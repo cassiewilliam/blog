@@ -111,6 +111,18 @@ body.drawio-edit-mode .drawio-chrome { opacity: 1 !important; }
   .post-content { padding-inline: 0 !important; }
 }
 
+/* On screens wide enough for the fixed-position left TOC, shift the
+   article body right so it does not sit underneath the TOC panel. */
+@media (min-width: 1280px) {
+  .main {
+    margin-left: max(auto, 380px) !important;
+    margin-right: auto !important;
+    padding-left: 380px !important;
+    box-sizing: border-box;
+    max-width: min(1480px, 100vw) !important;
+  }
+}
+
 /* mxgraph viewer: reserve space matching a 16:9 aspect so the page
    doesn't jump when each viewer asynchronously renders. */
 .cc-fig-mx { min-height: 340px; }
