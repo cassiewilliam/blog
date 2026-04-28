@@ -1,6 +1,6 @@
 ---
 title: "drawio 嵌入 + 在线编辑 Demo"
-date: 2026-04-28T20:00:00+08:00
+date: 2026-04-28T08:00:00+08:00
 summary: "演示 .drawio 文件如何在博客里渲染，以及如何在浏览器里直接编辑后保存到 GitHub。"
 tags: ["demo", "drawio"]
 math: false
