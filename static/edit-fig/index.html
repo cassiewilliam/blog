@@ -4,29 +4,28 @@
 <meta charset="utf-8">
 <title>Edit · drawio</title>
 <style>
-  html,body{margin:0;height:100%;font-family:-apple-system,Segoe UI,PingFang SC,sans-serif;color:#1f2328}
-  #bar{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid #d0d7de;background:#f6f8fa;font-size:13px}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:-apple-system,Segoe UI,PingFang SC,sans-serif;color:#1f2328}
+  #bar{position:fixed;top:0;left:0;right:0;height:38px;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid #d0d7de;background:#f6f8fa;font-size:13px;z-index:10;box-sizing:border-box}
   #bar code{font-family:ui-monospace,Menlo,monospace;color:#57606b}
   #bar .s{color:#57606b}
   #bar .ok{color:#1f883d;font-weight:600}
   #bar .err{color:#cf222e}
-  #frame{width:100%;height:calc(100vh - 38px);border:0;display:block}
+  #f{position:fixed;top:38px;left:0;right:0;bottom:0;width:100%;height:calc(100vh - 38px);border:0;display:block;background:#fff}
   .pane{max-width:540px;margin:80px auto;padding:0 20px}
   .pane a{color:#0969da}
 </style>
 </head>
 <body>
 <div id="bar"><strong>drawio</strong> <code id="src">…</code> <span class="s" id="st">loading…</span></div>
-<iframe id="f" src="about:blank"></iframe>
+<iframe id="f" src="about:blank" allow="clipboard-read; clipboard-write"></iframe>
 
 <script>
-const qs = new URLSearchParams(location.search);
-const src = qs.get('src');                 // /figures/v4/F1.svg
+const qs   = new URLSearchParams(location.search);
+const src  = qs.get('src');
 if (!src) {
   document.body.innerHTML = '<div class="pane"><h2>缺少 ?src 参数</h2></div>';
   throw 0;
 }
-// derived: /figures/v4/F1.svg → /drawio/v4/figures/F1.drawio
 const drawioPath = src
   .replace(/^\/figures\//, '/drawio/')
   .replace(/\/([^/]+)\.svg$/, '/figures/$1.drawio');
@@ -45,27 +44,26 @@ function readPAT() {
 }
 const token = readPAT();
 if (!token) {
-  document.body.innerHTML = '<div class="pane"><h2>需要先登录</h2><p>编辑器复用 Decap CMS 的 GitHub PAT。请先去 <a href="/admin/">/admin/</a> 用 PAT 登录一次（一次性），然后回到这页。</p></div>';
+  document.body.innerHTML = '<div class="pane"><h2>需要先登录</h2><p>编辑器复用 Decap CMS 的 GitHub PAT。请先去 <a href="/admin/">/admin/</a> 用 PAT 登录一次（一次性），再回到这页。</p></div>';
   throw 0;
 }
 
 const iframe = document.getElementById('f');
-let drawioXML = null;       // mxfile XML for drawio to edit
-let saveInProgress = false;
+let drawioXML = null;
+let saving = false;
 
-// Always load the .drawio companion (native shapes), not the raw SVG.
-// drawio renders the XML directly; on save we export back to xmlsvg
-// (SVG with embedded XML) and write to the .svg path so the live page
-// keeps rendering inline SVG.
 fetch(drawioPath + '?_=' + Date.now())
-  .then(r => {
-    if (!r.ok) throw new Error(`fetch ${drawioPath} → ${r.status}`);
-    return r.text();
-  })
+  .then(r => r.ok ? r.text() : Promise.reject(`fetch ${drawioPath} → ${r.status}`))
   .then(t => {
     drawioXML = t;
-    setStat('XML 已加载，启动 drawio…');
-    iframe.src = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=1&proto=json&saveAndExit=0&noSaveBtn=0';
+    setStat('XML 已读取，启动 drawio…');
+    // embed=1: postMessage protocol
+    // proto=json: JSON-format messages
+    // ui=min: minimal UI (avoids the 'atlas' theme rendering issues we saw)
+    // spin=0: no loading overlay before init
+    // saveAndExit=0: stay in editor after save
+    // noSaveBtn=0: keep the Save button (it triggers our save handler)
+    iframe.src = 'https://embed.diagrams.net/?embed=1&proto=json&ui=min&spin=0&saveAndExit=0&noSaveBtn=0';
   })
   .catch(e => setStat('加载失败: ' + e, 'err'));
 
@@ -77,10 +75,12 @@ window.addEventListener('message', e => {
 
   if (m.event === 'init') {
     post({ action: 'load', xml: drawioXML, autosave: 0 });
-    setStat('drawio 就绪 · 编辑后 ⌘S 保存（自动提交到 GitHub）', 'ok');
+    // After load, fit the diagram to the viewport so the canvas isn't blank.
+    setTimeout(() => post({ action: 'status', message: '' }), 200);
+    setStat('drawio 就绪 · 编辑后 ⌘S 保存', 'ok');
   }
-  else if (m.event === 'save' && !saveInProgress) {
-    saveInProgress = true;
+  else if (m.event === 'save' && !saving) {
+    saving = true;
     setStat('导出 SVG…');
     post({ action: 'export', format: 'xmlsvg' });
   }
@@ -89,11 +89,11 @@ window.addEventListener('message', e => {
     let svg;
     if (url.startsWith('data:image/svg+xml;base64,')) {
       svg = decodeURIComponent(escape(atob(url.split(',')[1])));
-    } else if (url.startsWith('<svg')) {
+    } else if (url.startsWith('<svg') || url.startsWith('<?xml')) {
       svg = url;
     } else {
-      saveInProgress = false;
-      setStat('导出格式异常: ' + url.slice(0, 50), 'err');
+      saving = false;
+      setStat('导出格式异常: ' + url.slice(0, 60), 'err');
       return;
     }
     setStat('提交到 GitHub…');
@@ -109,11 +109,11 @@ window.addEventListener('message', e => {
     })
     .then(r => r.json())
     .then(j => {
-      saveInProgress = false;
+      saving = false;
       if (j.ok) setStat('✓ commit ' + (j.sha||'').slice(0,7) + '  ·  ~8s 后博客刷新', 'ok');
       else     setStat('commit 失败: ' + (j.error||'unknown'), 'err');
     })
-    .catch(err => { saveInProgress = false; setStat('commit 失败: ' + err, 'err'); });
+    .catch(err => { saving = false; setStat('commit 失败: ' + err, 'err'); });
   }
 });
 </script>
