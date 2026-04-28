@@ -10,7 +10,7 @@
   #bar .s{color:#57606b}
   #bar .ok{color:#1f883d;font-weight:600}
   #bar .err{color:#cf222e}
-  #frame{width:100%;height:calc(100vh - 38px);border:0}
+  #frame{width:100%;height:calc(100vh - 38px);border:0;display:block}
   .pane{max-width:540px;margin:80px auto;padding:0 20px}
   .pane a{color:#0969da}
 </style>
@@ -20,12 +20,17 @@
 <iframe id="f" src="about:blank"></iframe>
 
 <script>
-const qs   = new URLSearchParams(location.search);
-const src  = qs.get('src');
+const qs = new URLSearchParams(location.search);
+const src = qs.get('src');                 // /figures/v4/F1.svg
 if (!src) {
-  document.body.innerHTML = '<div class="pane"><h2>缺少 ?src 参数</h2><p>用法：<code>/edit-fig/?src=/figures/v4/F1.svg</code></p></div>';
+  document.body.innerHTML = '<div class="pane"><h2>缺少 ?src 参数</h2></div>';
   throw 0;
 }
+// derived: /figures/v4/F1.svg → /drawio/v4/figures/F1.drawio
+const drawioPath = src
+  .replace(/^\/figures\//, '/drawio/')
+  .replace(/\/([^/]+)\.svg$/, '/figures/$1.drawio');
+
 document.getElementById('src').textContent = src;
 const st = document.getElementById('st');
 const setStat = (t,c) => { st.textContent = t; st.className = c || 's'; };
@@ -40,44 +45,55 @@ function readPAT() {
 }
 const token = readPAT();
 if (!token) {
-  document.body.innerHTML = '<div class="pane"><h2>需要先登录</h2><p>编辑器复用 Decap CMS 的 GitHub PAT。请先去 <a href="/admin/">/admin/</a> 用 PAT 登录一次（一次性，凭证存浏览器 localStorage），再回到这页。</p></div>';
+  document.body.innerHTML = '<div class="pane"><h2>需要先登录</h2><p>编辑器复用 Decap CMS 的 GitHub PAT。请先去 <a href="/admin/">/admin/</a> 用 PAT 登录一次（一次性），然后回到这页。</p></div>';
   throw 0;
 }
 
 const iframe = document.getElementById('f');
-let svgContent = null;
+let drawioXML = null;       // mxfile XML for drawio to edit
+let saveInProgress = false;
 
-fetch(src + '?_=' + Date.now())
-  .then(r => r.text())
+// Always load the .drawio companion (native shapes), not the raw SVG.
+// drawio renders the XML directly; on save we export back to xmlsvg
+// (SVG with embedded XML) and write to the .svg path so the live page
+// keeps rendering inline SVG.
+fetch(drawioPath + '?_=' + Date.now())
+  .then(r => {
+    if (!r.ok) throw new Error(`fetch ${drawioPath} → ${r.status}`);
+    return r.text();
+  })
   .then(t => {
-    svgContent = t;
-    setStat('SVG 已读取，加载 drawio…');
+    drawioXML = t;
+    setStat('XML 已加载，启动 drawio…');
     iframe.src = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=1&proto=json&saveAndExit=0&noSaveBtn=0';
   })
-  .catch(e => setStat('fetch failed: ' + e, 'err'));
+  .catch(e => setStat('加载失败: ' + e, 'err'));
 
 window.addEventListener('message', e => {
-  let m; try { m = JSON.parse(e.data); } catch (_) { return; }
+  let m;
+  try { m = JSON.parse(e.data); } catch (_) { return; }
   if (!m || !m.event) return;
   const post = obj => iframe.contentWindow.postMessage(JSON.stringify(obj), '*');
 
   if (m.event === 'init') {
-    post({ action: 'load', xml: svgContent, autosave: 0 });
+    post({ action: 'load', xml: drawioXML, autosave: 0 });
     setStat('drawio 就绪 · 编辑后 ⌘S 保存（自动提交到 GitHub）', 'ok');
   }
-  else if (m.event === 'save') {
-    // Re-export as SVG (with embedded drawio metadata for next round-trip).
-    post({ action: 'export', format: 'xmlsvg' });
+  else if (m.event === 'save' && !saveInProgress) {
+    saveInProgress = true;
     setStat('导出 SVG…');
+    post({ action: 'export', format: 'xmlsvg' });
   }
   else if (m.event === 'export') {
-    // m.data is a data: URI; pull the SVG bytes out.
     const url = m.data || '';
     let svg;
     if (url.startsWith('data:image/svg+xml;base64,')) {
       svg = decodeURIComponent(escape(atob(url.split(',')[1])));
+    } else if (url.startsWith('<svg')) {
+      svg = url;
     } else {
-      setStat('unexpected export format: ' + url.slice(0, 40), 'err');
+      saveInProgress = false;
+      setStat('导出格式异常: ' + url.slice(0, 50), 'err');
       return;
     }
     setStat('提交到 GitHub…');
@@ -93,10 +109,11 @@ window.addEventListener('message', e => {
     })
     .then(r => r.json())
     .then(j => {
+      saveInProgress = false;
       if (j.ok) setStat('✓ commit ' + (j.sha||'').slice(0,7) + '  ·  ~8s 后博客刷新', 'ok');
-      else setStat('commit 失败: ' + (j.error||'unknown'), 'err');
+      else     setStat('commit 失败: ' + (j.error||'unknown'), 'err');
     })
-    .catch(err => setStat('commit 失败: ' + err, 'err'));
+    .catch(err => { saveInProgress = false; setStat('commit 失败: ' + err, 'err'); });
   }
 });
 </script>
