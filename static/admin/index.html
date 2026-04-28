@@ -9,22 +9,142 @@
   <!-- Decap CMS bundle from CDN -->
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
 
-  <!-- KaTeX preview support inside the editor -->
+  <!-- markdown renderer for preview shortcodes (tip / supp / formula) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+
+  <!-- KaTeX for math rendering in preview -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-    onload='document.addEventListener("DOMContentLoaded",function(){
-      setInterval(function(){
-        document.querySelectorAll(".cms-preview-pane,.frame-content").forEach(function(el){
-          if(!el.dataset.kxRendered){
-            renderMathInElement(el,{delimiters:[
-              {left:"$$",right:"$$",display:true},
-              {left:"$",right:"$",display:false}],
-              throwOnError:false});
-            el.dataset.kxRendered="1";
-          }
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+  <script>
+  /* === Preview styling (loaded inside Decap's preview iframe) ============ */
+  CMS.registerPreviewStyle('/admin/preview.css');
+
+  function mdRender(s) {
+    if (!s) return '';
+    if (typeof marked === 'undefined') return s;
+    return marked.parse(s);
+  }
+  function attr(s) { return String(s || '').replace(/"/g, '&quot;'); }
+
+  /* === Editor components: each shortcode becomes a draggable, formed block.
+        The `pattern` is also used to detect the shortcode in existing markdown
+        when the post is loaded — so previously-converted posts pick up the
+        rich preview automatically.                                          */
+
+  CMS.registerEditorComponent({
+    id: 'tip',
+    label: '💡 Tip · 蓝色提示框',
+    fields: [
+      { name: 'body', label: '正文 (markdown)', widget: 'markdown' }
+    ],
+    pattern: /^{{<\s*tip\s*>}}\s*\n([\s\S]*?)\n{{<\s*\/tip\s*>}}$/m,
+    fromBlock: function (m) { return { body: m[1] }; },
+    toBlock: function (o) { return '{{< tip >}}\n' + (o.body || '') + '\n{{< /tip >}}'; },
+    toPreview: function (o) {
+      return '<div class="cc-tip">' + mdRender(o.body || '') + '</div>';
+    }
+  });
+
+  CMS.registerEditorComponent({
+    id: 'supp',
+    label: '📘 Supplement · 知识点延伸卡',
+    fields: [
+      { name: 'title', label: '标题 Title', widget: 'string', required: false },
+      { name: 'body',  label: '正文 (markdown)', widget: 'markdown' }
+    ],
+    pattern: /^{{<\s*supp\s+title="([^"]*)"\s*>}}\s*\n([\s\S]*?)\n{{<\s*\/supp\s*>}}$/m,
+    fromBlock: function (m) { return { title: m[1], body: m[2] }; },
+    toBlock: function (o) {
+      return '{{< supp title="' + attr(o.title) + '" >}}\n' +
+             (o.body || '') + '\n{{< /supp >}}';
+    },
+    toPreview: function (o) {
+      return '<aside class="cc-supp">' +
+        '<div class="cc-supp-label">SUPPLEMENT · 知识点延伸</div>' +
+        (o.title ? '<div class="cc-supp-title">' + attr(o.title) + '</div>' : '') +
+        '<div class="cc-supp-body">' + mdRender(o.body || '') + '</div>' +
+      '</aside>';
+    }
+  });
+
+  CMS.registerEditorComponent({
+    id: 'formula',
+    label: '🧮 Formula · 公式框 (std=red / sm=green)',
+    fields: [
+      { name: 'type',  label: '类型 (std / sm)', widget: 'select',
+        options: ['std', 'sm'], default: 'std' },
+      { name: 'label', label: 'Label (左上角徽章)', widget: 'string', required: false },
+      { name: 'body',  label: '正文 (markdown)', widget: 'markdown' }
+    ],
+    pattern: /^{{<\s*formula\s+type="(std|sm)"(?:\s+label="([^"]*)")?\s*>}}\s*\n([\s\S]*?)\n{{<\s*\/formula\s*>}}$/m,
+    fromBlock: function (m) { return { type: m[1], label: m[2] || '', body: m[3] }; },
+    toBlock: function (o) {
+      return '{{< formula type="' + (o.type || 'std') +
+             '" label="' + attr(o.label) + '" >}}\n' +
+             (o.body || '') + '\n{{< /formula >}}';
+    },
+    toPreview: function (o) {
+      var cls = 'cc-formula cc-formula-' + (o.type || 'std');
+      var label = o.label ? '<div class="cc-formula-label">' + attr(o.label) + '</div>' : '';
+      return '<div class="' + cls + '">' + label + mdRender(o.body || '') + '</div>';
+    }
+  });
+
+  CMS.registerEditorComponent({
+    id: 'fig',
+    label: '🖼 Figure · 插图 (SVG + drawio)',
+    fields: [
+      { name: 'src',     label: 'SVG 路径 (e.g. /figures/v4/F1.svg)', widget: 'string' },
+      { name: 'drawio',  label: 'drawio 路径 (可选)', widget: 'string', required: false },
+      { name: 'label',   label: 'Label (e.g. F1)', widget: 'string', required: false },
+      { name: 'caption', label: '图注 Caption', widget: 'string', required: false }
+    ],
+    pattern: /{{<\s*fig\s+src="([^"]*)"(?:\s+drawio="([^"]*)")?(?:\s+label="([^"]*)")?(?:\s+caption="([^"]*)")?\s*>}}/,
+    fromBlock: function (m) {
+      return { src: m[1] || '', drawio: m[2] || '', label: m[3] || '', caption: m[4] || '' };
+    },
+    toBlock: function (o) {
+      var s = '{{< fig src="' + attr(o.src) + '"';
+      if (o.drawio)  s += ' drawio="' + attr(o.drawio) + '"';
+      if (o.label)   s += ' label="' + attr(o.label) + '"';
+      if (o.caption) s += ' caption="' + attr(o.caption) + '"';
+      return s + ' >}}';
+    },
+    toPreview: function (o) {
+      var label = o.label ? '<b>' + attr(o.label) + '</b>&nbsp;&nbsp;' : '';
+      return '<figure class="cc-fig">' +
+        '<div class="cc-fig-svg">' +
+          '<img src="' + attr(o.src) + '" alt="' + attr(o.caption) + '">' +
+        '</div>' +
+        (o.caption || o.label
+          ? '<figcaption>' + label + attr(o.caption) + '</figcaption>'
+          : '') +
+      '</figure>';
+    }
+  });
+
+  /* === Re-render KaTeX inside preview iframe periodically =================*/
+  setInterval(function () {
+    if (typeof renderMathInElement === 'undefined') return;
+    document.querySelectorAll('iframe').forEach(function (frame) {
+      try {
+        var doc = frame.contentDocument;
+        if (!doc || !doc.body) return;
+        if (doc.body.dataset.kxLast === doc.body.innerHTML.length + '') return;
+        doc.body.dataset.kxLast = doc.body.innerHTML.length + '';
+        renderMathInElement(doc.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$',  right: '$',  display: false }
+          ],
+          throwOnError: false,
+          ignoredTags: ['script','noscript','style','textarea','pre','code']
         });
-      },800);
-    });'></script>
+      } catch (e) {}
+    });
+  }, 1200);
+  </script>
 </body>
 </html>
