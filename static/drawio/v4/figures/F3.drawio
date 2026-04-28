@@ -1,10 +1,114 @@
-<mxfile host="app.diagrams.net" agent="svg2drawio" version="22.0.0">
+<mxfile host="app.diagrams.net" agent="svg2drawio">
   <diagram id="conv" name="Page-1">
-    <mxGraphModel dx="1000" dy="360" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="360" math="0" shadow="0">
+    <mxGraphModel dx="1038" dy="2496" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="360" math="0" shadow="0">
       <root>
-        <mxCell id="0"/>
-        <mxCell id="1" parent="0"/>
-        <mxCell id="v2" value="" style="rounded=0;fillColor=#fff;strokeColor=none;html=1;" vertex="1" parent="1"><mxGeometry x="0.0" y="0.0" width="1000.0" height="360.0" as="geometry"/></mxCell><mxCell id="v3" value="mHC · Manifold-Constrained Hyper-Connections" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#000000;fontStyle=1;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="282.0" y="6.84" width="436" height="22" as="geometry"/></mxCell><mxCell id="v4" value="(a) Hyper-Connection (HC)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="119.5" y="41.96" width="201" height="18" as="geometry"/></mxCell><mxCell id="v5" value="" style="rounded=1;arcSize=5;fillColor=#fff5f0;strokeColor=#b85450;strokeWidth=1;html=1;" vertex="1" parent="1"><mxGeometry x="40.0" y="72.0" width="360.0" height="128.0" as="geometry"/></mxCell><mxCell id="v6" value="X_{l+1} = B_l · X_l + C_l · F_l(A_l · X_l)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="64.0" y="93.52" width="312" height="16" as="geometry"/></mxCell><mxCell id="v7" value="unconstrained B_l → ‖B_l‖₂ unbounded" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="97.5" y="119.3" width="245" height="15" as="geometry"/></mxCell><mxCell id="v8" value="27B: signal amplified ≈3000×" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#b85450;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="125.0" y="139.3" width="190" height="15" as="geometry"/></mxCell><mxCell id="v9" value="loss spike around step 12k" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#b85450;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="131.5" y="159.3" width="177" height="15" as="geometry"/></mxCell><mxCell id="v10" value="(b) Manifold-Constrained HC" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="601.5" y="41.96" width="217" height="18" as="geometry"/></mxCell><mxCell id="v11" value="" style="rounded=1;arcSize=5;fillColor=#f4faf4;strokeColor=#5fa55f;strokeWidth=1;html=1;" vertex="1" parent="1"><mxGeometry x="460.0" y="72.0" width="500.0" height="128.0" as="geometry"/></mxCell><mxCell id="v12" value="B_l ∈ M := { M ≥ 0 : M·𝟙=𝟙, 𝟙ᵀM=𝟙ᵀ }   (Birkhoff polytope)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="494.5" y="87.52" width="431" height="16" as="geometry"/></mxCell><mxCell id="v13" value="‖B_l‖₂ ≤ 1   ·   A_l, C_l via Sigmoid (bounded)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="535.5" y="111.52" width="349" height="16" as="geometry"/></mxCell><mxCell id="v14" value="B_l = Sinkhorn-Knopp(exp(B̃_l), t_max=20)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="570.5" y="134.3" width="279" height="15" as="geometry"/></mxCell><mxCell id="v15" value="total gain ≈1.6× · deep stacks converge" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#1a3d1a;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="577.5" y="152.3" width="265" height="15" as="geometry"/></mxCell><mxCell id="v16" value="BBH 43.8 → 51.0 (vs HC 48.9)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#1a3d1a;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="615.0" y="172.3" width="190" height="15" as="geometry"/></mxCell><mxCell id="v17" value="Sinkhorn-Knopp iteration (20 steps) · row + col normalize" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="270.5" y="173.96" width="459" height="18" as="geometry"/></mxCell><mxCell id="v18" value="" style="rounded=0;fillColor=#fff;strokeColor=#555;strokeWidth=1;html=1;" vertex="1" parent="1"><mxGeometry x="120.0" y="200.0" width="120.0" height="90.0" as="geometry"/></mxCell><mxCell id="v19" value="exp(B̃_l)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#000000;fontFamily=monospace;" vertex="1" parent="1"><mxGeometry x="141.0" y="235.18" width="78" height="19" as="geometry"/></mxCell><mxCell id="v20" value="positive matrix" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="133.5" y="299.08" width="93" height="14" as="geometry"/></mxCell><mxCell id="v21" value="" style="rounded=0;fillColor=#fff;strokeColor=#555;strokeWidth=1;html=1;" vertex="1" parent="1"><mxGeometry x="320.0" y="200.0" width="120.0" height="90.0" as="geometry"/></mxCell><mxCell id="v22" value="T_r(T_c(·))" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontFamily=monospace;" vertex="1" parent="1"><mxGeometry x="336.0" y="235.96" width="88" height="18" as="geometry"/></mxCell><mxCell id="v23" value="alternating norm." style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="327.5" y="299.08" width="105" height="14" as="geometry"/></mxCell><mxCell id="v24" value="" style="rounded=0;fillColor=#eef7ee;strokeColor=#5fa55f;strokeWidth=1;html=1;" vertex="1" parent="1"><mxGeometry x="520.0" y="200.0" width="120.0" height="90.0" as="geometry"/></mxCell><mxCell id="v25" value="B_l ∈ M" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontFamily=monospace;" vertex="1" parent="1"><mxGeometry x="552.0" y="235.96" width="56" height="18" as="geometry"/></mxCell><mxCell id="v26" value="doubly stochastic" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="527.5" y="299.08" width="105" height="14" as="geometry"/></mxCell><mxCell id="v27" value="" style="rounded=0;fillColor=#fff4e0;strokeColor=#e0b300;strokeWidth=1;html=1;" vertex="1" parent="1"><mxGeometry x="720.0" y="200.0" width="180.0" height="90.0" as="geometry"/></mxCell><mxCell id="v28" value="non-expansive map" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="752.5" y="232.3" width="115" height="15" as="geometry"/></mxCell><mxCell id="v29" value="stable fwd + bwd" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="755.5" y="250.3" width="109" height="15" as="geometry"/></mxCell><mxCell id="v30" value="n_hc = 4 expansion" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;fontFamily=sans-serif;" vertex="1" parent="1"><mxGeometry x="749.0" y="268.3" width="122" height="15" as="geometry"/></mxCell><mxCell id="v31" value="" style="endArrow=classic;strokeColor=#333;strokeWidth=1.4;html=1" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="240.0" y="245.0" as="sourcePoint"/><mxPoint x="318.0" y="245.0" as="targetPoint"/></mxGeometry></mxCell><mxCell id="v32" value="" style="endArrow=classic;strokeColor=#333;strokeWidth=1.4;html=1" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="440.0" y="245.0" as="sourcePoint"/><mxPoint x="518.0" y="245.0" as="targetPoint"/></mxGeometry></mxCell><mxCell id="v33" value="" style="endArrow=classic;strokeColor=#333;strokeWidth=1.4;html=1" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="640.0" y="245.0" as="sourcePoint"/><mxPoint x="718.0" y="245.0" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="v2" parent="1" style="rounded=0;fillColor=#fff;strokeColor=none;html=1;" value="" vertex="1">
+          <mxGeometry height="360" width="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="v3" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#000000;fontStyle=1;fontFamily=sans-serif;" value="mHC · Manifold-Constrained Hyper-Connections" vertex="1">
+          <mxGeometry height="22" width="436" x="282" y="6.84" as="geometry" />
+        </mxCell>
+        <mxCell id="v4" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontFamily=sans-serif;" value="(a) Hyper-Connection (HC)" vertex="1">
+          <mxGeometry height="18" width="201" x="119.5" y="41.96" as="geometry" />
+        </mxCell>
+        <mxCell id="v5" parent="1" style="rounded=1;arcSize=5;fillColor=#fff5f0;strokeColor=#b85450;strokeWidth=1;html=1;" value="" vertex="1">
+          <mxGeometry height="128" width="360" x="40" y="72" as="geometry" />
+        </mxCell>
+        <mxCell id="v6" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#000000;fontFamily=sans-serif;" value="X_{l+1} = B_l · X_l + C_l · F_l(A_l · X_l)" vertex="1">
+          <mxGeometry height="16" width="312" x="64" y="93.52" as="geometry" />
+        </mxCell>
+        <mxCell id="v7" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;fontFamily=sans-serif;" value="unconstrained B_l → ‖B_l‖₂ unbounded" vertex="1">
+          <mxGeometry height="15" width="245" x="97.5" y="119.3" as="geometry" />
+        </mxCell>
+        <mxCell id="v8" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#b85450;fontFamily=sans-serif;" value="27B: signal amplified ≈3000×" vertex="1">
+          <mxGeometry height="15" width="190" x="125" y="139.3" as="geometry" />
+        </mxCell>
+        <mxCell id="v9" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#b85450;fontFamily=sans-serif;" value="loss spike around step 12k" vertex="1">
+          <mxGeometry height="15" width="177" x="131.5" y="159.3" as="geometry" />
+        </mxCell>
+        <mxCell id="v10" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontFamily=sans-serif;" value="(b) Manifold-Constrained HC" vertex="1">
+          <mxGeometry height="18" width="217" x="601.5" y="41.96" as="geometry" />
+        </mxCell>
+        <mxCell id="v11" parent="1" style="rounded=1;arcSize=5;fillColor=#f4faf4;strokeColor=#5fa55f;strokeWidth=1;html=1;" value="" vertex="1">
+          <mxGeometry height="128" width="500" x="460" y="72" as="geometry" />
+        </mxCell>
+        <mxCell id="v12" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#000000;fontFamily=sans-serif;" value="B_l ∈ M := { M ≥ 0 : M·𝟙=𝟙, 𝟙ᵀM=𝟙ᵀ }   (Birkhoff polytope)" vertex="1">
+          <mxGeometry height="16" width="431" x="494.5" y="87.52" as="geometry" />
+        </mxCell>
+        <mxCell id="v13" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#000000;fontFamily=sans-serif;" value="‖B_l‖₂ ≤ 1   ·   A_l, C_l via Sigmoid (bounded)" vertex="1">
+          <mxGeometry height="16" width="349" x="535.5" y="111.52" as="geometry" />
+        </mxCell>
+        <mxCell id="v14" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;fontFamily=sans-serif;" value="B_l = Sinkhorn-Knopp(exp(B̃_l), t_max=20)" vertex="1">
+          <mxGeometry height="15" width="279" x="570.5" y="134.3" as="geometry" />
+        </mxCell>
+        <mxCell id="v15" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#1a3d1a;fontFamily=sans-serif;" value="total gain ≈1.6× · deep stacks converge" vertex="1">
+          <mxGeometry height="15" width="265" x="577.5" y="152.3" as="geometry" />
+        </mxCell>
+        <mxCell id="v16" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#1a3d1a;fontFamily=sans-serif;" value="BBH 43.8 → 51.0 (vs HC 48.9)" vertex="1">
+          <mxGeometry height="15" width="190" x="615" y="172.3" as="geometry" />
+        </mxCell>
+        <mxCell id="v17" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontFamily=sans-serif;" value="Sinkhorn-Knopp iteration (20 steps) · row + col normalize" vertex="1">
+          <mxGeometry height="18" width="459" x="270.5" y="213.96" as="geometry" />
+        </mxCell>
+        <mxCell id="v18" parent="1" style="rounded=0;fillColor=#fff;strokeColor=#555;strokeWidth=1;html=1;" value="" vertex="1">
+          <mxGeometry height="90" width="120" x="120" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="v19" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#000000;fontFamily=monospace;" value="exp(B̃_l)" vertex="1">
+          <mxGeometry height="19" width="78" x="141" y="275.18" as="geometry" />
+        </mxCell>
+        <mxCell id="v20" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#000000;fontFamily=sans-serif;" value="positive matrix" vertex="1">
+          <mxGeometry height="14" width="93" x="133.5" y="339.08" as="geometry" />
+        </mxCell>
+        <mxCell id="v21" parent="1" style="rounded=0;fillColor=#fff;strokeColor=#555;strokeWidth=1;html=1;" value="" vertex="1">
+          <mxGeometry height="90" width="120" x="320" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="v22" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontFamily=monospace;" value="T_r(T_c(·))" vertex="1">
+          <mxGeometry height="18" width="88" x="336" y="275.96000000000004" as="geometry" />
+        </mxCell>
+        <mxCell id="v23" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#000000;fontFamily=sans-serif;" value="alternating norm." vertex="1">
+          <mxGeometry height="14" width="105" x="327.5" y="339.08" as="geometry" />
+        </mxCell>
+        <mxCell id="v24" parent="1" style="rounded=0;fillColor=#eef7ee;strokeColor=#5fa55f;strokeWidth=1;html=1;" value="" vertex="1">
+          <mxGeometry height="90" width="120" x="520" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="v25" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontFamily=monospace;" value="B_l ∈ M" vertex="1">
+          <mxGeometry height="18" width="56" x="552" y="275.96000000000004" as="geometry" />
+        </mxCell>
+        <mxCell id="v26" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#000000;fontFamily=sans-serif;" value="doubly stochastic" vertex="1">
+          <mxGeometry height="14" width="105" x="527.5" y="339.08" as="geometry" />
+        </mxCell>
+        <mxCell id="v27" parent="1" style="rounded=0;fillColor=#fff4e0;strokeColor=#e0b300;strokeWidth=1;html=1;" value="" vertex="1">
+          <mxGeometry height="90" width="180" x="720" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="v28" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;fontFamily=sans-serif;" value="non-expansive map" vertex="1">
+          <mxGeometry height="15" width="115" x="752.5" y="272.3" as="geometry" />
+        </mxCell>
+        <mxCell id="v29" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;fontFamily=sans-serif;" value="stable fwd + bwd" vertex="1">
+          <mxGeometry height="15" width="109" x="755.5" y="290.3" as="geometry" />
+        </mxCell>
+        <mxCell id="v30" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;fontFamily=sans-serif;" value="n_hc = 4 expansion" vertex="1">
+          <mxGeometry height="15" width="122" x="749" y="308.3" as="geometry" />
+        </mxCell>
+        <mxCell id="v31" edge="1" parent="1" style="endArrow=classic;strokeColor=#333;strokeWidth=1.4;html=1" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="240" y="285" as="sourcePoint" />
+            <mxPoint x="318" y="285" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v32" edge="1" parent="1" style="endArrow=classic;strokeColor=#333;strokeWidth=1.4;html=1" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="440" y="285" as="sourcePoint" />
+            <mxPoint x="518" y="285" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v33" edge="1" parent="1" style="endArrow=classic;strokeColor=#333;strokeWidth=1.4;html=1" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="640" y="285" as="sourcePoint" />
+            <mxPoint x="718" y="285" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
