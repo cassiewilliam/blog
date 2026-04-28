@@ -97,3 +97,38 @@ body.drawio-edit-mode .drawio-chrome { opacity: 1 !important; }
 }
 .post-content h3 { margin-top:1.4em; }
 </style>
+
+<style id="wide-post-override">
+/* Widen the article to fit our 1000-px-wide drawio diagrams comfortably
+   (PaperMod default --article-max-width is too narrow). Only apply on
+   real screens — mobile falls back to PaperMod's responsive behaviour. */
+@media (min-width: 960px) {
+  .main, .post-single, .post-content, .post-header,
+  .breadcrumbs, .post-title, .post-meta, .post-description,
+  .post-content > *, article.post-single > * {
+    max-width: min(1100px, 92vw) !important;
+  }
+  .post-content { padding-inline: 0 !important; }
+}
+
+/* mxgraph viewer: reserve space matching a 16:9 aspect so the page
+   doesn't jump when each viewer asynchronously renders. */
+.cc-fig-mx { min-height: 340px; }
+.cc-fig-mx .mxgraph { width: 100%; }
+.cc-fig-mx .mxgraph svg { display:block; max-width:100%; height:auto; }
+
+/* TL;DR blockquote: lift it visually so the reader knows it's the summary. */
+.post-content > blockquote:first-of-type {
+  background: #f6f8fa;
+  border-left: 4px solid #4a90e2;
+  padding: 12px 18px;
+  font-size: 15px;
+  border-radius: 4px;
+  color: #1f2328;
+}
+.post-content > blockquote:first-of-type strong { color:#0e2e54; }
+
+/* Edit-chrome pill: keep visible space minimal so it doesn't shift layout
+   when revealed. */
+.drawio-chrome { line-height:1.4 }
+</style>
