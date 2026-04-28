@@ -1,4 +1,5 @@
-{{- /* KaTeX math + drawio viewer · added 2026-04-28 */ -}}
+{{- /* KaTeX math + drawio viewer + 不蒜子 PV/UV · 2026-04-28 */ -}}
+
 {{- if or .Params.math .Site.Params.math }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
@@ -7,7 +8,6 @@
 (function () {
   function render() {
     if (typeof renderMathInElement === "undefined") {
-      // auto-render hasn't loaded yet; retry shortly
       setTimeout(render, 50);
       return;
     }
@@ -31,4 +31,8 @@
 
 {{- if or .Params.drawio .Site.Params.drawio }}
 <script type="text/javascript" src="https://viewer.diagrams.net/js/viewer-static.min.js" defer></script>
+{{- end }}
+
+{{- if .Site.Params.busuanzi }}
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 {{- end }}

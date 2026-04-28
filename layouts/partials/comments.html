@@ -1,0 +1,24 @@
+{{- /* Giscus comments · uses params.giscus from hugo.toml */ -}}
+{{- with .Site.Params.giscus -}}
+{{- if and .repoID .categoryID }}
+<div class="giscus" style="margin-top:32px"></div>
+<script src="https://giscus.app/client.js"
+        data-repo="{{ .repo }}"
+        data-repo-id="{{ .repoID }}"
+        data-category="{{ .category }}"
+        data-category-id="{{ .categoryID }}"
+        data-mapping="{{ .mapping | default "pathname" }}"
+        data-strict="0"
+        data-reactions-enabled="{{ .reactionsEnabled | default "1" }}"
+        data-emit-metadata="{{ .emitMetadata | default "0" }}"
+        data-input-position="{{ .inputPosition | default "top" }}"
+        data-theme="{{ .theme | default "preferred_color_scheme" }}"
+        data-lang="{{ .lang | default "zh-CN" }}"
+        data-loading="{{ .loading | default "lazy" }}"
+        crossorigin="anonymous"
+        async>
+</script>
+{{- else }}
+<!-- Giscus not configured (set repoID + categoryID in hugo.toml [params.giscus]) -->
+{{- end }}
+{{- end -}}

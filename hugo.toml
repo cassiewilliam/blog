@@ -10,7 +10,7 @@ enableInlineShortcodes = true
 
 [params]
   env = "production"
-  description = "自动生成的报告与笔记"
+  description = "GPU / CUDA / LLM 系统优化 · 长上下文推理 · MoE 内核工程"
   author = "Min Yang"
   defaultTheme = "auto"
   ShowReadingTime = true
@@ -21,6 +21,52 @@ enableInlineShortcodes = true
   ShowToc = true
   TocOpen = false
   DateFormat = "2006-01-02"
+  comments = true                       # show Giscus on posts
+  busuanzi = true                       # show 不蒜子 PV/UV counter site-wide
+  math = false                          # per-post can override via frontmatter math: true
+  drawio = false                        # per-post override
+
+# 首页 profile 模式（左侧头像 + 简介 + 社交图标，比纯文章列表更像个人站）
+[params.profileMode]
+  enabled = true
+  title = "Min Yang"
+  subtitle = "GPU 内核工程 / LLM 推理系统 / 大模型基础设施"
+  imageUrl = "/avatar.jpg"
+  imageTitle = "avatar"
+  imageWidth = 140
+  imageHeight = 140
+  buttons = [
+    { name = "归档", url = "/archives/" },
+    { name = "标签", url = "/tags/" },
+    { name = "关于", url = "/about/" },
+  ]
+
+# 社交链接（在 profile 下方/页脚展示）
+[[params.socialIcons]]
+  name = "github"
+  url = "https://github.com/cassiewilliam"
+[[params.socialIcons]]
+  name = "rss"
+  url = "/index.xml"
+[[params.socialIcons]]
+  name = "email"
+  url = "mailto:cassiewilliam@example.com"   # ✏️ 改成你的邮箱
+
+# Giscus 评论配置 (params.giscus)
+# - 你需要先在 GitHub 仓库 Settings → Features 勾选 Discussions
+# - 然后到 https://giscus.app/ 配置一遍，把生成的 6 个值填进来
+[params.giscus]
+  repo = "cassiewilliam/blog"            # ✏️ 已默认，可不动
+  repoID = ""                             # ✏️ 从 giscus.app 复制
+  category = "Announcements"              # ✏️ 选一个 Discussions 分类
+  categoryID = ""                         # ✏️ 从 giscus.app 复制
+  mapping = "pathname"
+  reactionsEnabled = "1"
+  emitMetadata = "0"
+  inputPosition = "top"
+  theme = "preferred_color_scheme"
+  lang = "zh-CN"
+  loading = "lazy"
 
 [params.homeInfoParams]
   Title = "报告与笔记"
@@ -37,6 +83,12 @@ enableInlineShortcodes = true
   name = "标签"
   url = "/tags/"
   weight = 20
+
+[[menu.main]]
+  identifier = "about"
+  name = "关于"
+  url = "/about/"
+  weight = 30
 
 [outputs]
   home = ["HTML", "RSS", "JSON"]
