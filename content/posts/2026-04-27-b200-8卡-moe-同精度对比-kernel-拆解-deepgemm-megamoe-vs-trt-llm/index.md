@@ -29,9 +29,9 @@ TocOpen: false
 *DeepSeek-V4-Pro · 8× B200 · EP=8 · DP=8 · alltoall=NVLinkOneSided
   · H=7168, I=3072, E=384, topk=6 · 每 rank 持 48 个 expert*
 
-{{< fig src="/figures/2026-04-27-b200-8卡-moe-同精度对比-kernel-拆解-deepgemm-megamoe-vs-trt-llm/F1.svg" label="F1" caption="DeepSeek-V4-Pro · EP=8 wall-clock per forward (ms)" >}}
+{{< fig src="/figures/2026-04-27-b200-8卡-moe-同精度对比-kernel-拆解-deepgemm-megamoe-vs-trt-llm/F1.svg" label="F1" caption="DSV4-Pro · EP=8 wall-clock per forward (ms)" >}}
 
-{{< fig src="/figures/2026-04-27-b200-8卡-moe-同精度对比-kernel-拆解-deepgemm-megamoe-vs-trt-llm/F2.svg" label="F2" caption="DeepSeek-V4-Pro · DeepGEMM 优势倍数 (越大越优)" >}}
+{{< fig src="/figures/2026-04-27-b200-8卡-moe-同精度对比-kernel-拆解-deepgemm-megamoe-vs-trt-llm/F2.svg" label="F2" caption="DSV4-Pro · DeepGEMM 优势倍数 (越大越优)" >}}
 
 <table>
 <thead><tr>
@@ -53,9 +53,9 @@ TocOpen: false
 *Qwen3.5-Next-A3B · 8× B200 · EP=8 · DP=8 · alltoall=NVLinkOneSided
   · H=2048, I=512, E=512, topk=10 · 每 rank 持 64 个 expert*
 
-{{< fig src="/figures/2026-04-27-b200-8卡-moe-同精度对比-kernel-拆解-deepgemm-megamoe-vs-trt-llm/F3.svg" label="F3" caption="Qwen3.5-Next-80B-A3B · EP=8 wall-clock per forward (ms)" >}}
+{{< fig src="/figures/2026-04-27-b200-8卡-moe-同精度对比-kernel-拆解-deepgemm-megamoe-vs-trt-llm/F3.svg" label="F3" caption="Qwen3.5 · EP=8 wall-clock per forward (ms)" >}}
 
-{{< fig src="/figures/2026-04-27-b200-8卡-moe-同精度对比-kernel-拆解-deepgemm-megamoe-vs-trt-llm/F4.svg" label="F4" caption="Qwen3.5-Next-80B-A3B · DeepGEMM 优势倍数 (越大越优)" >}}
+{{< fig src="/figures/2026-04-27-b200-8卡-moe-同精度对比-kernel-拆解-deepgemm-megamoe-vs-trt-llm/F4.svg" label="F4" caption="Qwen3.5 · DeepGEMM 优势倍数" >}}
 
 <table>
 <thead><tr>
@@ -81,7 +81,7 @@ TocOpen: false
 **CAVEAT** · 这张图展示的是每个 kernel 各自占用 GPU 的时间。TRT-LLM 走 multi-stream，dispatch / combine / AllReduce 跟 GEMM 在不同 stream 上能 overlap，所以柱子总长 ≥ 上面 wall-clock 表里的实测值。柱长可以看「这条 path 在 GPU 上一共干了多少活」，但不是「forward 实际耗时」——后者以 ① / ② 的 wall-clock 表为准。
 {{< /tip >}}
 
-{{< fig src="/figures/2026-04-27-b200-8卡-moe-同精度对比-kernel-拆解-deepgemm-megamoe-vs-trt-llm/F5.svg" label="F5" caption="Kernel-level breakdown · DSV4-Pro BS=2048 · DeepGEMM 把 8 段融成一个 mega kernel" >}}
+{{< fig src="/figures/2026-04-27-b200-8卡-moe-同精度对比-kernel-拆解-deepgemm-megamoe-vs-trt-llm/F5.svg" label="F5" caption="Kernel-level breakdown · DSV4-Pro BS=2048" >}}
 
 <table>
 <thead><tr>

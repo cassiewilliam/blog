@@ -10427,8 +10427,6 @@ bashscripts/verify_hw_topology.sh
 
 **教程完** — 如果发现错漏或有新优化想补入，直接 edit 本文件并对应 drawio 页面。
 
- ====== END OF TUTORIAL ====== 
-
 ## 📐 配套架构图（25 页）
 
 所有图都用 viewer.diagrams.net 内嵌渲染，可缩放、可切页。
