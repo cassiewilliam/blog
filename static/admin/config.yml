@@ -2,12 +2,11 @@
 # Phase A: test_repo backend (in-memory, NO persistence). For real edits, switch to github backend in Phase C.
 
 backend:
-  name: test-repo                       # PHASE A — change to "github" after OAuth setup
-  # name: github
-  # repo: <github-user>/<repo-name>
-  # branch: main
-  # base_url: http://150.158.53.42       # OAuth proxy base URL (Phase C)
-  # auth_endpoint: /oauth                # OAuth proxy callback path
+  name: github
+  repo: cassiewilliam/blog
+  branch: main
+  base_url: http://150.158.53.42
+  auth_endpoint: oauth/auth
 
 local_backend: false
 publish_mode: simple
