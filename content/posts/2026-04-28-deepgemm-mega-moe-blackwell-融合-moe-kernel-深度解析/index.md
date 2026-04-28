@@ -3,6 +3,10 @@ title: "DeepGEMM Mega MoE · Blackwell 融合 MoE Kernel 深度解析"
 date: 2026-04-28T10:57:20+08:00
 draft: false
 tags: ["mega-moe", "deepgemm", "blackwell", "gpu", "cuda", "deep-dive"]
+math: true
+drawio: true
+ShowToc: true
+TocOpen: false
 ---
 
 ## 📖 Prologue · 背景知识与符号定义

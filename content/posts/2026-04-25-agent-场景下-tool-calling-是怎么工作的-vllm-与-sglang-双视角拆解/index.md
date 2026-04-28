@@ -3,6 +3,10 @@ title: "Agent 场景下 Tool Calling 是怎么工作的：vLLM 与 SGLang 双视
 date: 2026-04-25T23:46:44+08:00
 draft: false
 tags: ["deep-dive", "vllm", "sglang", "deepseek", "tool-calling", "agent", "llm-serving", "deepseek-v4", "llm", "async", "agent-runtime"]
+math: true
+drawio: true
+ShowToc: true
+TocOpen: false
 ---
 
 ## 📖 Prologue · Agent 场景为何需要 tool calling，以及它牵涉到哪些代码层

@@ -3,6 +3,10 @@ title: "vLLM DeepEP × DeepGEMM Prefill 深度解析"
 date: 2026-04-24T15:45:34+08:00
 draft: false
 tags: ["vllm", "deepep", "deepgemm", "moe", "cuda", "gpu", "hopper", "sm90", "fp8", "deepseek-v3", "prefill", "deep-dive"]
+math: true
+drawio: true
+ShowToc: true
+TocOpen: false
 ---
 
 vLLM · DeepEP HT · DeepGEMM Contiguous · DeepSeek-V3vLLM DeepEP × DeepGEMM Prefill 深度解析源码：vllm-project/vllm · DeepGEMM：deepseek-ai/DeepGEMM · DeepEP：deepseek-ai/DeepEP · 场景：DP=4 / EP=4 / 2 Nodes × 2 GPUs
