@@ -1,0 +1,21 @@
+{{- /* {{< pfig src="/paper_figs/dsv4/fig4_hca.png" caption="…" >}}
+       Paper-figure renderer. Routes the src through relURL so it works
+       both on the Tencent server (baseURL=/) and the GitHub Pages mirror
+       (served from /blog/). Drops loading=lazy because the previous
+       attempts at lazy-loading + 43 mxgraph viewers on one page caused
+       paper PNGs to silently fail in some browsers.                  */ -}}
+{{- $src := .Get "src" -}}
+{{- $cap := .Get "caption" -}}
+{{- $url := relURL $src -}}
+
+<figure class="cc-pfig" style="margin:18px 0">
+  <div style="border:1px solid #d0d7de;border-radius:6px;background:#fff;padding:6px;line-height:0;text-align:center">
+    <img src="{{ $url }}" alt="{{ $cap }}"
+         style="display:inline-block;max-width:100%;height:auto;background:#fff">
+  </div>
+  {{- with $cap }}
+  <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55">
+    <span style="display:inline-block;background:#eef3ff;color:#1a3a5c;font-size:11px;font-weight:700;padding:1px 8px;border-radius:3px;margin-right:6px;letter-spacing:.3px">PAPER</span>{{ . | safeHTML }}
+  </figcaption>
+  {{- end }}
+</figure>
