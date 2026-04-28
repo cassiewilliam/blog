@@ -908,7 +908,7 @@ However, the pursuit of granularity and sparsity comes with two painful hardware
 
 图：随 expert granularity 增大，单层 activation memory（左）与前向 IO 成本（右）的变化。固定 microbatch=32768 与各模型的 embedding dimension，仅改变 expert intermediate size，同时保持 training FLOPs 与参数量不变。
 
-#### Problem 1: Activation Memory Scales with Expert Granularity with Current Training Kernels.
+### Problem 1: Activation Memory Scales with Expert Granularity
 
 Problem 1：现行训练 kernel 下 Activation Memory 随 expert granularity 线性增长
 
@@ -941,7 +941,7 @@ For current MoE kernels like [ScatterMoE](https://arxiv.org/pdf/2403.08245) and 
 顺带：MoMoE 反向重算 down-proj GEMM，**不是 element-wise 而是真正的 Tensor Core GEMM**，反向时间约 +20%。而 SonicMoE 声称"无额外 FLOPs"的精确含义是：它只在反向 epilogue inline 重算一个 element-wise 的 `\mathrm{SwiGLU}(h)` —— 几乎免费。
 {{< /dd >}}
 
-#### Problem 2: IO Cost Scales with Expert Granularity and MoE Sparsity.
+### Problem 2: IO Cost Scales with Expert Granularity and MoE Sparsity
 
 Problem 2：IO Cost 随 expert granularity 与 MoE sparsity 同时恶化
 
