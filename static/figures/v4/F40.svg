@@ -1,4 +1,4 @@
-<svg width="100%" height="auto" viewBox="0 0 1100 540" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif">
+<svg viewBox="0 0 1100 540" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif">
 <rect width="1100" height="540" fill="#fff"/>
 <text x="550" y="26" font-size="16" font-weight="700" text-anchor="middle" fill="#111827">Power Budget · 三类 workload 在 H100 700 W TDP 包络下的功耗分布</text>
 <text x="550" y="46" font-size="11" text-anchor="middle" fill="#6b7280">柱状图：每个子系统的瞬时功耗 (W) · 红线：TDP 包络 700 W · 数据为典型场景估算值</text>

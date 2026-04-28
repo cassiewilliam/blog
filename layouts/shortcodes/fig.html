@@ -1,10 +1,17 @@
 {{- /* {{< fig src="/figures/v4/F1.svg" drawio="/drawio/v4/figures/F1.drawio" label="F1" caption="…" >}}
-       Renders the SVG inline (clean reader view). On hover OR with ?edit=1, an
+       Inlines the SVG into the rendered page so it scales naturally with its
+       parent (browsers' <img> sizing of viewBox-only SVG is inconsistent, esp.
+       in Safari/Firefox). On hover OR with ?edit=1 in the URL, an
        "Edit on diagrams.net" pill appears that opens the .drawio companion. */ -}}
-{{- $src   := .Get "src" -}}
-{{- $cap   := .Get "caption" -}}
-{{- $label := .Get "label" -}}
+{{- $src    := .Get "src" -}}
+{{- $cap    := .Get "caption" -}}
+{{- $label  := .Get "label" -}}
 {{- $drawio := .Get "drawio" -}}
+{{- $svgPath := printf "static%s" $src -}}
+{{- $svg := "" -}}
+{{- if (fileExists $svgPath) -}}
+  {{- $svg = readFile $svgPath -}}
+{{- end -}}
 {{- $repo   := .Page.Site.Params.drawioGithubRepo | default "cassiewilliam/blog" -}}
 {{- $branch := .Page.Site.Params.drawioGithubBranch | default "main" -}}
 {{- $editURL := "" -}}
@@ -15,7 +22,9 @@
 {{- end -}}
 
 <figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
-  <img src="{{ $src | safeURL }}" alt="{{ $cap }}" loading="lazy" style="display:block;width:100%;height:auto;border:1px solid #d0d7de;border-radius:6px;background:#fff">
+  <div class="cc-fig-svg" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;line-height:0;overflow:hidden">
+    {{ $svg | safeHTML }}
+  </div>
 
   {{- if $editURL }}
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
