@@ -1,54 +1,40 @@
-{{- /* {{< fig src="/figures/v4/F1.svg" drawio="/drawio/v4/figures/F1.drawio" label="F1" caption="…" >}}
+{{- /* {{< fig src="/figures/v4/F1.svg" label="F1" caption="…" >}}
 
-       Renders the .drawio file (native shapes) via the mxgraph viewer. The
-       .drawio is the source of truth: editing it in diagrams.net and saving
-       commits back to GitHub, and the next page load (after the 8s sync)
-       shows the updated diagram — no Hugo rebuild needed for the figure.
-
-       The .svg file stays as a fallback / lightweight asset and is also
-       linked next to the edit pill.                                      */ -}}
+       Inlines the SVG into the page so it renders pixel-perfect (no
+       lossy drawio-shape conversion, no mxgraph viewer layout issues).
+       The 'Edit' pill opens the SVG file in GitHub's web editor — direct
+       XML editing, save commits to main, ~8s later live.            */ -}}
 {{- $src    := .Get "src" -}}
-{{- $drawio := .Get "drawio" -}}
 {{- $cap    := .Get "caption" -}}
 {{- $label  := .Get "label" -}}
+{{- $svgPath := printf "static%s" $src -}}
+{{- $svg := "" -}}
+{{- if (fileExists $svgPath) -}}
+  {{- $svg = readFile $svgPath -}}
+{{- end -}}
 
 {{- $repo   := .Page.Site.Params.drawioGithubRepo | default "cassiewilliam/blog" -}}
 {{- $branch := .Page.Site.Params.drawioGithubBranch | default "main" -}}
-
-{{- /* The mxgraph viewer URL — absolute, so the viewer-static.min.js script
-       can fetch it from any iframe/sandbox.                                 */}}
-{{- $url := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $drawio) -}}
-
-{{- /* "Edit on diagrams.net" — opens the .drawio file from raw GitHub in
-       drawio web. Native shapes mean the user can drag boxes / edit text /
-       reroute lines and save back via mode=github.                          */}}
 {{- $editURL := "" -}}
-{{- with $drawio -}}
-  {{- $path := printf "static%s" . -}}
-  {{- $editH := printf "H%s%%2F%s%%2F%s" (replace $repo "/" "%2F") $branch (replace $path "/" "%2F") -}}
-  {{- $editURL = printf "https://app.diagrams.net/?mode=github&url=https%%3A%%2F%%2Fraw.githubusercontent.com%%2F%s%%2F%s%%2F%s#%s" $repo $branch $path $editH -}}
+{{- with $src -}}
+  {{- $editURL = printf "https://github.com/%s/edit/%s/static%s" $repo $branch . -}}
 {{- end -}}
 
 <figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
-  <div class="cc-fig-mx" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden">
-    <div class="mxgraph"
-         style="max-width:100%;"
-         data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","url":"{{ $url | safeJS }}"}'></div>
+  <div class="cc-fig-svg" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;line-height:0;overflow:hidden">
+    {{ $svg | safeHTML }}
   </div>
 
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
-    {{- if $editURL }}
-    <a href="{{ $editURL | safeURL }}" target="_blank" rel="noopener"
-       title="在 diagrams.net 中编辑可拖拽的 drawio 形状，保存即提交到 main"
+    {{- with $editURL }}
+    <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
+       title="GitHub 网页编辑器：直接改 SVG XML，提交即生效"
        style="color:#fff;background:#1f883d;text-decoration:none;border:1px solid #1f883d;padding:3px 10px;border-radius:4px;font-weight:600">
-       ✏️ Edit on diagrams.net
+       ✏️ Edit on GitHub
     </a>
     {{- end }}
-    {{- with $src }}
-    <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
-       title="原始 SVG (备用)"
-       style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">{{ . }}</a>
-    {{- end }}
+    <a href="{{ $src | safeURL }}" target="_blank" rel="noopener"
+       style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">{{ $src }}</a>
   </div>
 
   {{- with $cap }}
