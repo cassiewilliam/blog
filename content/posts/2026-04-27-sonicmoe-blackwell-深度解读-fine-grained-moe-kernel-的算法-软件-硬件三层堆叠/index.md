@@ -9,84 +9,7 @@ ShowToc: true
 TocOpen: false
 ---
 
-      {
-            "title": "SonicMoE: A Hardware-Efficient and Software-Extensible Blueprint for Fine-Grained MoEs",
-            "description": "",
-            "published": "April 22, 2026",
-            "authors": [
-
-              {
-                "author": "Wentao Guo",
-                "authorURL": "",
-                "affiliations": [
-                  {
-                    "name": "Princeton University",
-                    "url": ""
-                  }
-                ]
-              },
-
-              {
-                "author": "Mayank Mishra",
-                "authorURL": "",
-                "affiliations": [
-                  {
-                    "name": "UC Berkeley",
-                    "url": ""
-                  }
-                ]
-              },
-
-              {
-                "author": "Xinle Cheng",
-                "authorURL": "",
-                "affiliations": [
-                  {
-                    "name": "Princeton University",
-                    "url": ""
-                  }
-                ]
-              },
-
-              {
-                "author": "Ion Stoica",
-                "authorURL": "",
-                "affiliations": [
-                  {
-                    "name": "UC Berkeley",
-                    "url": ""
-                  }
-                ]
-              },
-
-              {
-                "author": "Tri Dao",
-                "authorURL": "",
-                "affiliations": [
-                  {
-                    "name": "Princeton University",
-                    "url": ""
-                  }
-                ]
-              }
-
-            ],
-            "katex": {
-              "delimiters": [
-                {
-                  "left": "$",
-                  "right": "$",
-                  "display": false
-                },
-                {
-                  "left": "$$",
-                  "right": "$$",
-                  "display": true
-                }
-              ]
-            }
-          }
-     Dao AI Lab Toggle navigation
+ Dao AI Lab Toggle navigation
 - [Research Group ](https://dao-lab.ai/)
 - [publications ](https://dao-lab.ai/publications/)
 - [blog ](https://dao-lab.ai/blog/)
@@ -123,74 +46,7 @@ Princeton University
 
 April 22, 2026
 
- MathJax (in body so Hugo preserves it) 
-window.MathJax = {
-  tex: {inlineMath: [['$', '$']], displayMath: [['$$','$$']]},
-  svg: {fontCache: 'global'}
-};
- Widen PaperMod content column + hide redundant Distill chrome elements 
-/* Override PaperMod's content-width CSS variable + use specificity */
-:root, html, body { --main-width: min(1500px, 96vw) !important; --content-gap: 20px !important; }
-html body .main,
-html body main.main,
-html body .post-single,
-html body .post-content,
-html body article.post-single {
-  max-width: min(1500px, 96vw) !important;
-  width: min(1500px, 96vw) !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-html body .post-content { max-width: 100% !important; padding: 0 4px !important; }
-html body .post-header { max-width: 100% !important; }
-html body .breadcrumbs { max-width: min(1500px, 96vw) !important; margin: 0 auto !important; }
-/* Hide Distill template chrome that doesn't make sense embedded in PaperMod */
-.post-content > header,
-.post-content #navbar,
-.post-content .navbar,
-.post-content nav.navbar,
-.post-content progress#progress,
-.post-content d-title,
-.post-content d-front-matter,
-.post-content footer.distill-site-footer,
-.post-content d-citation-list,
-.post-content d-appendix > h3:first-of-type { display: none !important; }
-/* d-byline still useful but tame layout */
-.post-content d-byline,
-.post-content .post .d-byline {
-  display: block !important;
-  max-width: 100% !important;
-  margin: 0 0 24px !important;
-  padding: 10px 0 !important;
-  border-top: 1px solid var(--border, #ddd);
-  border-bottom: 1px solid var(--border, #ddd);
-  font-size: 0.85em !important;
-}
-.post-content d-byline > * {
-  display: inline-block !important;
-  margin-right: 18px !important;
-  vertical-align: top;
-}
-.post-content d-byline h3 {
-  font-size: 0.78em !important;
-  text-transform: uppercase;
-  color: var(--secondary, #888);
-  margin: 0 0 4px !important;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-.post-content d-byline p { margin: 0 !important; font-size: 0.95em; }
-/* Distill list styling (may render bare bullets) */
-.post-content header ul, .post-content nav ul { display: none !important; }
-/* Avoid horizontal scroll on the page itself; the prologue handles its own */
-body { overflow-x: hidden; }
-/* Ensure code/pre wrapping isn't broken by the wider layout */
-.post-content pre { white-space: pre; overflow-x: auto; }
-/* Tighten d-figure margins */
-.post-content d-figure { display: block; margin: 1.4em 0; max-width: 100%; }
-.post-content d-figure svg { max-width: 100%; height: auto; }
-.post-content d-math { font-size: 1.02em; }
-📌 个人学习笔记 · Personal Study Note
+ MathJax (in body so Hugo preserves it)  Widen PaperMod content column + hide redundant Distill chrome elements 📌 个人学习笔记 · Personal Study Note
   本页是我个人阅读 Dao AI Lab 博客 SonicMoE on Blackwell（对应论文 arXiv:2512.14080）时做的中英对照 + 深度解读笔记，仅供自己学习备查，不对外分发。原博客正文版权归 Dao AI Lab 所有，所有技术主张、图片、数据归原作者。公开可分享的独立技术解读请见 原博客。
 📘 中英对照 + 深度解读版
   本文在博客原文（英文）每段之后紧跟 蓝色框中文译文；在关键段落之后插入 绿色框深度解读。
@@ -1511,7 +1367,7 @@ epilogue 内，`colvec_scale` = $s$ 只作用在 `dx_out` 和 `postact_out`，�
 - [Forward and Backward TFLOPS of 6 Open-source MoE Configs](https://dao-lab.ai/blog/2026/sonicmoe-blackwell/#forward-and-backward-tflops-of-6-open-source-moe-configs)
 - [Profiling Time Breakdown](https://dao-lab.ai/blog/2026/sonicmoe-blackwell/#profiling-time-breakdown)
 
-ConclusionAppendix.post img{max-width:100%;height:auto}.post blockquote p{margin-top:.2em;margin-bottom:.2em;line-height:1.4}.post blockquote p:first-child{margin-top:0}.post blockquote p:nth-child(2),.post blockquote p:nth-child(3){margin-bottom:1em}.post blockquote strong{font-style:normal!important}.post blockquote{background-color:rgba(76,158,255,0.08);border:1px solid var(--global-theme-color,#4c9eff);border-left:4px solid var(--global-theme-color,#4c9eff);border-radius:4px;padding:1rem 1.5rem;font-size:inherit;color:inherit;max-width:85%;margin:1.5rem auto}.post blockquote .MJXc-display,.post blockquote .katex-display{text-align:center!important;margin:1em 0!important}.post blockquote .MathJax,.post blockquote .katex,.post blockquote .MathJax_Display,.post blockquote mjx-container,.post blockquote mjx-math,.post blockquote mjx-mrow,.post blockquote .MathJax *,.post blockquote mjx-container *{color:inherit!important}html[data-theme='dark'] .post blockquote .MathJax,html[data-theme='dark'] .post blockquote mjx-container,html[data-theme='dark'] .post blockquote mjx-container *{color:var(--global-text-color)!important}.post h1{font-weight:normal!important;font-style:normal!important;border-bottom:1px solid var(--global-divider-color)!important;padding-bottom:.5rem!important}.post h1{margin-top:3rem!important;margin-bottom:1.5rem!important}.post h2{margin-top:2.5rem!important;margin-bottom:1.25rem!important}.post h3{margin-top:2rem!important;margin-bottom:1rem!important}.post h4{margin-top:1.5rem!important;margin-bottom:.75rem!important}.post h5,.post h6{margin-top:1rem!important;margin-bottom:.5rem!important}
+ConclusionAppendix
 
 <div class="en-trans">Figure: SonicMoE's per-layer activation memory footprint (left) stays constant even when expert granularity (embedding dimension / expert intermediate dimension) increases, and SonicMoE can achieve 1.87-4.04x relative speedup compared to existing MoE training kernels ScatterMoE and MoMoE.</div>
 
@@ -2406,73 +2262,6 @@ In the first row,
 In the second row, we already know that `gth-and-sum` only has 2% less bandwidth than `sum`.
 
 Although this 3% gap is much smaller than the prior gap on Hopper GPUs (20%), it still validates SonicMoE’s design on Blackwell GPUs.
-
-d-appendix {
-  contain: layout style;
-  font-size: 0.8em;
-  line-height: 1.7em;
-  margin-top: 60px;
-  margin-bottom: 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  color: rgba(0,0,0,0.5);
-  padding-top: 60px;
-  padding-bottom: 48px;
-}
-
-d-appendix h3 {
-  grid-column: page-start / text-start;
-  font-size: 15px;
-  font-weight: 500;
-  margin-top: 1em;
-  margin-bottom: 0;
-  color: rgba(0,0,0,0.65);
-}
-
-d-appendix h3 + * {
-  margin-top: 1em;
-}
-
-d-appendix ol {
-  padding: 0 0 0 15px;
-}
-
-@media (min-width: 768px) {
-  d-appendix ol {
-    padding: 0 0 0 30px;
-    margin-left: -30px;
-  }
-}
-
-d-appendix li {
-  margin-bottom: 1em;
-}
-
-d-appendix a {
-  color: rgba(0, 0, 0, 0.6);
-}
-
-d-appendix > * {
-  grid-column: text;
-}
-
-d-appendix > d-footnote-list,
-d-appendix > d-citation-list,
-d-appendix > distill-appendix {
-  grid-column: screen;
-}
-
-d-footnote-list {
-  contain: layout style;
-}
-
-d-footnote-list > * {
-  grid-column: text;
-}
-
-d-footnote-list a.footnote-backlink {
-  color: rgba(0,0,0,0.3);
-  padding-left: 0.5em;
-}
 
 ### Footnotes
 

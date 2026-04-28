@@ -1543,7 +1543,7 @@ DeepSeek-V3：B=4096、K=8、d=7168、BF16 → **每层 938 MiB / 单 micro-batc
 
 趋势：**专家数量增长两个数量级、专家粒度变细、激活率从 ~25% 降到 ~5.5%**。[drawio 第 15 页 ↓](#drawio-page-15)给出了完整的时间线图。
 
-📊 drawio 第 15 页 — 15 MoE 算法演进时间线drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 15 页 — 15 MoE 算法演进时间线
 
 ### 2.2 DeepSeek-V3 详细数字（贯穿全教程的"基准模型"）
 
@@ -1601,7 +1601,7 @@ attention   MLA (Multi-head Latent Attention)，KV ~70 KB/token
 
 [drawio 第 9 页 ↓](#drawio-page-9)给出了完整 dispatch / combine 数据流图。
 
-📊 drawio 第 9 页 — 09 EP MoE Dispatch Combinedrawio diagram (requires JavaScript / iframe)
+📊 drawio 第 9 页 — 09 EP MoE Dispatch Combine
 
 ### 2.4.1 深入：为什么 AllReduce 能"环形带宽摊薄"，而 AllToAll 不能（图解版）
 
@@ -2442,7 +2442,7 @@ MoE 网格 (同 64 GPU 上折叠)
 
 [drawio 第 10 页 ↓](#drawio-page-10)给出了 B200 单机 / 多机 / NVL72 三种拓扑下的并行布局对比。
 
-📊 drawio 第 10 页 — 10 B200 单机与多机拓扑drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 10 页 — 10 B200 单机与多机拓扑
 
 ### 3.5 读完本章你应该能
 
@@ -3382,7 +3382,7 @@ DeepEP / Pplx-kernels / SGLang DeepEPDispatcher / vLLM modular dispatcher / Mega
 
 [drawio 第 4 页 ↓](#drawio-page-4)给出了 Triton-distributed primitive ↔ 各通信库的映射表。
 
-📊 drawio 第 4 页 — 04 Primitive 后端映射drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 4 页 — 04 Primitive 后端映射
 
 ### 4.5 读完本章你应该能
 
@@ -3820,7 +3820,7 @@ NVL72 让 **EP=72 跨整个 rack** 变得可能——这就是 TensorRT-LLM Wide
 
 [drawio 第 14 页 ↓](#drawio-page-14)给出完整拓扑详图。摘要：
 
-📊 drawio 第 14 页 — 14 HGX B200 x8 硬件拓扑详图drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 14 页 — 14 HGX B200 x8 硬件拓扑详图
 - **CPU**：2× Intel Xeon 6767P (Granite Rapids)，64C/128T 每 socket，2.4/3.6 GHz
 - **内存**：~4 TiB DDR5（每 socket ~2 TiB）
 - **GPU**：8× B200，180 GB HBM3e，TDP 1000 W
@@ -5992,7 +5992,7 @@ EPLB 是 **运行时把 hot expert 跨 rank 重新放置 / 复制** 的机制。
 
 [drawio 第 16 页 ↓](#drawio-page-16)给出 EPLB 重排前后的 expert 负载柱状图对比。
 
-📊 drawio 第 16 页 — 16 EPLB hot-expert 重排drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 16 页 — 16 EPLB hot-expert 重排
 
 ### 8.2 为什么需要
 
@@ -6249,7 +6249,7 @@ Stage 3: 目标节点 receiver 通过 NVLink 散发给本地 expert owner
 
 [drawio 第 17 页 ↓](#drawio-page-17)给出 DeepEP normal 模式的两段时序图。
 
-📊 drawio 第 17 页 — 17 DeepEP normal/LL 时序drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 17 页 — 17 DeepEP normal/LL 时序
 
 ### 10.2 为什么需要：NVLink 带宽 vs RDMA 带宽不对称
 
@@ -6578,7 +6578,7 @@ Lab 5 演示这个 hook 模式。
 
 [drawio 第 21 页 ↓](#drawio-page-21)给出 TBO/DBO 时序图。
 
-📊 drawio 第 21 页 — 21 TBO/DBO Nsight 时间线drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 21 页 — 21 TBO/DBO Nsight 时间线
 
 ### 12.2 为什么需要：单 batch 的"通信黑洞"
 
@@ -6781,7 +6781,7 @@ fromtriton_dist.utilsimportnvshmem_create_tensor,nvshmem_free_tensor_syncclassEP
 
 中间通过 RDMA 把 KV cache 从 prefill 节点传到 decode 节点。[drawio 第 18 页 ↓](#drawio-page-18)给出完整数据流。
 
-📊 drawio 第 18 页 — 18 PD 分离 + EP 数据流drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 18 页 — 18 PD 分离 + EP 数据流
 
 ### 14.2 为什么需要：prefill / decode 的 SLO 冲突
 
@@ -6942,7 +6942,7 @@ KV transfer 复用 Mooncake / NIXL（不用自己造轮子）。
 
 把 GB200 NVL72 rack 的 **72 GPU 当作一个 NVLink coherent domain**，跑 EP=72。所有 GPU 之间任意 pair 都是 1.8 TB/s NVLink，跨 tray 仅多 ~150 ns 延迟。[drawio 第 19 页 ↓](#drawio-page-19)给出 NVL72 物理拓扑 + 数据流。
 
-📊 drawio 第 19 页 — 19 Wide-EP NVL72 rack-scaledrawio diagram (requires JavaScript / iframe)
+📊 drawio 第 19 页 — 19 Wide-EP NVL72 rack-scale
 
 ### 15.2 为什么需要：传统 EP 在 256 expert 下的两难
 
@@ -7183,7 +7183,7 @@ Hybrid-EP 是 NVIDIA 2026-03 博客提出的 EP kernel 设计范式。把一个 
 
 [drawio 第 22 页 ↓](#drawio-page-22)是 SM 内分工示意；本章把每个机制讲到 PTX 级 / 硬件级，让你能自己实现一遍。
 
-📊 drawio 第 22 页 — 22 Hybrid-EP 4 warp-groupdrawio diagram (requires JavaScript / iframe)
+📊 drawio 第 22 页 — 22 Hybrid-EP 4 warp-group
 
 ### 17.2 为什么需要：传统 EP kernel 的三大瓶颈
 
@@ -8123,7 +8123,7 @@ NCCL Device API 暴露 **4 类 transport 抽象**：
 
 [drawio 第 11 页 ↓](#drawio-page-11)给出 NCCL EP 接入路线（原路线 A/B/C 三条）。[drawio 第 20 页 ↓](#drawio-page-20)给出 Triton-distributed primitive ↔ NCCL Device API 的映射。
 
-📊 drawio 第 11 页 — 11 NCCL EP 接入路线drawio diagram (requires JavaScript / iframe)📊 drawio 第 20 页 — 20 Primitive ↔ 通信库 Mappingdrawio diagram (requires JavaScript / iframe)
+📊 drawio 第 11 页 — 11 NCCL EP 接入路线📊 drawio 第 20 页 — 20 Primitive ↔ 通信库 Mapping
 
 ### 20.2 为什么需要：NVSHMEM / DeepEP 路线的 3 个痛点
 
@@ -8551,7 +8551,7 @@ one-sided communication
 
 [drawio 第 2 页 ↓](#drawio-page-2)给出编程模型全景。
 
-📊 drawio 第 2 页 — 02 分布式编程模型drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 2 页 — 02 分布式编程模型
 
 ### 22.1 核心 primitive 6 件套
 
@@ -8600,7 +8600,7 @@ MLIR 对应 `include/TritonDistributed/Dialect/SIMT/IR/SIMTOps.td`。
 
 [drawio 第 3 页 ↓](#drawio-page-3)给出完整 pipeline。
 
-📊 drawio 第 3 页 — 03 编译器栈drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 3 页 — 03 编译器栈
 
 ### 23.1 Pipeline 总览
 
@@ -8713,7 +8713,7 @@ METAX / MACA 走 MXSHMEM，接口与 NVSHMEM 接近但部分能力需按 kernel 
 
 [drawio 第 5 页 ↓](#drawio-page-5)给出完整生命周期时序。
 
-📊 drawio 第 5 页 — 05 Runtime SHMEM 生命周期drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 5 页 — 05 Runtime SHMEM 生命周期
 
 ### 24.1 生命周期总图
 
@@ -9673,7 +9673,7 @@ importtorch# 1. 预热（必须，warmup 完成 autotune 和 lazy init）for_inr
 
 [drawio 第 13 页 ↓](#drawio-page-13)给出完整 debugging 决策树（复用）。
 
-📊 drawio 第 13 页 — 13 验证与调优drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 13 页 — 13 验证与调优
 
 ### 28.1 症状→根因查表
 
@@ -10433,7 +10433,7 @@ bashscripts/verify_hw_topology.sh
 
 所有图都用 viewer.diagrams.net 内嵌渲染，可缩放、可切页。
 
-📊 drawio 第 1 页 — 01 学习路径总览drawio diagram (requires JavaScript / iframe)📊 drawio 第 6 页 — 06 Overlapping Kernel 模式drawio diagram (requires JavaScript / iframe)📊 drawio 第 7 页 — 07 AllGather GEMM 教程drawio diagram (requires JavaScript / iframe)📊 drawio 第 8 页 — 08 GEMM ReduceScatter 教程drawio diagram (requires JavaScript / iframe)📊 drawio 第 12 页 — 12 MegaKernel AOT little_kerneldrawio diagram (requires JavaScript / iframe)📊 drawio 第 23 页 — 23 ConnectX-7 内部架构详解drawio diagram (requires JavaScript / iframe)📊 drawio 第 24 页 — 24 B200 GPU 内部架构详解drawio diagram (requires JavaScript / iframe)📊 drawio 第 25 页 — 25 NVSwitch5 内部架构详解drawio diagram (requires JavaScript / iframe)
+📊 drawio 第 1 页 — 01 学习路径总览📊 drawio 第 6 页 — 06 Overlapping Kernel 模式📊 drawio 第 7 页 — 07 AllGather GEMM 教程📊 drawio 第 8 页 — 08 GEMM ReduceScatter 教程📊 drawio 第 12 页 — 12 MegaKernel AOT little_kernel📊 drawio 第 23 页 — 23 ConnectX-7 内部架构详解📊 drawio 第 24 页 — 24 B200 GPU 内部架构详解📊 drawio 第 25 页 — 25 NVSwitch5 内部架构详解
 
 <p class="footnote" style="color:#55606b;font-size:.86em;font-family:ui-monospace,Menlo,monospace;margin-top:3em;padding-top:1em;border-top:1px dashed #d0d7de">source: Triton-distributed 仓库 (markdown 8800+ 行 + drawio 25 页) · generated by scripts/build_blog.py · 配套硬件实测 HGX B200 x8 (CPU Intel 6767P, NVLink5 144 链路, 8x ConnectX-7 400GbE RoCE)</p>
 
