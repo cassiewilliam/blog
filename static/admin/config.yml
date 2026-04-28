@@ -35,6 +35,26 @@ collections:
       - {label: "drawio 图表",      name: "drawio",  widget: "boolean", default: false}
       - {label: "正文 Body",        name: "body",    widget: "markdown"}
 
+  # 固定页面（关于、其它单页）—— 用 files 集合精确指向具体路径
+  - name: "pages"
+    label: "页面 · Pages"
+    files:
+      - name: "about"
+        label: "关于 · About"
+        file: "content/about/index.md"
+        media_folder: "/static/uploads"
+        public_folder: "/uploads"
+        fields:
+          - {label: "标题 Title",       name: "title",            widget: "string"}
+          - {label: "更新日期 Date",     name: "date",             widget: "datetime", required: false}
+          - {label: "草稿状态 Draft",    name: "draft",            widget: "boolean", default: false}
+          - {label: "隐藏 ToC",         name: "ShowToc",          widget: "boolean", default: false}
+          - {label: "隐藏面包屑",        name: "ShowBreadCrumbs",  widget: "boolean", default: false}
+          - {label: "隐藏 meta",        name: "hidemeta",         widget: "boolean", default: true}
+          - {label: "禁用分享按钮",      name: "disableShare",     widget: "boolean", default: true}
+          - {label: "关闭评论",          name: "comments",         widget: "boolean", default: false}
+          - {label: "正文 Body (Markdown)", name: "body",         widget: "markdown"}
+
   - name: "drafts"
     label: "草稿 · Drafts"
     folder: "content/drafts"
