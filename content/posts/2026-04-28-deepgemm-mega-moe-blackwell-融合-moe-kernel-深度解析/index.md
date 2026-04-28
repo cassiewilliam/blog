@@ -5,7 +5,6 @@ draft: false
 tags: ["mega-moe", "deepgemm", "blackwell", "gpu", "cuda", "deep-dive"]
 ---
 
-{{< rawhtml >}}
 <style>
 :root {
   --fg:#1f2328; --muted:#55606b; --bg:#ffffff; --bg-alt:#f6f8fa;
@@ -6168,4 +6167,3 @@ Variance across 3 reps: typically ≤ 0.05 µs with PDL + L2 persistence.
   }
 })();
 </script>
-{{< /rawhtml >}}

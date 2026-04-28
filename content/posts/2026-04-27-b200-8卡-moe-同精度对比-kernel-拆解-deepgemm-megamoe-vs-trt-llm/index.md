@@ -5,7 +5,6 @@ draft: false
 tags: ["B200", "MoE", "DeepGEMM", "MegaMoE", "TensorRT-LLM", "NVFP4", "FP8", "nsys", "DeepSeek", "Qwen"]
 ---
 
-{{< rawhtml >}}
 <style>
 .report { line-height: 1.7; }
 .report h2 { margin-top: 2.2em; font-size: 1.3em; font-weight: 600; letter-spacing: -0.01em; color: var(--primary); }
@@ -610,4 +609,3 @@ window.addEventListener('DOMContentLoaded', () => {
   chartKernel();
 });
 </script>
-{{< /rawhtml >}}

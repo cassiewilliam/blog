@@ -5,7 +5,6 @@ draft: false
 tags: ["deep-dive", "vllm", "sglang", "deepseek", "tool-calling", "agent", "llm-serving", "deepseek-v4", "llm", "async", "agent-runtime"]
 ---
 
-{{< rawhtml >}}
 <style>
 :root {
   --fg:#1f2328; --muted:#55606b; --bg:#ffffff; --bg-alt:#f6f8fa;
@@ -2764,4 +2763,3 @@ serving 端会用这个 id 做配对，错了直接 422</li>
 🤖 本文档由源码派生 · 图示为手绘 SVG · 最后更新 2026-04-25
 </p>
 </main>
-{{< /rawhtml >}}
