@@ -7,6 +7,7 @@ math: true
 drawio: true
 ShowToc: true
 TocOpen: true
+UseHugoToc: true
 ---
 
 ## 📖 Prologue · Agent 场景为何需要 tool calling，以及它牵涉到哪些代码层

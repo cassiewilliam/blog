@@ -7,6 +7,7 @@ math: true
 drawio: true
 ShowToc: true
 TocOpen: true
+UseHugoToc: true
 ---
 
 ## 📖 Prologue · 背景知识与符号定义

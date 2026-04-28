@@ -7,6 +7,7 @@ math: true
 drawio: true
 ShowToc: true
 TocOpen: true
+UseHugoToc: true
 ---
 
 > **TL;DR** · B200 8 卡 EP=8。**同精度**（W=NVFP4 + A=FP8）下：DeepGEMM MegaMoE 比 TRT-LLM 1.3.0rc9 W4A8MXFP4-FP8 快 **2.52×** @ DSV4 BS=8192。后面有 nsys kernel breakdown 解释这 4.7 ms 差距来自哪里。

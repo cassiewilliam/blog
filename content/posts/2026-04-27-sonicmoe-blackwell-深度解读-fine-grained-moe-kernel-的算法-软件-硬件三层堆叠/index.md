@@ -7,6 +7,7 @@ math: true
 drawio: true
 ShowToc: true
 TocOpen: true
+UseHugoToc: true
 ---
 
  Dao AI Lab Toggle navigation

@@ -7,6 +7,7 @@ math: true
 drawio: true
 ShowToc: true
 TocOpen: true
+UseHugoToc: true
 ---
 
 vLLM · DeepEP LL · DeepGEMM Masked · CUDA GraphvLLM DeepEP × DeepGEMM Decode 深度解析源码：vllm-project/vllm · DeepGEMM：deepseek-ai/DeepGEMM · DeepEP：deepseek-ai/DeepEP · 场景：DP=4 / EP=4 / 2 Nodes × 2 GPUs / low-latency

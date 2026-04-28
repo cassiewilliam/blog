@@ -8,6 +8,7 @@ math: true
 drawio: true
 ShowToc: true
 TocOpen: true
+UseHugoToc: true
 ---
 
 > **TL;DR** · DeepSeek-V4 用 **CSA + HCA 混合注意力**、**mHC 残差**、**Muon 优化器** 三板斧把 1 M 上下文做到 V3.2 的 27% FLOPs / 10% KV cache。本文按论文章节顺序逐节解读，每节附蓝色 supplement 知识扩展，独立第 7 章拆 vLLM 推理实现（branch `aip/0.16.0`）。
