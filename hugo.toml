@@ -2,59 +2,45 @@ baseURL = "http://150.158.53.42/"
 languageCode = "zh-cn"
 defaultContentLanguage = "zh-cn"
 title = "Min Yang 的报告博客"
-theme = "PaperMod"
+theme = "hugo-book"
 enableRobotsTXT = true
 buildDrafts = false
 pygmentsUseClasses = true
 enableInlineShortcodes = true
 
+# Book theme content section — articles live under content/posts/.
 [params]
-  env = "production"
+  # Book section to display in the sidebar.
+  BookSection = "posts"
+  # Show table of contents on the right side.
+  BookToC = true
+  # Repo link for "Edit this page" button.
+  BookRepo = "https://github.com/cassiewilliam/blog"
+  BookEditPath = "edit/main/content"
+  # Date format on archive / list pages.
+  BookDateFormat = "2006-01-02"
+  # Comments / search.
+  BookComments = true
+  BookSearch = true
+  # Add a custom logo.
+  BookLogo = "/avatar.jpg"
+  # Optional menu entries beyond the section.
+  BookMenuBundle = "/menu"
+  # Site-wide author + description.
   description = "GPU / CUDA / LLM 系统优化 · 长上下文推理 · MoE 内核工程"
   author = "Min Yang"
-  defaultTheme = "auto"
-  ShowReadingTime = true
-  ShowShareButtons = false
-  ShowCodeCopyButtons = true
-  ShowPostNavLinks = true
-  ShowBreadCrumbs = true
-  ShowToc = true
-  TocOpen = false
-  DateFormat = "2006-01-02"
-  comments = true                       # show Giscus on posts
-  busuanzi = true                       # show 不蒜子 PV/UV counter site-wide
-  math = false                          # per-post can override via frontmatter math: true
-  drawio = false                        # per-post override
+  # Per-post math/drawio still gated on frontmatter (preserves edit-fig flow).
+  math = false
+  drawio = false
+  # 不蒜子 PV/UV counter site-wide.
+  busuanzi = true
 
-# 首页 profile 模式（左侧头像 + 简介 + 社交图标，比纯文章列表更像个人站）
-[params.profileMode]
-  enabled = true
-  title = "Min Yang"
-  subtitle = "GPU 内核工程 / LLM 推理系统 / 大模型基础设施"
-  imageUrl = "/avatar.jpg"
-  imageTitle = "avatar"
-  imageWidth = 140
-  imageHeight = 140
-  buttons = [
-    { name = "归档", url = "/archives/" },
-    { name = "标签", url = "/tags/" },
-    { name = "关于", url = "/about/" },
-  ]
+# drawio GitHub direct-edit (used by {{< fig >}} shortcode + /edit-fig/)
+[params.drawioRepo]
+  drawioGithubRepo = "cassiewilliam/blog"
+  drawioGithubBranch = "main"
 
-# 社交链接（在 profile 下方/页脚展示）
-[[params.socialIcons]]
-  name = "github"
-  url = "https://github.com/cassiewilliam"
-[[params.socialIcons]]
-  name = "rss"
-  url = "/index.xml"
-[[params.socialIcons]]
-  name = "email"
-  url = "mailto:cassiewilliam@example.com"   # ✏️ 改成你的邮箱
-
-# Giscus 评论配置 (params.giscus)
-# - 你需要先在 GitHub 仓库 Settings → Features 勾选 Discussions
-# - 然后到 https://giscus.app/ 配置一遍，把生成的 6 个值填进来
+# Giscus 评论配置 — extend_head.html partial reads these.
 [params.giscus]
   repo = "cassiewilliam/blog"
   repoID = "R_kgDOSOl71A"
@@ -68,36 +54,36 @@ enableInlineShortcodes = true
   lang = "zh-CN"
   loading = "lazy"
 
-# drawio GitHub direct-edit (used by {{< drawio >}} shortcode)
-drawioGithubRepo = "cassiewilliam/blog"
-drawioGithubBranch = "main"
-
-[params.homeInfoParams]
-  Title = "报告与笔记"
-  Content = "自动化生成的分析报告。"
-
-[[menu.main]]
-  identifier = "archives"
-  name = "归档"
-  url = "/archives/"
+# Top menu (icons + external links)
+[[menu.after]]
+  name = "GitHub"
+  url = "https://github.com/cassiewilliam"
   weight = 10
-
-[[menu.main]]
-  identifier = "tags"
-  name = "标签"
-  url = "/tags/"
+[[menu.after]]
+  name = "RSS"
+  url = "/index.xml"
   weight = 20
-
-[[menu.main]]
-  identifier = "about"
-  name = "关于"
+[[menu.after]]
+  name = "About"
   url = "/about/"
   weight = 30
+[[menu.after]]
+  name = "Admin"
+  url = "/admin/"
+  weight = 40
 
 [outputs]
   home = ["HTML", "RSS", "JSON"]
+  section = ["HTML", "RSS"]
 
 [markup]
   [markup.goldmark]
     [markup.goldmark.renderer]
       unsafe = true
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 4
+    ordered = false
+
+[taxonomies]
+  tag = "tags"
