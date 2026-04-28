@@ -26,16 +26,31 @@
     {{ $svg | safeHTML }}
   </div>
 
-  {{- if $editURL }}
+  {{- /* Build a github.dev URL for direct SVG-XML editing in VSCode web —
+         this is what gives real edit + save (drawio shows the SVG as a single
+         image cell, which can't be re-shaped as primitives).  */}}
+  {{- $svgGhDev := "" -}}
+  {{- with $src -}}
+    {{- $svgGhDev = printf "https://github.dev/%s/blob/%s/static%s" $repo $branch . -}}
+  {{- end -}}
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
-    <a href="{{ $editURL | safeURL }}" target="_blank" rel="noopener"
+    {{- with $svgGhDev }}
+    <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
+       title="在 github.dev (VSCode web) 中编辑 SVG XML，保存即提交"
        style="color:#0969da;text-decoration:none;border:1px solid #d0d7de;padding:3px 8px;border-radius:4px;background:#f6f8fa">
-       ✏️ Edit on diagrams.net
+       ✏️ Edit SVG · github.dev
     </a>
-    <a href="{{ $drawio | safeURL }}" target="_blank" rel="noopener"
-       style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">{{ $drawio }}</a>
+    {{- end }}
+    {{- if $editURL }}
+    <a href="{{ $editURL | safeURL }}" target="_blank" rel="noopener"
+       title="在 diagrams.net 查看 / 单图替换（不能编辑 SVG 内部元素）"
+       style="color:#57606a;text-decoration:none;margin-left:6px;border:1px solid #d0d7de;padding:3px 8px;border-radius:4px;background:#fff">
+       🖼 View in drawio
+    </a>
+    {{- end }}
+    <a href="{{ $src | safeURL }}" target="_blank" rel="noopener"
+       style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">{{ $src }}</a>
   </div>
-  {{- end }}
 
   {{- with $cap }}
   <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55">
