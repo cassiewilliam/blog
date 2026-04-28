@@ -64,7 +64,7 @@ V4 系列保留 Transformer + MTP 骨架，在 DeepSeek-V3 的基础上做三处
 
 <div class="en-trans">V4 retains Transformer + MTP and makes three key upgrades over V3: mHC, hybrid CSA/HCA, Muon. Figure 2 shows the overall architecture.</div>
 
-## 2.1. 继承自 V3 的设计 · Designs Inherited from DeepSeek-V3
+### 2.1. 继承自 V3 的设计 · Designs Inherited from DeepSeek-V3
 
 **MoE**：沿用 DeepSeekMoE（细粒度 routed + shared experts），把 affinity 激活从 `Sigmoid` 改成 `Sqrt(Softplus(\cdot ))`；仍用 auxiliary-loss-free 负载均衡 + 轻量 sequence-wise balance loss。V4 **移除了 target-node 数量上限**，并重新设计并行策略保住训练效率；**前 3 个 MoE 层**改用 **Hash routing**（按 token ID 哈希）。
 
@@ -89,7 +89,7 @@ V4 系列保留 Transformer + MTP 骨架，在 DeepSeek-V3 的基础上做三处
 - 效果：routing 更「纯净」（只看 affinity），load balance 更好，而训练吞吐不退。
 {{< /supp >}}
 
-## 2.2. Manifold-Constrained Hyper-Connections · Manifold-Constrained Hyper-Connections
+### 2.2. Manifold-Constrained Hyper-Connections · Manifold-Constrained Hyper-Connections
 
 **Hyper-Connection (HC)** 把残差流从 $R^{d}$ 扩到 $R^{n&#95;{h}c\times d}$，更新方式是 $X&#95;{l+1} = B&#95;{l} X&#95;{l} + C&#95;{l} F&#95;{l}(A&#95;{l} X&#95;{l})$，只增加很小的参数量。但深层堆叠时 $B&#95;l$ 的谱范数无约束会让信号指数放大；DeepSeek 内部 27 B 实验观察到约 **3000× 放大 + step 12 k 处 loss spike**。
 
@@ -108,7 +108,7 @@ mHC 把 $B&#95;l$ 约束到 **Birkhoff 多面体**（双随机矩阵流形），
 - 效果：BBH 43.8 → 51.0（baseline → mHC），同时让 > 1 T 参数级训练收敛到 > 12 k 步不再 spike。
 {{< /supp >}}
 
-## 2.3. CSA 与 HCA 混合注意力 · Hybrid Attention with CSA and HCA
+### 2.3. CSA 与 HCA 混合注意力 · Hybrid Attention with CSA and HCA
 
 1 M 上下文下 attention 是主要瓶颈。V4 设计了两种互补的压缩注意力，**层间交替**：CSA 做「压缩 + 稀疏选择」，HCA 做「更强压缩 + 稠密」。
 
@@ -116,7 +116,7 @@ mHC 把 $B&#95;l$ 约束到 **Birkhoff 多面体**（双随机矩阵流形），
 
 {{< fig src="/figures/v4/F34.svg" drawio="/drawio/v4/figures/F34.drawio" label="F34" caption="层交替模式：Flash 前 2 层纯 SWA、Pro 前 2 层 HCA；之后 CSA↔HCA 交替，每层带 128 token SWA 分支。 Layer interleave pattern — Flash starts with 2 pure SWA layers, Pro with 2 HCA layers; the rest alternate CSA ↔ HCA with a 128-token SWA branch on every layer." >}}
 
-## 2.3.1. Compressed Sparse Attention · Compressed Sparse Attention
+#### 2.3.1. Compressed Sparse Attention · Compressed Sparse Attention
 
 CSA 第一步 **token-level compressor**：产生两路 KV $C&#95;{a}, C&#95;{b} \in R^{n\times c}$ 和对应的 softmax 权重 $Z&#95;a, Z&#95;b$；每 m 个位置按行 softmax 归一化、Hadamard 加权求和得到 $C&#95;{i}^{C}omp$。$C&#95;a$ 与邻块的 $C&#95;b$ 索引 **有重叠**，让块边界信息不丢。序列长度压到 `1/m`。
 
@@ -138,7 +138,7 @@ CSA 第一步 **token-level compressor**：产生两路 KV $C&#95;{a}, C&#95;{b}
 - 代价是：同一个 block 内的 m 个 token 会被当作一个单位读/忽略。为补偿这种粗粒度，V4 保留了 128-token sliding window 分支做局部精读。
 {{< /supp >}}
 
-## 2.3.2. Heavily Compressed Attention · Heavily Compressed Attention
+#### 2.3.2. Heavily Compressed Attention · Heavily Compressed Attention
 
 HCA 的 compressor 结构与 CSA 类似，但 **不重叠、压缩率更大**：`m' = 128`。每 128 个 token 压成一个 entry，随后做 **dense attention**（不用 lightning indexer），仍然走 shared-KV MQA + grouped output 的壳。也加 128-token sliding window 作为局部补充。
 
@@ -153,7 +153,7 @@ HCA 的 compressor 结构与 CSA 类似，但 **不重叠、压缩率更大**：
 - HCA **没有用 indexer**：理由见论文——压缩到 7.8 K entries 时 dense 的代价已可承受；再加 top-k 只会在已经「过度汇总」的表示上做选择，收益递减。
 {{< /supp >}}
 
-## 2.3.3. 其它细节：Q/K RMSNorm、Partial RoPE、SWA、Attention Sink · Other Details: Q/K RMSNorm, Partial RoPE, SWA, Attention Sink
+#### 2.3.3. 其它细节：Q/K RMSNorm、Partial RoPE、SWA、Attention Sink · Other Details: Q/K RMSNorm, Partial RoPE, SWA, Attention Sink
 
 **QK RMSNorm**：在核心 attention 前，对每个 query head 和单一 KV entry head 做 RMSNorm，抑制 attention logits 爆炸，稳定训练。
 
@@ -175,7 +175,7 @@ HCA 的 compressor 结构与 CSA 类似，但 **不重叠、压缩率更大**：
 在共享 K=V 的 MQA 下，如果不反消，权重会跟 token 的绝对位置耦合——长序列（尤其 prefix reuse 跨任务时）同一个值向量会因为绝对位置不同而产生不同输出，**破坏 prefix KV cache 的可迁移性**。V4 把 RoPE 限制在最后 64 维 + 反消，保证压缩 KV 在磁盘上落盘后跨请求可复用——这是 §3.6.2 on-disk KV cache 成立的前提。
 {{< /supp >}}
 
-## 2.3.4. 效率讨论 · Efficiency Discussion
+#### 2.3.4. 效率讨论 · Efficiency Discussion
 
 存储：**KV 混合精度**——RoPE 维度走 BF16，其余走 FP8，KV cache 接近减半。lightning indexer 内部 attention 走 **FP4**，进一步省时。V4 取更小的 attention top-k（相对 V3.2），中短文本上效率更好。以 BF16 GQA-8 (head=128) 为基线，V4 系列 1 M 上下文 KV cache 约为基线的 **2%**。
 
@@ -187,7 +187,7 @@ HCA 的 compressor 结构与 CSA 类似，但 **不重叠、压缩率更大**：
 - vLLM 中 `DeepseekV4SWACache` 直接按这 584 B 打包，`block_{size}=64`，于是单 block 正好 **64 × 584 = 36 KB**，恰好整除 1 KB 小页，SSD 刷盘友好。
 {{< /supp >}}
 
-## 2.4. Muon 优化器 · Muon Optimizer
+### 2.4. Muon 优化器 · Muon Optimizer
 
 V4 对主体参数用 **Muon**，只有 embedding、预测头、RMSNorm weight、mHC 静态偏置继续用 AdamW。核心差异在于 **Nesterov + hybrid Newton-Schulz 正交化 + RMS 重标定**：前 8 步系数 (3.4445, −4.7750, 2.0315) 快速把奇异值拉到 ≈1，后 2 步切 (2, −1.5, 0.5) 稳在 1。因为 V4 的 QK 前有 RMSNorm 抑制 logits 爆炸，所以 **不需要 QK-Clip**。
 
@@ -205,7 +205,7 @@ Newton-Schulz 本身是 **迭代自校正** 的多项式逼近——每步把 $M
 
 <div class="en-trans">V4 rewrites six infra pieces around the new architecture: a fused MoE mega-kernel, a DSL, a batch-invariant library, FP4 QAT, the training framework, and the inference framework.</div>
 
-## 3.1. 专家并行中的细粒度通信-计算重叠 · MegaMoE · Fine-Grained Communication-Computation Overlap in EP (MegaMoE)
+### 3.1. 专家并行中的细粒度通信-计算重叠 · MegaMoE · Fine-Grained Communication-Computation Overlap in EP (MegaMoE)
 
 作者观察：**MoE 单层内通信时间 < 计算时间**，只要把 Dispatch/L1/SwiGLU/L2/Combine 融进同一个流水，计算就始终是主瓶颈，通信可以藏进去。V4 的做法是把 experts 切成 waves，每 wave 是少量 experts；wave 间流水——当前 wave 算 L1/L2 时，下个 wave 在 Dispatch、上个 wave 在 Combine。
 
@@ -546,7 +546,7 @@ V_comm_new   = 3·h                                       (不变  ✓)
 
 <div class="en-trans">Putting the four observations on one thread: MegaMoE hides comm in compute → BW is no longer the real bottleneck (①) → tri-subsystem concurrency makes power the new ceiling (②) → pull wins now but push would win on future low-latency signaling (③) → SwiGLU caps d growth, so a cheaper activation pushes the threshold higher (④). It's a software-perspective spec sheet for next-gen MoE accelerators: less bandwidth, more power and signaling; meanwhile drop SwiGLU on the model side.</div>
 
-## 3.2. 用 TileLang 做灵活、高效的内核开发 · Flexible and Efficient Kernel Development with TileLang
+### 3.2. 用 TileLang 做灵活、高效的内核开发 · Flexible and Efficient Kernel Development with TileLang
 
 V4 用 **TileLang** DSL 压缩了数百个 PyTorch ATen 算子、替换成少量融合 kernel。三个亮点：(1) **Host Codegen** 把 Python 侧运行时检查下沉到生成的 host code，CPU 每次 kernel 调用的 validation 从数百 μs 降到 <1 μs；(2) **Z3 SMT solver 集成**，把 tensor 下标的整数表达式翻译成 QF_NIA 送给 Z3，支持 vectorization、barrier insertion、bound check 等高级 pass；(3) **bitwise reproducibility**：默认关掉 fast-math、与 NVCC 对齐降阶规则，允许用户通过 `T.annotate_layout` 锁定累加顺序。
 
@@ -558,7 +558,7 @@ V4 用 **TileLang** DSL 压缩了数百个 PyTorch ATen 算子、替换成少量
 大模型一旦出现 loss spike 或 gradient explosion，调试的第一步是「能否复现」。如果不同 batch 布局产生不同 bit-level 输出，你甚至无法区分「代码 bug」还是「数值抖动」。V4 坚持 batch-invariant + deterministic，是让 **SFT → RL rollout → 在线推理三个阶段的 logits 对齐**，同时让研究员可以按 bit 级别二分定位异常。
 {{< /supp >}}
 
-## 3.3. 高性能批不变与确定性内核库 · High-Performance Batch-Invariant and Deterministic Kernel Libraries
+### 3.3. 高性能批不变与确定性内核库 · High-Performance Batch-Invariant and Deterministic Kernel Libraries
 
 **批不变 (Batch-Invariant)**：任意 token 的输出与它在 batch 中的位置无关。要实现这点必须放弃 split-KV——那种把一条序列切给多 SM 再 atomicAdd 的做法打破了 float 加法的关联律。V4 **dual-kernel 方案**：kernel A 用单 SM 跑整条序列（主波），kernel B 用 cluster + distributed shared memory 处理尾部 partial wave，严格匹配 kernel A 的累加顺序；额外开销可忽略。
 
@@ -576,7 +576,7 @@ V4 用 **TileLang** DSL 压缩了数百个 PyTorch ATen 算子、替换成少量
 - **MoE 反向确定性**：梯度每次完全一致，loss spike 可二分；V4 实测把 12 k 步附近的问题从「偶发」转成「可复现 → 可定位」。
 {{< /supp >}}
 
-## 3.4. FP4 量化感知训练 · FP4 Quantization-Aware Training
+### 3.4. FP4 量化感知训练 · FP4 Quantization-Aware Training
 
 后训练阶段对两处使用 **MXFP4** QAT：(1) MoE expert 权重（显存大头）；(2) CSA lightning indexer 的 QK 路径（activations cache/load/matmul 全程 FP4）。此外把 $I&#95;{:, :}$ 从 FP32 再量化到 BF16，top-k selector 加速 2×，recall 保持 99.7%。
 
@@ -771,7 +771,7 @@ RHT 是一个 unitary 变换：把张量左乘随机 Hadamard 矩阵后，原本
 - [FP4 All the Way: Fully Quantized Training of LLMs (arxiv 2505.19115)](https://arxiv.org/html/2505.19115v2) — earlier FP4 FQT analysis on STE alternatives
 - DeepSeek-V4 §3.4 — explicit STE statement for V4 MXFP4 QAT path
 
-## 3.5. 训练框架 · Training Framework
+### 3.5. 训练框架 · Training Framework
 
 ### 3.5.1 Muon 的高效实现 · Efficient Implementation of Muon
 
@@ -808,7 +808,7 @@ mHC 把激活显存和流水通信都放大。V4 提供三层优化：(1) 训练
 - **SwiGLU clamping**：linear 分量 clamp 到 [−10, 10]，gate 分量上限 10。能直接消除 MoE outlier，基本不损性能。
 {{< /supp >}}
 
-## 3.6. 推理框架 · KV Cache + On-Disk Storage · Inference Framework · KV Cache + On-Disk Storage
+### 3.6. 推理框架 · KV Cache + On-Disk Storage · Inference Framework · KV Cache + On-Disk Storage
 
 ### 3.6.1 KV Cache 结构与管理 · KV Cache structure
 
@@ -972,7 +972,7 @@ MoE 激活参数对「world knowledge retention」的影响最大（pre-training
 
 {{< fig src="/figures/v4/F14.svg" drawio="/drawio/v4/figures/F14.drawio" label="F14" caption="DeepseekV4MultiHeadLatentAttentionWrapper.forward() 调用图 — 每条箭头带 shape 标注；custom op 内部见 F15/F16。 Wrapper.forward() call graph — every edge carries tensor shapes; the custom-op internals are detailed in F15/F16." >}}
 
-## 7.1. 源码地图 · Source Map
+### 7.1. 源码地图 · Source Map
 
 下表列出 vLLM `aip/0.16.0` 中与 DeepSeek-V4 相关的关键文件。整个推理路径是「模型类 → MLA attention wrapper → FlashMLA sparse backend / Indexer backend / SWA 元数据 → CUDA / TileLang kernels」。
 
@@ -986,7 +986,7 @@ MoE 激活参数对「world knowledge retention」的影响最大（pre-training
 - **compress_ratio = 128 (C128A / HCA)**：compressor 产生 1/128 KV、在 **metadata build** 阶段就预计算全部可见索引（无 indexer），之后 dense + SWA 一起喂进 FlashMLA。
 {{< /supp >}}
 
-## 7.2. Prefill 流水 · 从 hidden state 到 attention output · Prefill Flow — from hidden state to attention output
+### 7.2. Prefill 流水 · 从 hidden state 到 attention output · Prefill Flow — from hidden state to attention output
 
 入口 `DeepseekV4MLAAttention._{forward}_{prefill}()`（`deepseek_{v4}_{attention}.py:786-900`）。输入已按 **[decode | prefill]** 顺序重排，prefill 分片以 `PREFILL_{CHUNK}_{SIZE}=4` 请求为一批。十步流水（功能视角）见 F12，张量形状视角见 F15。
 
@@ -1052,7 +1052,7 @@ gather workspace 的大小是 `(PREFILL_{CHUNK}_{SIZE}, M, head_{dim})`，其中
 Q/KV LoRA 在主 stream 上跑 GEMM，compressor（`DeepseekCompressor`）在 aux CUDA stream 上同时做两路投影 $C&#95;a / C&#95;b$ 与 softmax 归一化。两条 stream 在 ④ 之前 event-sync。代价是 workspace 双倍，但把整个 prefill 的 L1/L2 GEMM 时间完全藏在 compressor 后面。
 {{< /supp >}}
 
-## 7.3. Decoding 流水 · 单 query 怎样吃下 1M 上下文 · Decoding Flow — how a single query consumes 1M context
+### 7.3. Decoding 流水 · 单 query 怎样吃下 1M 上下文 · Decoding Flow — how a single query consumes 1M context
 
 入口 `DeepseekV4MLAAttention._{forward}_{decode}()`（`deepseek_{v4}_{attention}.py:695-784`）。q shape $[num&#95;{decode}&#95;{tokens}, n&#95;h, head&#95;{dim}]$，speculative decoding 下 per-seq 可 > 1 token。功能流水见 F13，张量形状见 F16。
 
@@ -1127,7 +1127,7 @@ MTP 模块在主模型后接 `DeepSeekV4MultiTokenPredictorLayer`（`deepseek_v4
 FlashMLA 内部做 **log-sum-exp + 延迟 scale**：先 FP8 →  BF16 反量化 K，再用 BF16 的 partial sum / max 迭代；attention sink `z'` 以 FP32 额外加到分母的 exp 池中。这样 FP8 量化的误差不会进入 softmax 归一化的分母，避免 low-precision 下「sink 权重淹没信号」。
 {{< /supp >}}
 
-## 7.4. KV Cache / Indexer / MTP — 三条独立主线（含字节/shape 细节） · Three workstreams — KV Cache, Indexer, MTP (with byte / shape detail)
+### 7.4. KV Cache / Indexer / MTP — 三条独立主线（含字节/shape 细节） · Three workstreams — KV Cache, Indexer, MTP (with byte / shape detail)
 
 ### 7.4.1 KV Cache · 三类缓存与字节级布局
 
@@ -1165,7 +1165,7 @@ vLLM 的 block_table 是 $[req&#95;{idx}, logical&#95;{block}]\to physical&#95;{
 FlashMLA 的 tile_scheduler_metadata 由 kernel 内部 planner 分配（**PyTorch graph-aware allocator**），每种 layer type（swaonly/C4A/C128A）一份。同一 type 的所有层共享同一个指针：首层调用时 $have&#95;{initialized}=False$ 触发分配，后续层 $have&#95;{initialized}=True$ 只读。CUDA graph capture 把这三个指针记下来，replay 时地址完全一致——**这就是 1 M 上下文 decode 能稳定走 CG 的关键**。
 {{< /supp >}}
 
-## 7.5. 部署配方 · vLLM Recipes · Deployment Recipes · vLLM Recipes
+### 7.5. 部署配方 · vLLM Recipes · Deployment Recipes · vLLM Recipes
 
 <table><tr><th>硬件 · Hardware</th><th>策略 · Strategy</th><th>关键 flags · Key flags</th></tr><tr><td>B300 × 8</td><td>DP + EP</td><td><code>--data-parallel-size 8</code></td></tr><tr><td>H200 × 8</td><td>DP + EP</td><td><code>--data-parallel-size 8 --max-model-len 800000</code></td></tr><tr><td>GB200 NVL4 (2 trays, 8 GPU)</td><td>多节点 DP + EP</td><td><code>--data-parallel-size 8</code></td></tr></table>
 
