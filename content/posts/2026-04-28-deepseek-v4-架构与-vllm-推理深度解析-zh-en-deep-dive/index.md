@@ -1,13 +1,26 @@
 ---
-title: "DeepSeek-V4 架构与 vLLM 推理深度解析 (ZH/EN Deep Dive)"
-date: 2026-04-28T10:43:04+08:00
 draft: false
-summary: "DeepSeek-V4 论文 58 页章节级深度解读 + vLLM 推理实现：CSA / HCA 混合注意力、mHC 残差、MegaMoE、FP4 量化、KV cache 异构布局、Prefill / Decode 流程。中英对照 · 43 SVG。"
-tags: [deep-dive, deepseek-v4, vllm, csa, hca, mhc, mega-moe, fp4, kv-cache, long-context, sparse-attention, mla]
+summary: DeepSeek-V4 论文 58 页章节级深度解读 + vLLM 推理实现：CSA / HCA 混合注意力、mHC
+  残差、MegaMoE、FP4 量化、KV cache 异构布局、Prefill / Decode 流程。中英对照 · 43 SVG。
 math: true
 drawio: true
 ShowToc: true
+date: 2026-04-28T10:43:04+08:00
 TocOpen: false
+title: DeepSeek-V4 架构与推理深度解析 (论文补充与vLLM推理解析)
+tags:
+  - deep-dive
+  - deepseek-v4
+  - vllm
+  - csa
+  - hca
+  - mhc
+  - mega-moe
+  - fp4
+  - kv-cache
+  - long-context
+  - sparse-attention
+  - mla
 ---
 
 > **TL;DR** · DeepSeek-V4 用 **CSA + HCA 混合注意力**、**mHC 残差**、**Muon 优化器** 三板斧把 1 M 上下文做到 V3.2 的 27% FLOPs / 10% KV cache。本文按论文章节顺序逐节解读，每节附蓝色 supplement 知识扩展，独立第 7 章拆 vLLM 推理实现（branch `aip/0.16.0`）。
