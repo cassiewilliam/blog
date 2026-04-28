@@ -1,0 +1,34 @@
+<svg viewBox="0 0 1000 355" xmlns="http://www.w3.org/2000/svg"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>
+<text x="500" y="22" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#1f3a6f">DeepEP LL 通信 Buffer 分配（GPU 0，2 Nodes × 2 GPUs）</text>
+<g font-family="sans-serif" font-size="11">
+  <rect x="60"  y="60"  width="260" height="260" rx="6" fill="#eef3ff" stroke="#4a6fd3" stroke-width="2"/>
+  <text x="190" y="82" text-anchor="middle" font-weight="700" fill="#1f3a6f">GPU 0 本地显存</text>
+
+  <rect x="80" y="100" width="220" height="55" rx="4" fill="#fff" stroke="#4a6fd3"/>
+  <text x="190" y="124" text-anchor="middle" font-weight="700">NVLink Buffer</text>
+  <text x="190" y="142" text-anchor="middle" fill="#555">allow_nvlink_for_ll=True</text>
+
+  <rect x="80" y="170" width="220" height="55" rx="4" fill="#fff" stroke="#4a6fd3"/>
+  <text x="190" y="194" text-anchor="middle" font-weight="700">RDMA Buffer</text>
+  <text x="190" y="212" text-anchor="middle" fill="#555">get_low_latency_rdma_size_hint()</text>
+
+  <rect x="80" y="240" width="220" height="55" rx="4" fill="#fff" stroke="#4a6fd3"/>
+  <text x="190" y="264" text-anchor="middle" font-weight="700">Expert Staging</text>
+  <text x="190" y="282" text-anchor="middle" fill="#555">(2, max_m, hidden) · DBO dim0</text>
+
+  <!-- params -->
+  <rect x="400" y="60" width="540" height="280" rx="6" fill="#fffcf1" stroke="#d9b860"/>
+  <text x="670" y="82" text-anchor="middle" font-weight="700" fill="#7a4e00">关键启发式</text>
+  <g font-family="monospace" font-size="11.5" fill="#5a3f00">
+    <text x="420" y="110">num_nvl_bytes        = VLLM_DEEPEP_BUFFER_SIZE_MB &lt;&lt; 20   (≈ 1 GB)</text>
+    <text x="420" y="132">num_rdma_bytes       = get_low_latency_rdma_size_hint(max_tokens, H, ranks)</text>
+    <text x="420" y="154">num_qps_per_rank     = 64                    ← 固定多 QP，分摊 RDMA 延迟</text>
+    <text x="420" y="176">low_latency_mode     = True                  ← cooperative kernel</text>
+    <text x="420" y="198">allow_nvlink_for_ll  = True                  ← 同 Node 走 NVLink</text>
+    <text x="420" y="220">num_sms (comm)       = 0                     ← 不占算力 SM，全靠 RDMA HW</text>
+    <text x="420" y="242">max_m                = 256 (或其它 2 幂)     ← Masked 的 m 维</text>
+    <text x="420" y="264">staging dim0         = 2                     ← DBO micro-batch 双 buffer</text>
+  </g>
+  <text x="670" y="300" text-anchor="middle" fill="#7a4e00">★ LL 模式下 dispatch / combine 几乎不占用 SM，释放 SM 给 Expert Compute</text>
+</g>
+</svg>

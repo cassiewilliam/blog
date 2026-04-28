@@ -1,0 +1,63 @@
+<svg viewBox="0 0 1000 260" xmlns="http://www.w3.org/2000/svg">
+  <text x="500" y="22" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#1f3a6f">6-Stage Software Pipeline：TMA / UMMA / Epilogue 完全重叠</text>
+  <g font-family="monospace" font-size="10">
+    <!-- TMA-A row -->
+    <text x="20" y="62" fill="#b85450" font-weight="700">TMA-A  x/SFA</text>
+    <rect x="130" y="50" width="90" height="20" fill="#f8cecc" stroke="#b85450"/>
+    <rect x="220" y="50" width="90" height="20" fill="#f8cecc" stroke="#b85450"/>
+    <rect x="310" y="50" width="90" height="20" fill="#f8cecc" stroke="#b85450"/>
+    <rect x="400" y="50" width="90" height="20" fill="#f8cecc" stroke="#b85450"/>
+    <rect x="490" y="50" width="90" height="20" fill="#f8cecc" stroke="#b85450"/>
+    <rect x="580" y="50" width="90" height="20" fill="#f8cecc" stroke="#b85450"/>
+    <text x="175" y="64" text-anchor="middle" fill="#4a1515">K0</text>
+    <text x="265" y="64" text-anchor="middle" fill="#4a1515">K1</text>
+    <text x="355" y="64" text-anchor="middle" fill="#4a1515">K2</text>
+    <text x="445" y="64" text-anchor="middle" fill="#4a1515">K3</text>
+    <text x="535" y="64" text-anchor="middle" fill="#4a1515">K4</text>
+    <text x="625" y="64" text-anchor="middle" fill="#4a1515">K5</text>
+    <!-- TMA-B -->
+    <text x="20" y="94" fill="#d27d00" font-weight="700">TMA-B  W/SFB</text>
+    <rect x="130" y="82" width="90" height="20" fill="#fff2cc" stroke="#e0b300"/>
+    <rect x="220" y="82" width="90" height="20" fill="#fff2cc" stroke="#e0b300"/>
+    <rect x="310" y="82" width="90" height="20" fill="#fff2cc" stroke="#e0b300"/>
+    <rect x="400" y="82" width="90" height="20" fill="#fff2cc" stroke="#e0b300"/>
+    <rect x="490" y="82" width="90" height="20" fill="#fff2cc" stroke="#e0b300"/>
+    <rect x="580" y="82" width="90" height="20" fill="#fff2cc" stroke="#e0b300"/>
+    <!-- UMMA -->
+    <text x="20" y="126" fill="#1a3d1a" font-weight="700">UMMA  (tcgen05)</text>
+    <rect x="220" y="114" width="90" height="20" fill="#d5e8d4" stroke="#5fa55f"/>
+    <rect x="310" y="114" width="90" height="20" fill="#d5e8d4" stroke="#5fa55f"/>
+    <rect x="400" y="114" width="90" height="20" fill="#d5e8d4" stroke="#5fa55f"/>
+    <rect x="490" y="114" width="90" height="20" fill="#d5e8d4" stroke="#5fa55f"/>
+    <rect x="580" y="114" width="90" height="20" fill="#d5e8d4" stroke="#5fa55f"/>
+    <rect x="670" y="114" width="90" height="20" fill="#d5e8d4" stroke="#5fa55f"/>
+    <text x="265" y="128" text-anchor="middle">K0</text>
+    <text x="355" y="128" text-anchor="middle">K1</text>
+    <text x="445" y="128" text-anchor="middle">K2</text>
+    <text x="535" y="128" text-anchor="middle">K3</text>
+    <text x="625" y="128" text-anchor="middle">K4</text>
+    <text x="715" y="128" text-anchor="middle">K5</text>
+    <!-- TMEM / Epi (Linear1) -->
+    <text x="20" y="158" fill="#4a1a48" font-weight="700">Epi L1 SwiGLU</text>
+    <rect x="670" y="146" width="90" height="20" fill="#f8d4e8" stroke="#a33ea1"/>
+    <rect x="760" y="146" width="90" height="20" fill="#f8d4e8" stroke="#a33ea1"/>
+    <text x="715" y="160" text-anchor="middle" fill="#4a1a48">L1-blk0</text>
+    <text x="805" y="160" text-anchor="middle" fill="#4a1a48">L1-blk1</text>
+    <!-- Epi (Linear2 + NVLink) -->
+    <text x="20" y="190" fill="#1f3a6f" font-weight="700">Epi L2 + NVLink</text>
+    <rect x="760" y="178" width="90" height="20" fill="#e1f0ff" stroke="#4a6fd3"/>
+    <rect x="850" y="178" width="90" height="20" fill="#e1f0ff" stroke="#4a6fd3"/>
+    <text x="805" y="192" text-anchor="middle" fill="#1f3a6f">push→</text>
+    <text x="895" y="192" text-anchor="middle" fill="#1f3a6f">combine</text>
+  </g>
+
+  <!-- legend -->
+  <g font-family="sans-serif" font-size="10.5">
+    <text x="20" y="226" fill="#555">流水约束：UMMA(K<sub>i</sub>) 需要 TMA-A(K<sub>i</sub>) 与 TMA-B(K<sub>i</sub>) 完成 → stage 深度 ≥ 6 才能覆盖 TMA 延迟</text>
+    <text x="20" y="244" fill="#555">mbarrier 链：<tspan fill="#b85450" font-weight="700">full_barrier</tspan>(TMA→MMA)、<tspan fill="#1f5d1f" font-weight="700">tmem_full</tspan>(MMA→Epi)、<tspan fill="#4a6fd3" font-weight="700">empty_barrier</tspan>(Epi→TMA) 构成环</text>
+  </g>
+  <!-- time arrow -->
+  <line x1="130" y1="212" x2="940" y2="212" stroke="#888" stroke-width="1" marker-end="url(#arrp)"/>
+  <defs><marker id="arrp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#888"/></marker></defs>
+  <text x="945" y="216" font-size="10" fill="#888">time</text>
+</svg>

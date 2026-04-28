@@ -1,0 +1,42 @@
+<svg viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#4a6fd3"/>
+  </marker>
+  <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#b85450"/>
+  </marker>
+  <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#5fa55f"/>
+  </marker>
+  <marker id="arrO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#e0b300"/>
+  </marker>
+</defs>
+
+<rect x="20" y="20" width="940" height="42" rx="6" fill="#eef3ff" stroke="#4a6fd3"/>
+<text x="40" y="42" font-family="sans-serif" font-size="13" font-weight="700" fill="#1a2d55">客户端 messages（OpenAI JSON）</text>
+<text x="40" y="58" font-family="monospace" font-size="11" fill="#1a2d55">{role:"assistant", content:null, tool_calls:[{id, function:{name:"web_search", arguments:"{...}"}}]}</text>
+
+<line x1="490" y1="68" x2="490" y2="100" stroke="#4a6fd3" stroke-width="2" marker-end="url(#arr)"/>
+<text x="510" y="88" font-family="sans-serif" font-size="11" fill="#1a2d55">apply_chat_template 反向编码</text>
+
+<rect x="20" y="110" width="940" height="100" rx="6" fill="#fff5f0" stroke="#b85450"/>
+<text x="40" y="132" font-family="sans-serif" font-size="13" font-weight="700" fill="#4a1515">渲染回 DeepSeek V4 wire format（DSML）</text>
+<text x="40" y="150" font-family="monospace" font-size="11" fill="#4a1515">&lt;｜DSML｜tool_calls&gt;</text>
+<text x="40" y="166" font-family="monospace" font-size="11" fill="#4a1515">  &lt;｜DSML｜invoke name="web_search"&gt;</text>
+<text x="40" y="182" font-family="monospace" font-size="11" fill="#4a1515">    &lt;｜DSML｜parameter name="q" string="true"&gt;hi&lt;/｜DSML｜parameter&gt;</text>
+<text x="40" y="198" font-family="monospace" font-size="11" fill="#4a1515">  &lt;/｜DSML｜invoke&gt;</text>
+<text x="40" y="214" font-family="monospace" font-size="11" fill="#4a1515">&lt;/｜DSML｜tool_calls&gt;&lt;｜end▁of▁sentence｜&gt;</text>
+
+<rect x="20" y="230" width="940" height="100" rx="6" fill="#fafbfc" stroke="#d0d7de"/>
+<text x="40" y="252" font-family="sans-serif" font-size="13" font-weight="700" fill="#1f2328">关键代码：encode_arguments_to_dsml（V4）</text>
+<text x="40" y="270" font-family="monospace" font-size="11" fill="#1f2328">arguments = json.loads(tool_call["arguments"])      # 解 OpenAI 的 JSON string</text>
+<text x="40" y="286" font-family="monospace" font-size="11" fill="#1f2328">for k, v in arguments.items():                       # 每个键值</text>
+<text x="40" y="302" font-family="monospace" font-size="11" fill="#1f2328">  is_str = "true" if isinstance(v, str) else "false"  # 决定 string="true|false"</text>
+<text x="40" y="318" font-family="monospace" font-size="11" fill="#1f2328">  emit f'&lt;｜DSML｜parameter name="{k}" string="{is_str}"&gt;{value}&lt;/...&gt;'</text>
+
+<rect x="20" y="350" width="940" height="40" rx="6" fill="#fff8e7" stroke="#e0b300"/>
+<text x="490" y="375" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#5a3f00">两个易错点：(1) string 类型标注必须正确，否则模型把 number 当 string；(2) JSON 类型 → DSML 的 round-trip 必须无损，避免反复转码丢精度</text>
+
+</svg>

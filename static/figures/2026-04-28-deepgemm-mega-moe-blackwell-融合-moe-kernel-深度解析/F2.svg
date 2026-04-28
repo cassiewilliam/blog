@@ -1,0 +1,42 @@
+<svg viewBox="0 0 1000 260" xmlns="http://www.w3.org/2000/svg">
+  <text x="500" y="20" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#1f3a6f">Blackwell (SM100) 执行层级 —— Mega MoE 落子的五个粒度</text>
+  <g font-family="sans-serif" font-size="11.5">
+    <!-- Grid -->
+    <rect x="20"  y="40" width="175" height="170" rx="6" fill="#e1f0ff" stroke="#4a6fd3"/>
+    <text x="107" y="60" text-anchor="middle" font-weight="700" fill="#1f3a6f">Grid (148 SMs)</text>
+    <text x="107" y="80" text-anchor="middle" fill="#1f3a6f">persistent kernel</text>
+    <text x="107" y="96" text-anchor="middle" fill="#666" font-size="10.5">gridDim = ⌊148/2⌋ = 74 (2-CTA cluster)</text>
+    <!-- Cluster -->
+    <rect x="215" y="40" width="175" height="170" rx="6" fill="#d5e8d4" stroke="#5fa55f"/>
+    <text x="302" y="60" text-anchor="middle" font-weight="700" fill="#1a3d1a">Cluster (2 CTAs)</text>
+    <text x="302" y="80" text-anchor="middle" fill="#1a3d1a">UMMA 2-SM broadcast</text>
+    <text x="302" y="96" text-anchor="middle" fill="#666" font-size="10.5">B 权重只传一份到两 CTA</text>
+    <text x="302" y="112" text-anchor="middle" fill="#666" font-size="10.5">共享 TMEM allocator</text>
+    <!-- CTA -->
+    <rect x="410" y="40" width="175" height="170" rx="6" fill="#fff2cc" stroke="#e0b300"/>
+    <text x="497" y="60" text-anchor="middle" font-weight="700" fill="#5a3f00">CTA (Block) 512 thread</text>
+    <text x="497" y="80" text-anchor="middle" fill="#5a3f00">228 KB SMEM</text>
+    <text x="497" y="96" text-anchor="middle" fill="#666" font-size="10.5">容纳 6-stage TMA pipeline</text>
+    <text x="497" y="112" text-anchor="middle" fill="#666" font-size="10.5">mbarrier / TMEM 在此 scope</text>
+    <!-- Warpgroup -->
+    <rect x="605" y="40" width="175" height="170" rx="6" fill="#ffe0b2" stroke="#d27d00"/>
+    <text x="692" y="60" text-anchor="middle" font-weight="700" fill="#6b3e00">Warpgroup (128 thr)</text>
+    <text x="692" y="80" text-anchor="middle" fill="#6b3e00">4 warps</text>
+    <text x="692" y="96" text-anchor="middle" fill="#666" font-size="10.5">epilogue 以 WG 为单位</text>
+    <text x="692" y="112" text-anchor="middle" fill="#666" font-size="10.5">WGMMA / UMMA issuer</text>
+    <!-- Warp/Thread -->
+    <rect x="800" y="40" width="175" height="170" rx="6" fill="#f8cecc" stroke="#b85450"/>
+    <text x="887" y="60" text-anchor="middle" font-weight="700" fill="#4a1515">Warp (32 thr) / Thread</text>
+    <text x="887" y="80" text-anchor="middle" fill="#4a1515">角色最细粒度</text>
+    <text x="887" y="96" text-anchor="middle" fill="#666" font-size="10.5">Dispatch / TMA / MMA / Epi</text>
+    <text x="887" y="112" text-anchor="middle" fill="#666" font-size="10.5">寄存器 dealloc/realloc</text>
+  </g>
+  <g stroke="#888" stroke-width="1.5" fill="none">
+    <line x1="195" y1="125" x2="214" y2="125" marker-end="url(#arrh)"/>
+    <line x1="390" y1="125" x2="409" y2="125" marker-end="url(#arrh)"/>
+    <line x1="585" y1="125" x2="604" y2="125" marker-end="url(#arrh)"/>
+    <line x1="780" y1="125" x2="799" y2="125" marker-end="url(#arrh)"/>
+  </g>
+  <defs><marker id="arrh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#888"/></marker></defs>
+  <text x="500" y="240" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#555">Mega MoE 同时在 <tspan font-weight="700" fill="#b85450">所有 5 个粒度</tspan> 上做文章：grid 持久驻留；cluster 做 UMMA multicast；CTA 内 warp specialization；warpgroup 做 epilogue；thread 级 TMEM / register 精细管理。</text>
+</svg>

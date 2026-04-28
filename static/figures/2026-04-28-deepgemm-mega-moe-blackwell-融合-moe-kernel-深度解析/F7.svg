@@ -1,0 +1,36 @@
+<svg viewBox="0 0 1000 260" xmlns="http://www.w3.org/2000/svg">
+  <text x="500" y="22" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#1f3a6f">2-CTA Cluster UMMA：B 权重 multicast，A 独立</text>
+  <defs>
+    <marker id="arrc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5fa55f"/></marker>
+  </defs>
+  <g font-family="sans-serif" font-size="11">
+    <!-- B in L2 -->
+    <rect x="380" y="50" width="240" height="44" rx="4" fill="#fff2cc" stroke="#e0b300"/>
+    <text x="500" y="70" text-anchor="middle" font-weight="700" fill="#5a3f00">L2 Cache：B (W) 权重一份</text>
+    <text x="500" y="86" text-anchor="middle" font-size="10.5" fill="#5a3f00">TMA multicast → 两个 CTA 同时收到</text>
+
+    <!-- Two CTAs -->
+    <rect x="60"  y="120" width="400" height="110" rx="6" fill="#e1f0ff" stroke="#4a6fd3"/>
+    <text x="260" y="140" text-anchor="middle" font-weight="700" font-size="13" fill="#1f3a6f">CTA 0 (leader)</text>
+    <g font-size="10.5" fill="#1f3a6f">
+      <text x="70" y="160">· SMEM: A₀ (独立 x 分片)</text>
+      <text x="70" y="176">· SMEM: B  (与 CTA1 共享的副本)</text>
+      <text x="70" y="192">· 发 <tspan font-family="monospace">tcgen05.mma</tspan> 指令</text>
+      <text x="70" y="208">· 累加器 → TMEM[0..N_tile]</text>
+    </g>
+    <rect x="540" y="120" width="400" height="110" rx="6" fill="#d5e8d4" stroke="#5fa55f"/>
+    <text x="740" y="140" text-anchor="middle" font-weight="700" font-size="13" fill="#1f5d1f">CTA 1 (follower)</text>
+    <g font-size="10.5" fill="#1f5d1f">
+      <text x="550" y="160">· SMEM: A₁ (独立 x 分片)</text>
+      <text x="550" y="176">· SMEM: B  (multicast 副本, 与 CTA0 同)</text>
+      <text x="550" y="192">· 不发 MMA，只等 TMEM 可读</text>
+      <text x="550" y="208">· 累加器 → TMEM[0..N_tile] (同列)</text>
+    </g>
+    <!-- arrows -->
+    <g stroke="#5fa55f" stroke-width="2" fill="none">
+      <path d="M 440 94 Q 350 110 260 120" marker-end="url(#arrc)"/>
+      <path d="M 560 94 Q 650 110 740 120" marker-end="url(#arrc)"/>
+    </g>
+  </g>
+  <text x="500" y="254" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#333">收益：<tspan font-weight="700" fill="#b85450">TMA-B 带宽减半</tspan> · TMEM allocator 合并成 <tspan font-family="monospace">Allocator2Sm</tspan> · UMMA 单次处理 2×UMMA_M 行</text>
+</svg>

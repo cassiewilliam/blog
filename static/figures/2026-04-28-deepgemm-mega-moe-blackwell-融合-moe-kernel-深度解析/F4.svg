@@ -1,0 +1,44 @@
+<svg viewBox="0 0 1000 260" xmlns="http://www.w3.org/2000/svg">
+  <text x="500" y="22" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#1f3a6f">Tensor Core 演进：MMA → WGMMA (Hopper) → UMMA (Blackwell)</text>
+  <g font-family="sans-serif" font-size="11">
+    <!-- MMA -->
+    <rect x="30"  y="50" width="290" height="170" rx="6" fill="#fde2e4" stroke="#b85450"/>
+    <text x="175" y="72" text-anchor="middle" font-weight="700" font-size="13" fill="#4a1515">MMA (Volta/Ampere)</text>
+    <text x="175" y="92" text-anchor="middle" fill="#4a1515">warp-level · 32 thread</text>
+    <g fill="#555" font-size="10.5">
+      <text x="40" y="116">累加器：register (每 thread 持 1/32)</text>
+      <text x="40" y="134">操作数：register，需 ldmatrix 装载</text>
+      <text x="40" y="152">同步：naturally warp-sync</text>
+      <text x="40" y="170">痛点：寄存器压力大；占用发射</text>
+      <text x="40" y="188">      槽位；数据通路耗 SM 时钟</text>
+    </g>
+    <!-- WGMMA -->
+    <rect x="340" y="50" width="290" height="170" rx="6" fill="#fff2cc" stroke="#e0b300"/>
+    <text x="485" y="72" text-anchor="middle" font-weight="700" font-size="13" fill="#5a3f00">WGMMA (Hopper SM90)</text>
+    <text x="485" y="92" text-anchor="middle" fill="#5a3f00">warpgroup-level · 128 thread</text>
+    <g fill="#555" font-size="10.5">
+      <text x="350" y="116">累加器：register (仍然)</text>
+      <text x="350" y="134">操作数：SMEM (descriptor)</text>
+      <text x="350" y="152">异步：发 commit → wait group</text>
+      <text x="350" y="170">优点：TMA 直推 SMEM；MMA 流水重叠</text>
+      <text x="350" y="188">痛点：累加器 still in reg，FP32 占 1/4 reg</text>
+    </g>
+    <!-- UMMA -->
+    <rect x="650" y="50" width="320" height="170" rx="6" fill="#d5e8d4" stroke="#5fa55f"/>
+    <text x="810" y="72" text-anchor="middle" font-weight="700" font-size="13" fill="#1a3d1a">UMMA (Blackwell SM100)</text>
+    <text x="810" y="92" text-anchor="middle" fill="#1a3d1a">tcgen05.mma · 1-CTA or 2-CTA cluster</text>
+    <g fill="#1a3d1a" font-size="10.5">
+      <text x="660" y="116">累加器：<tspan font-weight="700" fill="#0f3d0f">TMEM</tspan>（新增专用 SRAM）</text>
+      <text x="660" y="134">操作数：SMEM + descriptor</text>
+      <text x="660" y="152">2-CTA：B 共享（multicast），A 独立</text>
+      <text x="660" y="170">block-scaled：原生支持 UE8M0 SF</text>
+      <text x="660" y="188">优点：register 解放；UMMA_M=128 大 tile</text>
+      <text x="660" y="206">配套：UTCCP 做 SF → TMEM 快速通道</text>
+    </g>
+  </g>
+  <g stroke="#888" stroke-width="1.5" fill="none">
+    <path d="M 320 135 Q 330 135 340 135" marker-end="url(#arrt)"/>
+    <path d="M 630 135 Q 640 135 650 135" marker-end="url(#arrt)"/>
+  </g>
+  <defs><marker id="arrt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#888"/></marker></defs>
+</svg>

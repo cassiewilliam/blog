@@ -1,0 +1,76 @@
+<svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#4a6fd3"/>
+  </marker>
+  <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#b85450"/>
+  </marker>
+  <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#5fa55f"/>
+  </marker>
+  <marker id="arrO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#e0b300"/>
+  </marker>
+</defs>
+
+<rect x="20" y="30" width="120" height="34" rx="4" fill="#fff5f0" stroke="#b85450"/>
+<text x="80" y="52" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#4a1515">vLLM</text>
+
+<rect x="160" y="20" width="120" height="50" rx="4" fill="#fafbfc" stroke="#b85450"/>
+<text x="220" y="40" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#4a1515">收到 token #1</text>
+<text x="220" y="56" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a1515">_extract_delta=[]</text>
+
+<rect x="295" y="20" width="120" height="50" rx="4" fill="#fafbfc" stroke="#b85450"/>
+<text x="355" y="40" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#4a1515">收到 token #N</text>
+<text x="355" y="56" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a1515">_extract_delta=[]</text>
+
+<rect x="430" y="20" width="170" height="50" rx="4" fill="#fff5f0" stroke="#b85450"/>
+<text x="515" y="40" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#4a1515">看到 &lt;/invoke&gt;</text>
+<text x="515" y="56" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a1515">完整 invoke 一次性 emit</text>
+
+<line x1="280" y1="45" x2="295" y2="45" stroke="#b85450" stroke-width="1.5" stroke-dasharray="3,2"/>
+<line x1="415" y1="45" x2="430" y2="45" stroke="#b85450" stroke-width="2" marker-end="url(#arrR)"/>
+
+<rect x="615" y="20" width="155" height="50" rx="4" fill="#fff5f0" stroke="#b85450"/>
+<text x="692" y="40" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#4a1515">SSE: tool_calls=full</text>
+<text x="692" y="56" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a1515">name+arguments 一起到</text>
+
+<line x1="600" y1="45" x2="612" y2="45" stroke="#b85450" stroke-width="2" marker-end="url(#arrR)"/>
+
+<rect x="20" y="115" width="950" height="2" fill="#d0d7de"/>
+
+<rect x="20" y="145" width="120" height="34" rx="4" fill="#f4faf4" stroke="#5fa55f"/>
+<text x="80" y="167" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#1a3d1a">SGLang</text>
+
+<rect x="160" y="135" width="120" height="50" rx="4" fill="#fafbfc" stroke="#5fa55f"/>
+<text x="220" y="155" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1a3d1a">看到 invoke 名</text>
+<text x="220" y="171" text-anchor="middle" font-family="monospace" font-size="10" fill="#1a3d1a">emit name only</text>
+
+<rect x="295" y="135" width="160" height="50" rx="4" fill="#fafbfc" stroke="#5fa55f"/>
+<text x="375" y="155" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1a3d1a">收到 partial param value</text>
+<text x="375" y="171" text-anchor="middle" font-family="monospace" font-size="10" fill="#1a3d1a">_find_common_prefix→delta</text>
+
+<rect x="470" y="135" width="160" height="50" rx="4" fill="#fafbfc" stroke="#5fa55f"/>
+<text x="550" y="155" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1a3d1a">下一个 partial</text>
+<text x="550" y="171" text-anchor="middle" font-family="monospace" font-size="10" fill="#1a3d1a">emit args delta</text>
+
+<rect x="645" y="135" width="125" height="50" rx="4" fill="#f4faf4" stroke="#5fa55f"/>
+<text x="707" y="155" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#1a3d1a">看到 &lt;/invoke&gt;</text>
+<text x="707" y="171" text-anchor="middle" font-family="monospace" font-size="10" fill="#1a3d1a">finalize</text>
+
+<line x1="280" y1="160" x2="293" y2="160" stroke="#5fa55f" stroke-width="2" marker-end="url(#arrG)"/>
+<line x1="455" y1="160" x2="468" y2="160" stroke="#5fa55f" stroke-width="2" marker-end="url(#arrG)"/>
+<line x1="630" y1="160" x2="643" y2="160" stroke="#5fa55f" stroke-width="2" marker-end="url(#arrG)"/>
+
+<rect x="785" y="135" width="180" height="50" rx="4" fill="#f4faf4" stroke="#5fa55f"/>
+<text x="875" y="155" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="700" fill="#1a3d1a">SSE: 多帧 args 增量</text>
+<text x="875" y="171" text-anchor="middle" font-family="monospace" font-size="10" fill="#1a3d1a">name 先到，args 流式</text>
+
+<line x1="770" y1="160" x2="783" y2="160" stroke="#5fa55f" stroke-width="2" marker-end="url(#arrG)"/>
+
+<rect x="20" y="220" width="940" height="60" rx="6" fill="#fff8e7" stroke="#e0b300"/>
+<text x="490" y="245" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#5a3f00">权衡</text>
+<text x="490" y="265" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#5a3f00">vLLM = first-arg-byte 延迟 ≈ tool_call 总长度；SGLang = first-arg-byte 延迟 ≈ 1-2 token</text>
+
+</svg>

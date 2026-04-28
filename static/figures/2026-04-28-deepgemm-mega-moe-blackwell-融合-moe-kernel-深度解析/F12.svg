@@ -1,0 +1,35 @@
+<svg viewBox="0 0 1000 240" xmlns="http://www.w3.org/2000/svg">
+  <text x="500" y="22" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#1f3a6f">Output-Stationary 调度 · 同一个 pool_block 的 token 从 Linear1 到 Linear2 都在同一个 SM</text>
+  <g font-family="sans-serif" font-size="11">
+    <!-- SM0 -->
+    <rect x="30"  y="50" width="280" height="170" rx="6" fill="#d5e8d4" stroke="#5fa55f"/>
+    <text x="170" y="72" text-anchor="middle" font-weight="700" fill="#1f5d1f">SM 0 (pool_block 0)</text>
+    <g fill="#333" font-size="10.5">
+      <text x="38" y="96">Linear1：读 x[tk 0..63] · W₁</text>
+      <text x="38" y="114">→ TMEM[0..N] 累加</text>
+      <text x="38" y="132">L1 epi：SwiGLU → FP8 → SMEM + HBM</text>
+      <text x="38" y="152">Linear2：读 <tspan font-weight="700" fill="#0f3d0f">本地 SMEM</tspan> · W₂</text>
+      <text x="38" y="170">→ TMEM 第二段累加</text>
+      <text x="38" y="188">L2 epi：BF16 → 本地 SMEM</text>
+      <text x="38" y="206">Combine：NVLink 写回源 rank</text>
+    </g>
+    <!-- SM1 -->
+    <rect x="340" y="50" width="280" height="170" rx="6" fill="#e1f0ff" stroke="#4a6fd3"/>
+    <text x="480" y="72" text-anchor="middle" font-weight="700" fill="#1f3a6f">SM 1 (pool_block 1)</text>
+    <text x="480" y="96" text-anchor="middle" fill="#333">同样的 6 个阶段，独立 64 token</text>
+    <text x="480" y="116" text-anchor="middle" fill="#333">与 SM0 无任何跨 SM 依赖</text>
+
+    <!-- benefit -->
+    <rect x="650" y="50" width="330" height="170" rx="6" fill="#fff2cc" stroke="#e0b300"/>
+    <text x="815" y="72" text-anchor="middle" font-weight="700" fill="#5a3f00">对比 Split-K 方案</text>
+    <g fill="#333" font-size="10.5">
+      <text x="658" y="96">Split-K：每 token 的 Linear1 被多 SM 拆 K</text>
+      <text x="658" y="114">         必须跨 SM 规约 → atomicAdd 到 HBM</text>
+      <text x="658" y="132">         Linear2 要么再读 HBM，要么重划分</text>
+      <text x="658" y="156" font-weight="700" fill="#1f5d1f">Output-Stationary 优势</text>
+      <text x="658" y="174">· 无跨 SM 规约，只在 pool_block 内做 k-loop</text>
+      <text x="658" y="192">· L1 输出驻留 SMEM，L2 直接读</text>
+      <text x="658" y="210">· 天然适合小 token 数 (tk=32~96) 的 MoE</text>
+    </g>
+  </g>
+</svg>

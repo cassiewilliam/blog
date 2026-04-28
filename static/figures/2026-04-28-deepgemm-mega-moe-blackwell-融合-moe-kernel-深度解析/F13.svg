@@ -1,0 +1,34 @@
+<svg viewBox="0 0 1000 220" xmlns="http://www.w3.org/2000/svg">
+  <text x="500" y="22" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#1f3a6f">通信 / 计算 / 写回 三条流水线的重叠时间线 (粗略)</text>
+  <g font-family="monospace" font-size="10">
+    <!-- Dispatch -->
+    <text x="18" y="62" fill="#b85450" font-weight="700">Dispatch</text>
+    <rect x="100" y="50" width="200" height="22" fill="#f8cecc" stroke="#b85450"/>
+    <text x="200" y="65" text-anchor="middle" fill="#4a1515">count + pull tokens</text>
+    <rect x="300" y="50" width="30" height="22" fill="#fde2e4" stroke="#b85450"/>
+    <text x="315" y="65" text-anchor="middle" fill="#666" font-size="9">done</text>
+
+    <!-- Linear1 -->
+    <text x="18" y="98" fill="#5a3f00" font-weight="700">Linear1</text>
+    <rect x="150" y="86" width="400" height="22" fill="#fff2cc" stroke="#e0b300"/>
+    <text x="350" y="101" text-anchor="middle" fill="#5a3f00">UMMA k-loop × N_stages · 6-stage pipe</text>
+
+    <!-- L1 epilogue -->
+    <text x="18" y="134" fill="#a33ea1" font-weight="700">L1 epi</text>
+    <rect x="360" y="122" width="220" height="22" fill="#f8d4e8" stroke="#a33ea1"/>
+    <text x="470" y="137" text-anchor="middle" fill="#4a1a48">SwiGLU + FP8 quant + TMA store (HBM)</text>
+
+    <!-- Linear2 -->
+    <text x="18" y="170" fill="#1f5d1f" font-weight="700">Linear2</text>
+    <rect x="420" y="158" width="360" height="22" fill="#d5e8d4" stroke="#5fa55f"/>
+    <text x="600" y="173" text-anchor="middle" fill="#1f5d1f">UMMA k-loop · 从 SMEM 读 L1 输出</text>
+
+    <!-- Combine -->
+    <text x="18" y="206" fill="#1f3a6f" font-weight="700">Combine</text>
+    <rect x="620" y="194" width="200" height="22" fill="#e1f0ff" stroke="#4a6fd3"/>
+    <text x="720" y="209" text-anchor="middle" fill="#1f3a6f">NVLink push + weighted sum + Y write</text>
+    <rect x="820" y="194" width="40" height="22" fill="#d4e8ff" stroke="#4a6fd3"/>
+    <text x="840" y="209" text-anchor="middle" fill="#1f3a6f" font-size="9">done</text>
+  </g>
+  <text x="500" y="200" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#333">阴影重叠区 = 通信与 GEMM 同时在飞 → Mega MoE 的核心收益</text>
+</svg>

@@ -1,0 +1,80 @@
+<svg viewBox="0 0 1000 200" xmlns="http://www.w3.org/2000/svg"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>
+<text x="500" y="20" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#1f3a6f">Software Pipeline (kNumStages=6) — BLOCK_K=128, K=7168</text>
+<g font-family="sans-serif" font-size="10.5">
+  <!-- TMA warps row -->
+  <rect x="50" y="50" width="900" height="40" fill="#fff4e0" stroke="#e0b300"/>
+  <text x="25" y="74" text-anchor="middle" font-weight="700" fill="#7a4e00">TMA</text>
+  <g fill="#e0b300" opacity="0.75">
+    <rect x="60"  y="54" width="55" height="32"/>
+    <rect x="120" y="54" width="55" height="32"/>
+    <rect x="180" y="54" width="55" height="32"/>
+    <rect x="240" y="54" width="55" height="32"/>
+    <rect x="300" y="54" width="55" height="32"/>
+    <rect x="360" y="54" width="55" height="32"/>
+    <rect x="420" y="54" width="55" height="32" fill="#d9b860"/>
+    <rect x="480" y="54" width="55" height="32" fill="#d9b860"/>
+    <rect x="540" y="54" width="55" height="32" fill="#d9b860"/>
+    <rect x="600" y="54" width="55" height="32" fill="#d9b860"/>
+    <rect x="660" y="54" width="55" height="32" fill="#d9b860"/>
+  </g>
+  <g fill="#5a3f00">
+    <text x="87"  y="74" text-anchor="middle">k=0</text>
+    <text x="147" y="74" text-anchor="middle">k=1</text>
+    <text x="207" y="74" text-anchor="middle">k=2</text>
+    <text x="267" y="74" text-anchor="middle">k=3</text>
+    <text x="327" y="74" text-anchor="middle">k=4</text>
+    <text x="387" y="74" text-anchor="middle">k=5</text>
+    <text x="447" y="74" text-anchor="middle">k=6</text>
+    <text x="507" y="74" text-anchor="middle">k=7</text>
+    <text x="567" y="74" text-anchor="middle">k=8</text>
+    <text x="627" y="74" text-anchor="middle">k=9</text>
+    <text x="687" y="74" text-anchor="middle">...</text>
+  </g>
+
+  <!-- Math warps row -->
+  <rect x="50" y="110" width="900" height="40" fill="#f4faf4" stroke="#5fa55f"/>
+  <text x="25" y="134" text-anchor="middle" font-weight="700" fill="#1a3d1a">Math</text>
+  <g fill="#5fa55f" opacity="0.7">
+    <rect x="120" y="114" width="55" height="32"/>
+    <rect x="180" y="114" width="55" height="32"/>
+    <rect x="240" y="114" width="55" height="32"/>
+    <rect x="300" y="114" width="55" height="32"/>
+    <rect x="360" y="114" width="55" height="32"/>
+    <rect x="420" y="114" width="55" height="32"/>
+    <rect x="480" y="114" width="55" height="32"/>
+    <rect x="540" y="114" width="55" height="32"/>
+    <rect x="600" y="114" width="55" height="32"/>
+    <rect x="660" y="114" width="55" height="32"/>
+    <rect x="720" y="114" width="55" height="32"/>
+  </g>
+  <g fill="#0f3d0f">
+    <text x="147" y="134" text-anchor="middle">WG k=0</text>
+    <text x="207" y="134" text-anchor="middle">k=1</text>
+    <text x="267" y="134" text-anchor="middle">k=2</text>
+    <text x="327" y="134" text-anchor="middle">k=3</text>
+    <text x="387" y="134" text-anchor="middle">k=4</text>
+    <text x="447" y="134" text-anchor="middle">k=5</text>
+    <text x="507" y="134" text-anchor="middle">k=6</text>
+    <text x="567" y="134" text-anchor="middle">k=7</text>
+    <text x="627" y="134" text-anchor="middle">k=8</text>
+    <text x="687" y="134" text-anchor="middle">k=9</text>
+    <text x="747" y="134" text-anchor="middle">...</text>
+  </g>
+
+  <!-- stage buffer labels -->
+  <g fill="#666">
+    <text x="87"  y="45" text-anchor="middle">stage 0</text>
+    <text x="147" y="45" text-anchor="middle">1</text>
+    <text x="207" y="45" text-anchor="middle">2</text>
+    <text x="267" y="45" text-anchor="middle">3</text>
+    <text x="327" y="45" text-anchor="middle">4</text>
+    <text x="387" y="45" text-anchor="middle">5</text>
+    <text x="447" y="45" text-anchor="middle">0 (reuse)</text>
+    <text x="507" y="45" text-anchor="middle">1</text>
+    <text x="567" y="45" text-anchor="middle">2</text>
+    <text x="627" y="45" text-anchor="middle">3</text>
+    <text x="687" y="45" text-anchor="middle">4</text>
+  </g>
+</g>
+<text x="500" y="180" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#555">full barrier: TMA → Math，empty barrier: Math → TMA（kNumStages buffer 循环复用）</text>
+</svg>
