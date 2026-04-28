@@ -1,26 +1,13 @@
 ---
+title: "DeepSeek-V4 架构与 vLLM 推理深度解析 (ZH/EN Deep Dive)"
+date: 2026-04-28T10:43:04+08:00
 draft: false
-summary: DeepSeek-V4 论文 58 页章节级深度解读 + vLLM 推理实现：CSA / HCA 混合注意力、mHC
-  残差、MegaMoE、FP4 量化、KV cache 异构布局、Prefill / Decode 流程。中英对照 · 43 SVG。
+summary: "DeepSeek-V4 论文 58 页章节级深度解读 + vLLM 推理实现：CSA / HCA 混合注意力、mHC 残差、MegaMoE、FP4 量化、KV cache 异构布局、Prefill / Decode 流程。中英对照 · 43 SVG。"
+tags: [deep-dive, deepseek-v4, vllm, csa, hca, mhc, mega-moe, fp4, kv-cache, long-context, sparse-attention, mla]
 math: true
 drawio: true
 ShowToc: true
-date: 2026-04-28T10:43:04+08:00
 TocOpen: false
-title: DeepSeek-V4 架构与推理深度解析 (论文补充与vLLM推理解析)
-tags:
-  - deep-dive
-  - deepseek-v4
-  - vllm
-  - csa
-  - hca
-  - mhc
-  - mega-moe
-  - fp4
-  - kv-cache
-  - long-context
-  - sparse-attention
-  - mla
 ---
 
 > **TL;DR** · DeepSeek-V4 用 **CSA + HCA 混合注意力**、**mHC 残差**、**Muon 优化器** 三板斧把 1 M 上下文做到 V3.2 的 27% FLOPs / 10% KV cache。本文按论文章节顺序逐节解读，每节附蓝色 supplement 知识扩展，独立第 7 章拆 vLLM 推理实现（branch `aip/0.16.0`）。
@@ -237,7 +224,7 @@ MegaMoE 在 V4 的 vLLM 实现里是 **整个推理路径上唯一被 prefill / 
 
 {{< fig src="/figures/v4/F36.svg" drawio="/drawio/v4/figures/F36.drawio" label="F36" caption="MegaMoE 在 prefill / decode / MTP 三种 batch 来源下走同一条调用栈；wave 调度对 T 不敏感。 MegaMoE shares one call stack across prefill / decode / MTP batches; wave scheduling is T-agnostic." >}}
 
-**Prefill 路径下**：T 大（数千~数万），算术强度高，wave 内每个 expert 的 GEMM 接近 SM 满载，通信完全藏在计算之下，**实测 1.50–1.73×**。**Decode 路径下**：T 小（8~256），算术强度低，但 wave 调度仍能摊薄 dispatch / combine 的固定开销 —— 这正是论文实测 RL rollout 这种 small-batch long-tail 场景能拉到 **1.96×** 的原因（同样的特征：少量 expert 被命中、wave 数变少但仍流水）。**MTP speculative decode**：每步 T 翻倍（verify + draft），算术强度上升，wave overlap 更稳。
+**Prefill 路径下**：T 大（数千～数万），算术强度高，wave 内每个 expert 的 GEMM 接近 SM 满载，通信完全藏在计算之下，**实测 1.50–1.73×**。**Decode 路径下**：T 小（8～256），算术强度低，但 wave 调度仍能摊薄 dispatch / combine 的固定开销 —— 这正是论文实测 RL rollout 这种 small-batch long-tail 场景能拉到 **1.96×** 的原因（同样的特征：少量 expert 被命中、wave 数变少但仍流水）。**MTP speculative decode**：每步 T 翻倍（verify + draft），算术强度上升，wave overlap 更稳。
 
 <div class="en-trans">Prefill: T is large (thousands to tens of thousands), arithmetic intensity is high, wave-internal GEMMs nearly saturate SMs, comm is fully hidden — measured 1.50–1.73×. Decode: T is small (8–256), arithmetic intensity drops, but wave scheduling still amortizes dispatch/combine fixed costs — this is why RL rollout (small-batch long-tail) reaches 1.96× in the paper (same characteristic: few experts hit, fewer but still pipelined waves). MTP speculative decode doubles T per step (verify + draft), so arithmetic intensity rises and wave overlap tightens.</div>
 
