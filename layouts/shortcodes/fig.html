@@ -52,11 +52,17 @@
     {{- end }}
     {{- with $ghDev }}
     <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
-       title="github.dev (VSCode web) — 用 GitHub session cookie 鉴权，不走 OAuth；打开后右键文件 → Open With → Text Editor 切到 SVG 源码"
+       title="github.dev (VSCode web) — GitHub session cookie 鉴权不走 OAuth；右键文件 → Open With → Text Editor 切源码"
        style="color:#fff;background:#1f883d;text-decoration:none;border:1px solid #1f883d;padding:3px 10px;border-radius:4px;font-weight:600;margin-left:6px">
        📝 github.dev
     </a>
     {{- end }}
+    <a href="{{ printf "https://raw.githubusercontent.com/%s/%s/static%s" $repo $branch $src | safeURL }}"
+       download
+       title="下载 SVG 到本地，用 drawio Desktop 打开编辑（彻底绕过 OAuth）"
+       style="color:#57606a;text-decoration:none;border:1px solid #d0d7de;padding:3px 10px;border-radius:4px;background:#f6f8fa;margin-left:6px">
+       💾 Download
+    </a>
     <a href="{{ $src | safeURL }}" target="_blank" rel="noopener"
        style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">{{ $src }}</a>
   </div>
