@@ -1,102 +1,110 @@
-<svg font-family="system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif" viewbox="0 0 1100 540" xmlns="http://www.w3.org/2000/svg">
-<rect fill="#fff" height="540" width="1100"></rect>
-<text fill="#111827" font-size="16" font-weight="700" text-anchor="middle" x="550" y="26">Power Budget · 三类 workload 在 H100 700 W TDP 包络下的功耗分布</text>
-<text fill="#6b7280" font-size="11" text-anchor="middle" x="550" y="46">柱状图：每个子系统的瞬时功耗 (W) · 红线：TDP 包络 700 W · 数据为典型场景估算值</text>
+<svg width="100%" height="auto" viewBox="0 0 1100 540" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif">
+<rect width="1100" height="540" fill="#fff"/>
+<text x="550" y="26" font-size="16" font-weight="700" text-anchor="middle" fill="#111827">Power Budget · 三类 workload 在 H100 700 W TDP 包络下的功耗分布</text>
+<text x="550" y="46" font-size="11" text-anchor="middle" fill="#6b7280">柱状图：每个子系统的瞬时功耗 (W) · 红线：TDP 包络 700 W · 数据为典型场景估算值</text>
+
 <!-- Reference TDP line (drawn first, behind bars) -->
 <g transform="translate(60,90)">
-<!-- Bar chart area -->
-<rect fill="#fafbfc" height="320" stroke="#d0d7de" width="980" x="0" y="0"></rect>
-<!-- Y-axis -->
-<line stroke="#333" x1="60" x2="60" y1="20" y2="300"></line>
-<line stroke="#333" x1="60" x2="940" y1="300" y2="300"></line>
-<text fill="#555" font-size="10" text-anchor="end" x="50" y="304">0</text>
-<text fill="#555" font-size="10" text-anchor="end" x="50" y="240">200</text>
-<text fill="#555" font-size="10" text-anchor="end" x="50" y="180">400</text>
-<text fill="#555" font-size="10" text-anchor="end" x="50" y="120">600</text>
-<text fill="#555" font-size="10" text-anchor="end" x="50" y="60">800</text>
-<text fill="#555" font-size="11" transform="rotate(-90 20 160)" x="20" y="160">power (Watts)</text>
-<!-- TDP envelope line at 700 W -->
-<!-- y = 300 - (700/1000)*280 = 300-196 = 104 -->
-<line stroke="#b85450" stroke-dasharray="6 4" stroke-width="2" x1="60" x2="940" y1="104" y2="104"></line>
-<text fill="#b85450" font-size="11" font-weight="700" x="950" y="108">TDP 700 W</text>
-<!-- Workload 1: GEMM-only (e.g. dense LLM training without comm) -->
-<g transform="translate(110,0)">
-<!-- SM tensor core: 380 W → height = (380/1000)*280 = 106; y = 300-106 = 194 -->
-<rect fill="#b85450" height="106" stroke="#7a2f2b" width="50" x="0" y="194"></rect>
-<text fill="#7a2f2b" font-size="10" font-weight="700" text-anchor="middle" x="25" y="190">380 W</text>
-<!-- HBM: 110 W → h=31, y=269 -->
-<rect fill="#4a6fd3" height="31" stroke="#1a2d55" width="50" x="55" y="269"></rect>
-<text fill="#1a2d55" font-size="10" font-weight="700" text-anchor="middle" x="80" y="265">110 W</text>
-<!-- NVLink: 30 W → h=8.4, y=292 -->
-<rect fill="#5fa55f" height="8" stroke="#1a5c1a" width="50" x="110" y="292"></rect>
-<text fill="#1a5c1a" font-size="10" font-weight="700" text-anchor="middle" x="135" y="290">30 W</text>
-<!-- Misc: 80 W → h=22, y=278 -->
-<rect fill="#e0b300" height="22" stroke="#7a4e00" width="50" x="165" y="278"></rect>
-<text fill="#7a4e00" font-size="10" font-weight="700" text-anchor="middle" x="190" y="275">80 W</text>
-<!-- Total label -->
-<text fill="#333" font-size="11" font-weight="700" text-anchor="middle" x="107" y="318">Σ ≈ 600 W</text>
-<text fill="#1a3d1a" font-size="11" font-weight="600" text-anchor="middle" x="107" y="334">✓ 在 TDP 内 (86%)</text>
-<text fill="#666" font-size="10" text-anchor="middle" x="107" y="350">workload type</text>
-<text fill="#666" font-size="10" font-weight="700" text-anchor="middle" x="107" y="364">GEMM-only</text>
-<text fill="#666" font-size="9" text-anchor="middle" x="107" y="376">(dense LLM, 单卡训练)</text>
+  <!-- Bar chart area -->
+  <rect x="0" y="0" width="980" height="320" fill="#fafbfc" stroke="#d0d7de"/>
+
+  <!-- Y-axis -->
+  <line x1="60" y1="20" x2="60" y2="300" stroke="#333"/>
+  <line x1="60" y1="300" x2="940" y2="300" stroke="#333"/>
+  <text x="50" y="304" font-size="10" text-anchor="end" fill="#555">0</text>
+  <text x="50" y="240" font-size="10" text-anchor="end" fill="#555">200</text>
+  <text x="50" y="180" font-size="10" text-anchor="end" fill="#555">400</text>
+  <text x="50" y="120" font-size="10" text-anchor="end" fill="#555">600</text>
+  <text x="50" y="60"  font-size="10" text-anchor="end" fill="#555">800</text>
+  <text x="20" y="160" font-size="11" fill="#555" transform="rotate(-90 20 160)">power (Watts)</text>
+
+  <!-- TDP envelope line at 700 W -->
+  <!-- y = 300 - (700/1000)*280 = 300-196 = 104 -->
+  <line x1="60" y1="104" x2="940" y2="104" stroke="#b85450" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="950" y="108" font-size="11" font-weight="700" fill="#b85450">TDP 700 W</text>
+
+  <!-- Workload 1: GEMM-only (e.g. dense LLM training without comm) -->
+  <g transform="translate(110,0)">
+    <!-- SM tensor core: 380 W → height = (380/1000)*280 = 106; y = 300-106 = 194 -->
+    <rect x="0" y="194" width="50" height="106" fill="#b85450" stroke="#7a2f2b"/>
+    <text x="25" y="190" font-size="10" text-anchor="middle" fill="#7a2f2b" font-weight="700">380 W</text>
+    <!-- HBM: 110 W → h=31, y=269 -->
+    <rect x="55" y="269" width="50" height="31" fill="#4a6fd3" stroke="#1a2d55"/>
+    <text x="80" y="265" font-size="10" text-anchor="middle" fill="#1a2d55" font-weight="700">110 W</text>
+    <!-- NVLink: 30 W → h=8.4, y=292 -->
+    <rect x="110" y="292" width="50" height="8" fill="#5fa55f" stroke="#1a5c1a"/>
+    <text x="135" y="290" font-size="10" text-anchor="middle" fill="#1a5c1a" font-weight="700">30 W</text>
+    <!-- Misc: 80 W → h=22, y=278 -->
+    <rect x="165" y="278" width="50" height="22" fill="#e0b300" stroke="#7a4e00"/>
+    <text x="190" y="275" font-size="10" text-anchor="middle" fill="#7a4e00" font-weight="700">80 W</text>
+    <!-- Total label -->
+    <text x="107" y="318" font-size="11" font-weight="700" text-anchor="middle" fill="#333">Σ ≈ 600 W</text>
+    <text x="107" y="334" font-size="11" font-weight="600" text-anchor="middle" fill="#1a3d1a">✓ 在 TDP 内 (86%)</text>
+    <text x="107" y="350" font-size="10" text-anchor="middle" fill="#666">workload type</text>
+    <text x="107" y="364" font-size="10" text-anchor="middle" fill="#666" font-weight="700">GEMM-only</text>
+    <text x="107" y="376" font-size="9" text-anchor="middle" fill="#666">(dense LLM, 单卡训练)</text>
+  </g>
+
+  <!-- Workload 2: Collective-only (e.g. all-reduce-heavy phase) -->
+  <g transform="translate(390,0)">
+    <!-- SM: 80 W → h=22, y=278 -->
+    <rect x="0" y="278" width="50" height="22" fill="#b85450" stroke="#7a2f2b"/>
+    <text x="25" y="275" font-size="10" text-anchor="middle" fill="#7a2f2b" font-weight="700">80 W</text>
+    <!-- HBM: 60 W → h=17, y=283 -->
+    <rect x="55" y="283" width="50" height="17" fill="#4a6fd3" stroke="#1a2d55"/>
+    <text x="80" y="280" font-size="10" text-anchor="middle" fill="#1a2d55" font-weight="700">60 W</text>
+    <!-- NVLink: 95 W → h=27, y=273 -->
+    <rect x="110" y="273" width="50" height="27" fill="#5fa55f" stroke="#1a5c1a"/>
+    <text x="135" y="270" font-size="10" text-anchor="middle" fill="#1a5c1a" font-weight="700">95 W</text>
+    <!-- Misc: 60 W → h=17, y=283 -->
+    <rect x="165" y="283" width="50" height="17" fill="#e0b300" stroke="#7a4e00"/>
+    <text x="190" y="280" font-size="10" text-anchor="middle" fill="#7a4e00" font-weight="700">60 W</text>
+    <text x="107" y="318" font-size="11" font-weight="700" text-anchor="middle" fill="#333">Σ ≈ 295 W</text>
+    <text x="107" y="334" font-size="11" font-weight="600" text-anchor="middle" fill="#1a3d1a">✓ 远低于 TDP (42%)</text>
+    <text x="107" y="350" font-size="10" text-anchor="middle" fill="#666">workload type</text>
+    <text x="107" y="364" font-size="10" text-anchor="middle" fill="#666" font-weight="700">Collective-only</text>
+    <text x="107" y="376" font-size="9" text-anchor="middle" fill="#666">(all-reduce 阶段)</text>
+  </g>
+
+  <!-- Workload 3: MegaMoE (concurrent) -->
+  <g transform="translate(670,0)">
+    <!-- SM: 360 W → h=101, y=199 -->
+    <rect x="0" y="199" width="50" height="101" fill="#b85450" stroke="#7a2f2b"/>
+    <text x="25" y="195" font-size="10" text-anchor="middle" fill="#7a2f2b" font-weight="700">360 W</text>
+    <!-- HBM: 130 W → h=36, y=264 -->
+    <rect x="55" y="264" width="50" height="36" fill="#4a6fd3" stroke="#1a2d55"/>
+    <text x="80" y="261" font-size="10" text-anchor="middle" fill="#1a2d55" font-weight="700">130 W</text>
+    <!-- NVLink: 100 W → h=28, y=272 -->
+    <rect x="110" y="272" width="50" height="28" fill="#5fa55f" stroke="#1a5c1a"/>
+    <text x="135" y="269" font-size="10" text-anchor="middle" fill="#1a5c1a" font-weight="700">100 W</text>
+    <!-- Misc: 90 W → h=25, y=275 -->
+    <rect x="165" y="275" width="50" height="25" fill="#e0b300" stroke="#7a4e00"/>
+    <text x="190" y="272" font-size="10" text-anchor="middle" fill="#7a4e00" font-weight="700">90 W</text>
+    <!-- Stacked overlay showing total = 680 → near TDP -->
+    <text x="107" y="318" font-size="11" font-weight="700" text-anchor="middle" fill="#7a2f2b">Σ ≈ 680 W → 770 W</text>
+    <text x="107" y="334" font-size="11" font-weight="600" text-anchor="middle" fill="#7a2f2b">⚠ 触及 / 超过 TDP</text>
+    <text x="107" y="350" font-size="10" text-anchor="middle" fill="#666">workload type</text>
+    <text x="107" y="364" font-size="10" text-anchor="middle" fill="#666" font-weight="700">MegaMoE concurrent</text>
+    <text x="107" y="376" font-size="9" text-anchor="middle" fill="#666">(三子系统并发)</text>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(800,20)">
+    <rect x="0" y="0" width="14" height="14" fill="#b85450"/>
+    <text x="20" y="12" font-size="10.5" fill="#333">SM tensor core</text>
+    <rect x="0" y="22" width="14" height="14" fill="#4a6fd3"/>
+    <text x="20" y="34" font-size="10.5" fill="#333">HBM controller + DRAM</text>
+    <rect x="0" y="44" width="14" height="14" fill="#5fa55f"/>
+    <text x="20" y="56" font-size="10.5" fill="#333">NVLink + PHY</text>
+    <rect x="0" y="66" width="14" height="14" fill="#e0b300"/>
+    <text x="20" y="78" font-size="10.5" fill="#333">L2 / sched / misc</text>
+  </g>
 </g>
-<!-- Workload 2: Collective-only (e.g. all-reduce-heavy phase) -->
-<g transform="translate(390,0)">
-<!-- SM: 80 W → h=22, y=278 -->
-<rect fill="#b85450" height="22" stroke="#7a2f2b" width="50" x="0" y="278"></rect>
-<text fill="#7a2f2b" font-size="10" font-weight="700" text-anchor="middle" x="25" y="275">80 W</text>
-<!-- HBM: 60 W → h=17, y=283 -->
-<rect fill="#4a6fd3" height="17" stroke="#1a2d55" width="50" x="55" y="283"></rect>
-<text fill="#1a2d55" font-size="10" font-weight="700" text-anchor="middle" x="80" y="280">60 W</text>
-<!-- NVLink: 95 W → h=27, y=273 -->
-<rect fill="#5fa55f" height="27" stroke="#1a5c1a" width="50" x="110" y="273"></rect>
-<text fill="#1a5c1a" font-size="10" font-weight="700" text-anchor="middle" x="135" y="270">95 W</text>
-<!-- Misc: 60 W → h=17, y=283 -->
-<rect fill="#e0b300" height="17" stroke="#7a4e00" width="50" x="165" y="283"></rect>
-<text fill="#7a4e00" font-size="10" font-weight="700" text-anchor="middle" x="190" y="280">60 W</text>
-<text fill="#333" font-size="11" font-weight="700" text-anchor="middle" x="107" y="318">Σ ≈ 295 W</text>
-<text fill="#1a3d1a" font-size="11" font-weight="600" text-anchor="middle" x="107" y="334">✓ 远低于 TDP (42%)</text>
-<text fill="#666" font-size="10" text-anchor="middle" x="107" y="350">workload type</text>
-<text fill="#666" font-size="10" font-weight="700" text-anchor="middle" x="107" y="364">Collective-only</text>
-<text fill="#666" font-size="9" text-anchor="middle" x="107" y="376">(all-reduce 阶段)</text>
-</g>
-<!-- Workload 3: MegaMoE (concurrent) -->
-<g transform="translate(670,0)">
-<!-- SM: 360 W → h=101, y=199 -->
-<rect fill="#b85450" height="101" stroke="#7a2f2b" width="50" x="0" y="199"></rect>
-<text fill="#7a2f2b" font-size="10" font-weight="700" text-anchor="middle" x="25" y="195">360 W</text>
-<!-- HBM: 130 W → h=36, y=264 -->
-<rect fill="#4a6fd3" height="36" stroke="#1a2d55" width="50" x="55" y="264"></rect>
-<text fill="#1a2d55" font-size="10" font-weight="700" text-anchor="middle" x="80" y="261">130 W</text>
-<!-- NVLink: 100 W → h=28, y=272 -->
-<rect fill="#5fa55f" height="28" stroke="#1a5c1a" width="50" x="110" y="272"></rect>
-<text fill="#1a5c1a" font-size="10" font-weight="700" text-anchor="middle" x="135" y="269">100 W</text>
-<!-- Misc: 90 W → h=25, y=275 -->
-<rect fill="#e0b300" height="25" stroke="#7a4e00" width="50" x="165" y="275"></rect>
-<text fill="#7a4e00" font-size="10" font-weight="700" text-anchor="middle" x="190" y="272">90 W</text>
-<!-- Stacked overlay showing total = 680 → near TDP -->
-<text fill="#7a2f2b" font-size="11" font-weight="700" text-anchor="middle" x="107" y="318">Σ ≈ 680 W → 770 W</text>
-<text fill="#7a2f2b" font-size="11" font-weight="600" text-anchor="middle" x="107" y="334">⚠ 触及 / 超过 TDP</text>
-<text fill="#666" font-size="10" text-anchor="middle" x="107" y="350">workload type</text>
-<text fill="#666" font-size="10" font-weight="700" text-anchor="middle" x="107" y="364">MegaMoE concurrent</text>
-<text fill="#666" font-size="9" text-anchor="middle" x="107" y="376">(三子系统并发)</text>
-</g>
-<!-- Legend -->
-<g transform="translate(800,20)">
-<rect fill="#b85450" height="14" width="14" x="0" y="0"></rect>
-<text fill="#333" font-size="10.5" x="20" y="12">SM tensor core</text>
-<rect fill="#4a6fd3" height="14" width="14" x="0" y="22"></rect>
-<text fill="#333" font-size="10.5" x="20" y="34">HBM controller + DRAM</text>
-<rect fill="#5fa55f" height="14" width="14" x="0" y="44"></rect>
-<text fill="#333" font-size="10.5" x="20" y="56">NVLink + PHY</text>
-<rect fill="#e0b300" height="14" width="14" x="0" y="66"></rect>
-<text fill="#333" font-size="10.5" x="20" y="78">L2 / sched / misc</text>
-</g>
-</g>
+
 <!-- Annotation block -->
-<rect fill="#f9fafb" height="92" rx="8" stroke="#e5e7eb" width="980" x="60" y="430"></rect>
-<text fill="#333" font-size="11" x="80" y="450">• <b>GEMM-only</b>：tensor core 主导，NVLink 几乎不用 → 留 100 W 余量</text>
-<text fill="#333" font-size="11" x="80" y="468">• <b>Collective-only</b>：NVLink 高负载但 SM 闲置等数据 → 总功耗只占 TDP 的 42%（典型 GPU 利用率低的场景）</text>
-<text fill="#333" font-size="11" x="80" y="486">• <b>MegaMoE</b>：tensor core 因 wave 流水保持高负载、HBM 因 FP4 weight 流式加载、NVLink 因 dispatch/combine 重叠 — <b>三者同时跑到 80%+ 负载</b>，叠加 ≈ 770 W &gt; 700 W TDP → 触发 DVFS 降频 → 实测 throughput 比理论低 5-15%。</text>
-<text fill="#666" font-size="10" font-style="italic" x="80" y="510">注：上述功耗分配为典型估算值，具体数字依固件、ROP 路径、显存类型而异；GB200 700 W、B200 1000 W、B300 ~1100-1400 W 同理放大但比例近似。</text>
+<rect x="60" y="430" width="980" height="92" rx="8" fill="#f9fafb" stroke="#e5e7eb"/>
+<text x="80"  y="450" font-size="11" fill="#333">• <b>GEMM-only</b>：tensor core 主导，NVLink 几乎不用 → 留 100 W 余量</text>
+<text x="80"  y="468" font-size="11" fill="#333">• <b>Collective-only</b>：NVLink 高负载但 SM 闲置等数据 → 总功耗只占 TDP 的 42%（典型 GPU 利用率低的场景）</text>
+<text x="80"  y="486" font-size="11" fill="#333">• <b>MegaMoE</b>：tensor core 因 wave 流水保持高负载、HBM 因 FP4 weight 流式加载、NVLink 因 dispatch/combine 重叠 — <b>三者同时跑到 80%+ 负载</b>，叠加 ≈ 770 W &gt; 700 W TDP → 触发 DVFS 降频 → 实测 throughput 比理论低 5-15%。</text>
+<text x="80"  y="510" font-size="10" fill="#666" font-style="italic">注：上述功耗分配为典型估算值，具体数字依固件、ROP 路径、显存类型而异；GB200 700 W、B200 1000 W、B300 ~1100-1400 W 同理放大但比例近似。</text>
 </svg>

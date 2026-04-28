@@ -1,31 +1,33 @@
-<svg viewbox="0 0 1100 340" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="qi_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
-<rect fill="#fff" height="340" width="1100"></rect>
-<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">Quick Instruction · reuse KV cache for auxiliary tasks in chatbot</text>
+<svg width="100%" height="auto" viewBox="0 0 1100 340" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="qi_ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="1100" height="340" fill="#fff"/>
+<text x="550" y="24" font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle">Quick Instruction · reuse KV cache for auxiliary tasks in chatbot</text>
+
 <!-- Without -->
-<rect fill="#fff5f0" height="260" rx="4" stroke="#b85450" width="510" x="30" y="56"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="285" y="78">Conventional (separate small models)</text>
-<text font-family="monospace" font-size="11" x="45" y="102">1. user prompt arrives</text>
-<text font-family="monospace" font-size="11" x="45" y="120">2. small model A — intent classification (new prefill)</text>
-<text font-family="monospace" font-size="11" x="45" y="138">3. small model B — search query gen (new prefill)</text>
-<text font-family="monospace" font-size="11" x="45" y="156">4. small model C — authority / domain check (new prefill)</text>
-<text font-family="monospace" font-size="11" x="45" y="174">5. main V4 — final response (new prefill)</text>
-<text fill="#b85450" font-family="sans-serif" font-size="11" x="45" y="200">cost: 4 separate prefills, no cache sharing</text>
-<text fill="#b85450" font-family="sans-serif" font-size="11" x="45" y="218">+ maintenance of 3 auxiliary models</text>
-<text fill="#b85450" font-family="sans-serif" font-size="11" x="45" y="236">+ iteration cost as prompt distribution drifts</text>
-<text font-family="sans-serif" font-size="11" x="45" y="268">→ TTFT dominated by auxiliary-model prefills</text>
+<rect x="30" y="56" width="510" height="260" fill="#fff5f0" stroke="#b85450" rx="4"/>
+<text x="285" y="78" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">Conventional (separate small models)</text>
+<text x="45"  y="102" font-family="monospace" font-size="11">1. user prompt arrives</text>
+<text x="45"  y="120" font-family="monospace" font-size="11">2. small model A — intent classification (new prefill)</text>
+<text x="45"  y="138" font-family="monospace" font-size="11">3. small model B — search query gen (new prefill)</text>
+<text x="45"  y="156" font-family="monospace" font-size="11">4. small model C — authority / domain check (new prefill)</text>
+<text x="45"  y="174" font-family="monospace" font-size="11">5. main V4 — final response (new prefill)</text>
+<text x="45"  y="200" font-family="sans-serif" font-size="11" fill="#b85450">cost: 4 separate prefills, no cache sharing</text>
+<text x="45"  y="218" font-family="sans-serif" font-size="11" fill="#b85450">+ maintenance of 3 auxiliary models</text>
+<text x="45"  y="236" font-family="sans-serif" font-size="11" fill="#b85450">+ iteration cost as prompt distribution drifts</text>
+<text x="45"  y="268" font-family="sans-serif" font-size="11">→ TTFT dominated by auxiliary-model prefills</text>
+
 <!-- With -->
-<rect fill="#f4faf4" height="260" rx="4" stroke="#5fa55f" width="500" x="570" y="56"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="820" y="78">V4 Quick Instruction</text>
-<text font-family="monospace" font-size="11" x="585" y="102">1. user prompt + trailing special tokens</text>
-<text font-family="monospace" font-size="11" x="585" y="120">   &lt;|action|&gt; · &lt;|query|&gt; · &lt;|domain|&gt; · &lt;|authority|&gt;</text>
-<text font-family="monospace" font-size="11" x="585" y="138">2. V4 prefills once → KV cache populated</text>
-<text font-family="monospace" font-size="11" x="585" y="156">3. each special token emits its auxiliary output</text>
-<text font-family="monospace" font-size="11" x="585" y="174">   reusing the SAME KV cache, in PARALLEL</text>
-<text font-family="monospace" font-size="11" x="585" y="192">4. main response decoded last, same cache</text>
-<text fill="#1a3d1a" font-family="sans-serif" font-size="11" x="585" y="220">→ 1 prefill instead of 4</text>
-<text fill="#1a3d1a" font-family="sans-serif" font-size="11" x="585" y="238">→ no extra models to maintain</text>
-<text fill="#1a3d1a" font-family="sans-serif" font-size="11" x="585" y="256">→ TTFT cut to a small fraction</text>
-<text fill="#555" font-family="monospace" font-size="10.5" x="585" y="284">extra tokens: &lt;|title|&gt;, &lt;|extracted_url|&gt;, &lt;|read_url|&gt;</text>
-<text fill="#555" font-family="monospace" font-size="10.5" x="585" y="300">all share the same prefix KV</text>
+<rect x="570" y="56" width="500" height="260" fill="#f4faf4" stroke="#5fa55f" rx="4"/>
+<text x="820" y="78" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">V4 Quick Instruction</text>
+<text x="585" y="102" font-family="monospace" font-size="11">1. user prompt + trailing special tokens</text>
+<text x="585" y="120" font-family="monospace" font-size="11">   &lt;|action|&gt; · &lt;|query|&gt; · &lt;|domain|&gt; · &lt;|authority|&gt;</text>
+<text x="585" y="138" font-family="monospace" font-size="11">2. V4 prefills once → KV cache populated</text>
+<text x="585" y="156" font-family="monospace" font-size="11">3. each special token emits its auxiliary output</text>
+<text x="585" y="174" font-family="monospace" font-size="11">   reusing the SAME KV cache, in PARALLEL</text>
+<text x="585" y="192" font-family="monospace" font-size="11">4. main response decoded last, same cache</text>
+<text x="585" y="220" font-family="sans-serif" font-size="11" fill="#1a3d1a">→ 1 prefill instead of 4</text>
+<text x="585" y="238" font-family="sans-serif" font-size="11" fill="#1a3d1a">→ no extra models to maintain</text>
+<text x="585" y="256" font-family="sans-serif" font-size="11" fill="#1a3d1a">→ TTFT cut to a small fraction</text>
+<text x="585" y="284" font-family="monospace" font-size="10.5" fill="#555">extra tokens: &lt;|title|&gt;, &lt;|extracted_url|&gt;, &lt;|read_url|&gt;</text>
+<text x="585" y="300" font-family="monospace" font-size="10.5" fill="#555">all share the same prefix KV</text>
 </svg>

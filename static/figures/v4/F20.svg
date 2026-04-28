@@ -1,39 +1,45 @@
-<svg viewbox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="sd_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
-<rect fill="#fff" height="400" width="1100"></rect>
-<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">MTP speculative decode · batch-shape propagation (MTP depth = 1)</text>
+<svg width="100%" height="auto" viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="sd_ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="1100" height="400" fill="#fff"/>
+<text x="550" y="24" font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle">MTP speculative decode · batch-shape propagation (MTP depth = 1)</text>
+
 <!-- Step t: main decode -->
-<rect fill="#eef3ff" height="80" rx="4" stroke="#4a6fd3" width="320" x="30" y="56"></rect>
-<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="190" y="78">Step t  —  main decode</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="190" y="98">q_main  : [num_decodes, 128, 576]</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="190" y="114">logits  : [num_decodes, 129280]</text>
-<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="190" y="128">sample one token per req</text>
+<rect x="30" y="56" width="320" height="80" fill="#eef3ff" stroke="#4a6fd3" rx="4"/>
+<text x="190" y="78" font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle">Step t  —  main decode</text>
+<text x="190" y="98" font-family="monospace" font-size="10.5" text-anchor="middle">q_main  : [num_decodes, 128, 576]</text>
+<text x="190" y="114" font-family="monospace" font-size="10.5" text-anchor="middle">logits  : [num_decodes, 129280]</text>
+<text x="190" y="128" font-family="monospace" font-size="10" text-anchor="middle" fill="#555">sample one token per req</text>
+
 <!-- MTP draft -->
-<rect fill="#f9eef8" height="80" rx="4" stroke="#a33ea1" width="320" x="380" y="56"></rect>
-<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="540" y="78">MTP head  —  same step</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="540" y="98">hidden_last  : [num_decodes, 7168]</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="540" y="114">draft_logits : [num_decodes, 129280]</text>
-<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="540" y="128">produces +1 draft token / req</text>
+<rect x="380" y="56" width="320" height="80" fill="#f9eef8" stroke="#a33ea1" rx="4"/>
+<text x="540" y="78" font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle">MTP head  —  same step</text>
+<text x="540" y="98" font-family="monospace" font-size="10.5" text-anchor="middle">hidden_last  : [num_decodes, 7168]</text>
+<text x="540" y="114" font-family="monospace" font-size="10.5" text-anchor="middle">draft_logits : [num_decodes, 129280]</text>
+<text x="540" y="128" font-family="monospace" font-size="10" text-anchor="middle" fill="#555">produces +1 draft token / req</text>
+
 <!-- Merge into next step batch -->
-<rect fill="#fff4e0" height="80" rx="4" stroke="#e0b300" width="340" x="730" y="56"></rect>
-<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="900" y="78">Step t+1 batch (speculative)</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="900" y="98">num_decode_tokens = 2 · num_decodes</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="900" y="114">q : [num_decode_tokens, 128, 576]</text>
-<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="900" y="128">[verify_token_t, draft_token_{t+1}] × num_decodes</text>
-<line marker-end="url(#sd_ar)" stroke="#333" x1="350" x2="380" y1="96" y2="96"></line>
-<line marker-end="url(#sd_ar)" stroke="#333" x1="700" x2="730" y1="96" y2="96"></line>
+<rect x="730" y="56" width="340" height="80" fill="#fff4e0" stroke="#e0b300" rx="4"/>
+<text x="900" y="78" font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle">Step t+1 batch (speculative)</text>
+<text x="900" y="98" font-family="monospace" font-size="10.5" text-anchor="middle">num_decode_tokens = 2 · num_decodes</text>
+<text x="900" y="114" font-family="monospace" font-size="10.5" text-anchor="middle">q : [num_decode_tokens, 128, 576]</text>
+<text x="900" y="128" font-family="monospace" font-size="10" text-anchor="middle" fill="#555">[verify_token_t, draft_token_{t+1}] × num_decodes</text>
+
+<line x1="350" y1="96" x2="380" y2="96" stroke="#333" marker-end="url(#sd_ar)"/>
+<line x1="700" y1="96" x2="730" y2="96" stroke="#333" marker-end="url(#sd_ar)"/>
+
 <!-- Step t+1 -->
-<rect fill="#eef7ee" height="100" rx="4" stroke="#5fa55f" stroke-width="2" width="1040" x="30" y="162"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="550" y="184">Step t+1  —  single flash_mla_with_kvcache call handles verify + draft jointly</text>
-<text font-family="monospace" font-size="11" x="60" y="208">q                        : [num_decode_tokens, 1, 128, 576]   bf16</text>
-<text font-family="monospace" font-size="11" x="60" y="226">indices (SWA)            : [num_decode_tokens, 128]           int32</text>
-<text font-family="monospace" font-size="11" x="60" y="244">extra_indices_in_kvcache : [num_decode_tokens, 1, 1024]       int32  (indexer re-selects top-k per draft token)</text>
-<text fill="#1a3d1a" font-family="monospace" font-size="11" x="800" y="208">out : [num_decode_tokens, 1, 128, 576]</text>
-<text fill="#1a3d1a" font-family="monospace" font-size="11" x="800" y="226">tile_scheduler reused</text>
-<text fill="#1a3d1a" font-family="monospace" font-size="11" x="800" y="244">decode_threshold += 1</text>
-<rect fill="#fff5f0" height="90" rx="4" stroke="#b85450" width="1040" x="30" y="280"></rect>
-<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="550" y="302">Verification  —  sampler picks from verify logits; kept drafts promote to next-step main</text>
-<text font-family="monospace" font-size="11" x="60" y="326">accepted_mask : [num_decodes] bool    ·    accept if draft matches sampled verify token</text>
-<text font-family="monospace" font-size="11" x="60" y="344">throughput gain ≈ 1 + acceptance_rate (typical 0.4–0.7 for V4-Pro MTP depth=1)</text>
-<text fill="#555" font-family="monospace" font-size="11" x="60" y="362">MTP layer reuses the main tile_scheduler metadata → no extra kernel launches</text>
+<rect x="30" y="162" width="1040" height="100" fill="#eef7ee" stroke="#5fa55f" stroke-width="2" rx="4"/>
+<text x="550" y="184" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">Step t+1  —  single flash_mla_with_kvcache call handles verify + draft jointly</text>
+<text x="60"  y="208" font-family="monospace" font-size="11">q                        : [num_decode_tokens, 1, 128, 576]   bf16</text>
+<text x="60"  y="226" font-family="monospace" font-size="11">indices (SWA)            : [num_decode_tokens, 128]           int32</text>
+<text x="60"  y="244" font-family="monospace" font-size="11">extra_indices_in_kvcache : [num_decode_tokens, 1, 1024]       int32  (indexer re-selects top-k per draft token)</text>
+<text x="800" y="208" font-family="monospace" font-size="11" fill="#1a3d1a">out : [num_decode_tokens, 1, 128, 576]</text>
+<text x="800" y="226" font-family="monospace" font-size="11" fill="#1a3d1a">tile_scheduler reused</text>
+<text x="800" y="244" font-family="monospace" font-size="11" fill="#1a3d1a">decode_threshold += 1</text>
+
+<rect x="30" y="280" width="1040" height="90" fill="#fff5f0" stroke="#b85450" rx="4"/>
+<text x="550" y="302" font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle">Verification  —  sampler picks from verify logits; kept drafts promote to next-step main</text>
+<text x="60"  y="326" font-family="monospace" font-size="11">accepted_mask : [num_decodes] bool    ·    accept if draft matches sampled verify token</text>
+<text x="60"  y="344" font-family="monospace" font-size="11">throughput gain ≈ 1 + acceptance_rate (typical 0.4–0.7 for V4-Pro MTP depth=1)</text>
+<text x="60"  y="362" font-family="monospace" font-size="11" fill="#555">MTP layer reuses the main tile_scheduler metadata → no extra kernel launches</text>
 </svg>

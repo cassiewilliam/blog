@@ -1,46 +1,49 @@
-<svg viewbox="0 0 1100 360" xmlns="http://www.w3.org/2000/svg">
-<rect fill="#fff" height="360" width="1100"></rect>
-<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">Three Reasoning Modes · RL configuration, context, length penalty</text>
+<svg width="100%" height="auto" viewBox="0 0 1100 360" xmlns="http://www.w3.org/2000/svg">
+<rect width="1100" height="360" fill="#fff"/>
+<text x="550" y="24" font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle">Three Reasoning Modes · RL configuration, context, length penalty</text>
+
 <g transform="translate(30,60)">
-<rect fill="#eef3ff" height="280" rx="6" stroke="#4a6fd3" width="340" x="0" y="0"></rect>
-<text font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle" x="170" y="26">Non-think (fast)</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="48">context window · 8 K</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="66">length penalty · strong</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="94">fast, intuitive responses</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="112">habit / simple-rule reasoning</text>
-<text font-family="sans-serif" font-size="11" font-weight="600" text-anchor="middle" x="170" y="140">Response format:</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="158">&lt;/think&gt; summary</text>
-<text fill="#1a3a5c" font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="194">typical: daily tasks,</text>
-<text fill="#1a3a5c" font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="212">emergency reactions,</text>
-<text fill="#1a3a5c" font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="230">low-risk decisions</text>
-<text fill="#555" font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="258">bench avg ≈ 50–70%</text>
+  <rect x="0" y="0" width="340" height="280" fill="#eef3ff" stroke="#4a6fd3" rx="6"/>
+  <text x="170" y="26" font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle">Non-think (fast)</text>
+  <text x="170" y="48" font-family="monospace" font-size="10.5" text-anchor="middle">context window · 8 K</text>
+  <text x="170" y="66" font-family="monospace" font-size="10.5" text-anchor="middle">length penalty · strong</text>
+  <text x="170" y="94" font-family="sans-serif" font-size="11" text-anchor="middle">fast, intuitive responses</text>
+  <text x="170" y="112" font-family="sans-serif" font-size="11" text-anchor="middle">habit / simple-rule reasoning</text>
+  <text x="170" y="140" font-family="sans-serif" font-size="11" font-weight="600" text-anchor="middle">Response format:</text>
+  <text x="170" y="158" font-family="monospace" font-size="10.5" text-anchor="middle">&lt;/think&gt; summary</text>
+  <text x="170" y="194" font-family="sans-serif" font-size="11" fill="#1a3a5c" text-anchor="middle">typical: daily tasks,</text>
+  <text x="170" y="212" font-family="sans-serif" font-size="11" fill="#1a3a5c" text-anchor="middle">emergency reactions,</text>
+  <text x="170" y="230" font-family="sans-serif" font-size="11" fill="#1a3a5c" text-anchor="middle">low-risk decisions</text>
+  <text x="170" y="258" font-family="monospace" font-size="10.5" text-anchor="middle" fill="#555">bench avg ≈ 50–70%</text>
 </g>
+
 <g transform="translate(380,60)">
-<rect fill="#fff4e0" height="280" rx="6" stroke="#e0b300" width="340" x="0" y="0"></rect>
-<text font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle" x="170" y="26">Think High (conscious)</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="48">context window · 128 K</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="66">length penalty · medium</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="94">conscious logical analysis</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="112">slower but more accurate</text>
-<text font-family="sans-serif" font-size="11" font-weight="600" text-anchor="middle" x="170" y="140">Response format:</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="158">&lt;think&gt; …tokens… &lt;/think&gt;</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="176">summary</text>
-<text fill="#7a4e00" font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="210">typical: complex problems,</text>
-<text fill="#7a4e00" font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="228">planning, medium-risk</text>
-<text fill="#555" font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="258">HLE: 34.5 · Codeforces: 2919</text>
+  <rect x="0" y="0" width="340" height="280" fill="#fff4e0" stroke="#e0b300" rx="6"/>
+  <text x="170" y="26" font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle">Think High (conscious)</text>
+  <text x="170" y="48" font-family="monospace" font-size="10.5" text-anchor="middle">context window · 128 K</text>
+  <text x="170" y="66" font-family="monospace" font-size="10.5" text-anchor="middle">length penalty · medium</text>
+  <text x="170" y="94" font-family="sans-serif" font-size="11" text-anchor="middle">conscious logical analysis</text>
+  <text x="170" y="112" font-family="sans-serif" font-size="11" text-anchor="middle">slower but more accurate</text>
+  <text x="170" y="140" font-family="sans-serif" font-size="11" font-weight="600" text-anchor="middle">Response format:</text>
+  <text x="170" y="158" font-family="monospace" font-size="10.5" text-anchor="middle">&lt;think&gt; …tokens… &lt;/think&gt;</text>
+  <text x="170" y="176" font-family="monospace" font-size="10.5" text-anchor="middle">summary</text>
+  <text x="170" y="210" font-family="sans-serif" font-size="11" fill="#7a4e00" text-anchor="middle">typical: complex problems,</text>
+  <text x="170" y="228" font-family="sans-serif" font-size="11" fill="#7a4e00" text-anchor="middle">planning, medium-risk</text>
+  <text x="170" y="258" font-family="monospace" font-size="10.5" text-anchor="middle" fill="#555">HLE: 34.5 · Codeforces: 2919</text>
 </g>
+
 <g transform="translate(730,60)">
-<rect fill="#fff5f0" height="280" rx="6" stroke="#b85450" width="340" x="0" y="0"></rect>
-<text font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle" x="170" y="26">Think Max (full force)</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="48">context window · 384 K (vLLM ≥ 393216)</text>
-<text font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="66">length penalty · weakest</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="94">push reasoning to its limit</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="112">slow but powerful</text>
-<text font-family="sans-serif" font-size="11" font-weight="600" text-anchor="middle" x="170" y="140">System prompt prepended:</text>
-<text font-family="monospace" font-size="10" text-anchor="middle" x="170" y="158">“Reasoning Effort: Absolute maximum…”</text>
-<text font-family="monospace" font-size="10" text-anchor="middle" x="170" y="176">(forces exhaustive decomposition)</text>
-<text fill="#b85450" font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="210">typical: frontier reasoning,</text>
-<text fill="#b85450" font-family="sans-serif" font-size="11" text-anchor="middle" x="170" y="228">competition math, formal proofs</text>
-<text fill="#555" font-family="monospace" font-size="10.5" text-anchor="middle" x="170" y="258">HLE: 37.7 · Codeforces: 3206</text>
+  <rect x="0" y="0" width="340" height="280" fill="#fff5f0" stroke="#b85450" rx="6"/>
+  <text x="170" y="26" font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle">Think Max (full force)</text>
+  <text x="170" y="48" font-family="monospace" font-size="10.5" text-anchor="middle">context window · 384 K (vLLM ≥ 393216)</text>
+  <text x="170" y="66" font-family="monospace" font-size="10.5" text-anchor="middle">length penalty · weakest</text>
+  <text x="170" y="94" font-family="sans-serif" font-size="11" text-anchor="middle">push reasoning to its limit</text>
+  <text x="170" y="112" font-family="sans-serif" font-size="11" text-anchor="middle">slow but powerful</text>
+  <text x="170" y="140" font-family="sans-serif" font-size="11" font-weight="600" text-anchor="middle">System prompt prepended:</text>
+  <text x="170" y="158" font-family="monospace" font-size="10" text-anchor="middle">&ldquo;Reasoning Effort: Absolute maximum…&rdquo;</text>
+  <text x="170" y="176" font-family="monospace" font-size="10" text-anchor="middle">(forces exhaustive decomposition)</text>
+  <text x="170" y="210" font-family="sans-serif" font-size="11" fill="#b85450" text-anchor="middle">typical: frontier reasoning,</text>
+  <text x="170" y="228" font-family="sans-serif" font-size="11" fill="#b85450" text-anchor="middle">competition math, formal proofs</text>
+  <text x="170" y="258" font-family="monospace" font-size="10.5" text-anchor="middle" fill="#555">HLE: 37.7 · Codeforces: 3206</text>
 </g>
 </svg>

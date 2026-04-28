@@ -1,22 +1,22 @@
-<svg viewbox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="hca_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
-<rect fill="#fff" height="320" width="1000"></rect>
-<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="500" y="26">HCA · Heavily Compressed Attention  (paper Figure 4)</text>
-<text font-family="sans-serif" font-size="12" font-weight="600" x="30" y="70">Hidden states of 128 KV tokens</text>
-<g transform="translate(30,80)"><rect fill="#eef3ff" height="28" stroke="#4a6fd3" width="340" x="0" y="0"></rect><text font-family="monospace" font-size="11" text-anchor="middle" x="170" y="18">128 tokens  (non-overlapping block)</text></g>
-<rect fill="#fff4e0" height="40" rx="4" stroke="#e0b300" width="160" x="400" y="76"></rect><text font-family="sans-serif" font-size="12" font-weight="600" text-anchor="middle" x="480" y="95">Token-Level Compressor</text><text font-family="sans-serif" font-size="11" text-anchor="middle" x="480" y="110">Softmax(Z+B)⊙C</text>
-<rect fill="#f4faf4" height="36" stroke="#5fa55f" width="72" x="600" y="78"></rect><text font-family="monospace" font-size="11" text-anchor="middle" x="636" y="101">1 entry</text>
-<line marker-end="url(#hca_ar)" stroke="#333" x1="370" x2="400" y1="94" y2="94"></line>
-<line marker-end="url(#hca_ar)" stroke="#333" x1="562" x2="598" y1="94" y2="94"></line>
-<rect fill="#eef7ee" height="90" rx="4" stroke="#5fa55f" width="560" x="130" y="160"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="410" y="184">Dense Attention across all L/128 compressed entries</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="410" y="204">shared-KV MQA, partial RoPE(64), attention sink</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="410" y="220">+ 128-token sliding window branch</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="410" y="238">grouped output projection as CSA</text>
-<rect fill="#fff5f0" height="90" rx="4" stroke="#b85450" width="230" x="730" y="160"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="845" y="184">Global low-resolution view</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="845" y="205">1 M tokens → only 7,812 entries</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="845" y="221">no lightning indexer</text>
-<text font-family="sans-serif" font-size="11" text-anchor="middle" x="845" y="237">1/m' = 1/128 KV</text>
-<text fill="#555" font-family="monospace" font-size="11" text-anchor="middle" x="500" y="290">CSA ↔ HCA interleaved every layer  ·  V4-Flash first 2 layers pure SWA  ·  V4-Pro first 2 are HCA</text>
+<svg width="100%" height="auto" viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="hca_ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="1000" height="320" fill="#fff"/>
+<text x="500" y="26" font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle">HCA · Heavily Compressed Attention  (paper Figure 4)</text>
+<text x="30" y="70" font-family="sans-serif" font-size="12" font-weight="600">Hidden states of 128 KV tokens</text>
+<g transform="translate(30,80)"><rect x="0" y="0" width="340" height="28" fill="#eef3ff" stroke="#4a6fd3"/><text x="170" y="18" font-family="monospace" font-size="11" text-anchor="middle">128 tokens  (non-overlapping block)</text></g>
+<rect x="400" y="76" width="160" height="40" fill="#fff4e0" stroke="#e0b300" rx="4"/><text x="480" y="95" font-family="sans-serif" font-size="12" font-weight="600" text-anchor="middle">Token-Level Compressor</text><text x="480" y="110" font-family="sans-serif" font-size="11" text-anchor="middle">Softmax(Z+B)⊙C</text>
+<rect x="600" y="78" width="72" height="36" fill="#f4faf4" stroke="#5fa55f"/><text x="636" y="101" font-family="monospace" font-size="11" text-anchor="middle">1 entry</text>
+<line x1="370" y1="94" x2="400" y2="94" stroke="#333" marker-end="url(#hca_ar)"/>
+<line x1="562" y1="94" x2="598" y2="94" stroke="#333" marker-end="url(#hca_ar)"/>
+<rect x="130" y="160" width="560" height="90" fill="#eef7ee" stroke="#5fa55f" rx="4"/>
+<text x="410" y="184" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">Dense Attention across all L/128 compressed entries</text>
+<text x="410" y="204" font-family="sans-serif" font-size="11" text-anchor="middle">shared-KV MQA, partial RoPE(64), attention sink</text>
+<text x="410" y="220" font-family="sans-serif" font-size="11" text-anchor="middle">+ 128-token sliding window branch</text>
+<text x="410" y="238" font-family="sans-serif" font-size="11" text-anchor="middle">grouped output projection as CSA</text>
+<rect x="730" y="160" width="230" height="90" fill="#fff5f0" stroke="#b85450" rx="4"/>
+<text x="845" y="184" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">Global low-resolution view</text>
+<text x="845" y="205" font-family="sans-serif" font-size="11" text-anchor="middle">1 M tokens → only 7,812 entries</text>
+<text x="845" y="221" font-family="sans-serif" font-size="11" text-anchor="middle">no lightning indexer</text>
+<text x="845" y="237" font-family="sans-serif" font-size="11" text-anchor="middle">1/m' = 1/128 KV</text>
+<text x="500" y="290" font-family="monospace" font-size="11" text-anchor="middle" fill="#555">CSA ↔ HCA interleaved every layer  ·  V4-Flash first 2 layers pure SWA  ·  V4-Pro first 2 are HCA</text>
 </svg>

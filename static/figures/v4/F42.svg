@@ -1,114 +1,142 @@
-<svg font-family="system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif" viewbox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="cmp_ar" markerheight="6" markerwidth="6" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#4b5563"></path></marker></defs>
-<rect fill="#fff" height="720" width="1200"></rect>
-<text fill="#111827" font-size="16" font-weight="700" text-anchor="middle" x="600" y="26">DeepSeek V4 (MXFP4 W4A8) vs LMSYS (INT4 W4A16) · 数据流对比</text>
-<text fill="#6b7280" font-size="11" text-anchor="middle" x="600" y="46">两条 4-bit weight QAT 路线在前向、反向、推理三阶段的差异</text>
+<svg width="100%" height="auto" viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif">
+<defs><marker id="cmp_ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4b5563"/></marker></defs>
+<rect width="1200" height="720" fill="#fff"/>
+<text x="600" y="26" font-size="16" font-weight="700" text-anchor="middle" fill="#111827">DeepSeek V4 (MXFP4 W4A8) vs LMSYS (INT4 W4A16) · 数据流对比</text>
+<text x="600" y="46" font-size="11" text-anchor="middle" fill="#6b7280">两条 4-bit weight QAT 路线在前向、反向、推理三阶段的差异</text>
+
 <!-- LEFT: V4 (FP4 W4A8) -->
 <g transform="translate(40,68)">
-<rect fill="#f4faf4" height="640" rx="10" stroke="#5fa55f" stroke-width="1.4" width="540" x="0" y="0"></rect>
-<text fill="#1a5c1a" font-size="14" font-weight="700" text-anchor="middle" x="270" y="26">DeepSeek V4 · MXFP4 W4A8</text>
-<text fill="#1a5c1a" font-size="10.5" font-style="italic" text-anchor="middle" x="270" y="46">B200 / B300 / Rubin · native FP4 tensor core</text>
-<!-- Training section -->
-<text fill="#0f3d0f" font-size="12" font-weight="700" x="20" y="78">[训练阶段 · Forward + Backward]</text>
-<rect fill="#fff" height="44" rx="6" stroke="#0000FF" stroke-width="2" width="200" x="40" y="88"></rect>
-<text fill="#0000FF" font-size="11" font-weight="700" text-anchor="middle" x="140" y="106">FP32 master W</text>
-<text fill="#555" font-size="9" text-anchor="middle" x="140" y="122">4 bytes/weight · 高 fidelity</text>
-<rect fill="#e1d5e7" height="44" rx="6" stroke="#9673a6" width="200" x="40" y="148"></rect>
-<text fill="#4a1a48" font-size="11" font-weight="700" text-anchor="middle" x="140" y="166">MXFP4 quant</text>
-<text fill="#4a1a48" font-size="9" text-anchor="middle" x="140" y="180">1×32 tile + ue8m0 scale (1 B)</text>
-<rect fill="#e1d5e7" height="44" rx="6" stroke="#9673a6" width="200" x="40" y="208"></rect>
-<text fill="#4a1a48" font-size="11" font-weight="700" text-anchor="middle" x="140" y="226">FP8 dequant 【无损】</text>
-<text fill="#4a1a48" font-size="9" text-anchor="middle" x="140" y="240">FP8 比 FP4 多 2 位指数</text>
-<rect fill="#efe3b7" height="50" rx="6" stroke="#111111" stroke-width="2" width="200" x="40" y="268"></rect>
-<text fill="#7a4e00" font-size="11" font-weight="700" text-anchor="middle" x="140" y="288">FP8 × FP8 GEMM</text>
-<text fill="#7a4e00" font-size="9.5" text-anchor="middle" x="140" y="304">FP8 tensor core (B200 4.5 PFLOPs)</text>
-<line marker-end="url(#cmp_ar)" stroke="#4b5563" x1="140" x2="140" y1="132" y2="146"></line>
-<line marker-end="url(#cmp_ar)" stroke="#4b5563" x1="140" x2="140" y1="192" y2="206"></line>
-<line marker-end="url(#cmp_ar)" stroke="#4b5563" x1="140" x2="140" y1="252" y2="266"></line>
-<!-- STE backward -->
-<rect fill="#fff5f0" height="230" rx="6" stroke="#b85450" stroke-dasharray="4 3" width="240" x="280" y="88"></rect>
-<text fill="#7a2f2b" font-size="11" font-weight="700" text-anchor="middle" x="400" y="108">反向 (STE)</text>
-<text fill="#7a2f2b" font-size="10" x="295" y="130">∂L/∂W_FP8 直接</text>
-<text fill="#7a2f2b" font-size="10" x="295" y="146">→ ∂L/∂W_FP32</text>
-<text fill="#7a2f2b" font-size="10" x="295" y="166">不需 transpose 后</text>
-<text fill="#7a2f2b" font-size="10" x="295" y="182">re-quant</text>
-<text fill="#1a3d1a" font-size="10" font-weight="700" x="295" y="208">→ FP8 训练栈</text>
-<text fill="#1a3d1a" font-size="10" font-weight="700" x="295" y="224">完全无修改复用</text>
-<text fill="#555" font-size="9.5" font-style="italic" x="295" y="252">关键性质：</text>
-<text fill="#555" font-size="9" x="295" y="268">FP4(E2M1)→FP8(E4M3)</text>
-<text fill="#555" font-size="9" x="295" y="282">在 1×32 tile scale</text>
-<text fill="#555" font-size="9" x="295" y="296">比值受限下「无损」</text>
-<!-- Inference section -->
-<line stroke="#5fa55f" stroke-dasharray="3 2" x1="20" x2="520" y1="350" y2="350"></line>
-<text fill="#0f3d0f" font-size="12" font-weight="700" x="20" y="368">[推理 / RL rollout 阶段]</text>
-<rect fill="#fff" height="44" rx="6" stroke="#0000FF" stroke-width="2" width="200" x="40" y="380"></rect>
-<text fill="#0000FF" font-size="11" font-weight="700" text-anchor="middle" x="140" y="398">real FP4 weight</text>
-<text fill="#555" font-size="9" text-anchor="middle" x="140" y="414">不模拟，DeepGEMM 直接吃</text>
-<rect fill="#fff" height="44" rx="6" stroke="#0000FF" stroke-width="2" width="200" x="40" y="440"></rect>
-<text fill="#0000FF" font-size="11" font-weight="700" text-anchor="middle" x="140" y="458">FP8 activation</text>
-<text fill="#555" font-size="9" text-anchor="middle" x="140" y="474">activation BW ↓ 50%</text>
-<rect fill="#efe3b7" height="56" rx="6" stroke="#111111" stroke-width="2" width="480" x="40" y="500"></rect>
-<text fill="#7a4e00" font-size="11" font-weight="700" text-anchor="middle" x="280" y="520">DeepGEMM MegaMoE · FP4 × FP8 GEMM</text>
-<text fill="#7a4e00" font-size="9.5" text-anchor="middle" x="280" y="536">当前 HW: throughput 同 FP8×FP8 · Rubin+: 1.33×</text>
-<text fill="#555" font-size="9" text-anchor="middle" x="280" y="550">batch-invariant + bit-reproducible</text>
-<line marker-end="url(#cmp_ar)" stroke="#4b5563" x1="140" x2="140" y1="424" y2="438"></line>
-<line marker-end="url(#cmp_ar)" stroke="#4b5563" x1="140" x2="140" y1="484" y2="498"></line>
-<!-- Footer summary -->
-<rect fill="#fff" height="60" rx="6" width="500" x="20" y="572"></rect>
-<text fill="#1a5c1a" font-size="10" x="30" y="590">✔ <b>W4A8 同时压权重 + 激活带宽</b>，针对 1 M context</text>
-<text fill="#1a5c1a" font-size="10" x="30" y="606">✔ FP4→FP8 无损 dequant，无需改 backward</text>
-<text fill="#1a5c1a" font-size="10" x="30" y="622">✔ 量化范围：MoE 权重 + CSA indexer QK 路径</text>
+  <rect x="0" y="0" width="540" height="640" rx="10" fill="#f4faf4" stroke="#5fa55f" stroke-width="1.4"/>
+  <text x="270" y="26" font-size="14" font-weight="700" text-anchor="middle" fill="#1a5c1a">DeepSeek V4 · MXFP4 W4A8</text>
+  <text x="270" y="46" font-size="10.5" text-anchor="middle" fill="#1a5c1a" font-style="italic">B200 / B300 / Rubin · native FP4 tensor core</text>
+
+  <!-- Training section -->
+  <text x="20" y="78" font-size="12" font-weight="700" fill="#0f3d0f">[训练阶段 · Forward + Backward]</text>
+
+  <rect x="40" y="88" width="200" height="44" rx="6" fill="#fff" stroke="#0000FF" stroke-width="2"/>
+  <text x="140" y="106" font-size="11" font-weight="700" text-anchor="middle" fill="#0000FF">FP32 master W</text>
+  <text x="140" y="122" font-size="9" text-anchor="middle" fill="#555">4 bytes/weight · 高 fidelity</text>
+
+  <rect x="40" y="148" width="200" height="44" rx="6" fill="#e1d5e7" stroke="#9673a6"/>
+  <text x="140" y="166" font-size="11" font-weight="700" text-anchor="middle" fill="#4a1a48">MXFP4 quant</text>
+  <text x="140" y="180" font-size="9" text-anchor="middle" fill="#4a1a48">1×32 tile + ue8m0 scale (1 B)</text>
+
+  <rect x="40" y="208" width="200" height="44" rx="6" fill="#e1d5e7" stroke="#9673a6"/>
+  <text x="140" y="226" font-size="11" font-weight="700" text-anchor="middle" fill="#4a1a48">FP8 dequant 【无损】</text>
+  <text x="140" y="240" font-size="9" text-anchor="middle" fill="#4a1a48">FP8 比 FP4 多 2 位指数</text>
+
+  <rect x="40" y="268" width="200" height="50" rx="6" fill="#efe3b7" stroke="#111111" stroke-width="2"/>
+  <text x="140" y="288" font-size="11" font-weight="700" text-anchor="middle" fill="#7a4e00">FP8 × FP8 GEMM</text>
+  <text x="140" y="304" font-size="9.5" text-anchor="middle" fill="#7a4e00">FP8 tensor core (B200 4.5 PFLOPs)</text>
+
+  <line x1="140" y1="132" x2="140" y2="146" stroke="#4b5563" marker-end="url(#cmp_ar)"/>
+  <line x1="140" y1="192" x2="140" y2="206" stroke="#4b5563" marker-end="url(#cmp_ar)"/>
+  <line x1="140" y1="252" x2="140" y2="266" stroke="#4b5563" marker-end="url(#cmp_ar)"/>
+
+  <!-- STE backward -->
+  <rect x="280" y="88" width="240" height="230" rx="6" fill="#fff5f0" stroke="#b85450" stroke-dasharray="4 3"/>
+  <text x="400" y="108" font-size="11" font-weight="700" text-anchor="middle" fill="#7a2f2b">反向 (STE)</text>
+  <text x="295" y="130" font-size="10" fill="#7a2f2b">∂L/∂W_FP8 直接</text>
+  <text x="295" y="146" font-size="10" fill="#7a2f2b">→ ∂L/∂W_FP32</text>
+  <text x="295" y="166" font-size="10" fill="#7a2f2b">不需 transpose 后</text>
+  <text x="295" y="182" font-size="10" fill="#7a2f2b">re-quant</text>
+  <text x="295" y="208" font-size="10" fill="#1a3d1a" font-weight="700">→ FP8 训练栈</text>
+  <text x="295" y="224" font-size="10" fill="#1a3d1a" font-weight="700">完全无修改复用</text>
+  <text x="295" y="252" font-size="9.5" fill="#555" font-style="italic">关键性质：</text>
+  <text x="295" y="268" font-size="9" fill="#555">FP4(E2M1)→FP8(E4M3)</text>
+  <text x="295" y="282" font-size="9" fill="#555">在 1×32 tile scale</text>
+  <text x="295" y="296" font-size="9" fill="#555">比值受限下「无损」</text>
+
+  <!-- Inference section -->
+  <line x1="20" y1="350" x2="520" y2="350" stroke="#5fa55f" stroke-dasharray="3 2"/>
+  <text x="20" y="368" font-size="12" font-weight="700" fill="#0f3d0f">[推理 / RL rollout 阶段]</text>
+
+  <rect x="40" y="380" width="200" height="44" rx="6" fill="#fff" stroke="#0000FF" stroke-width="2"/>
+  <text x="140" y="398" font-size="11" font-weight="700" text-anchor="middle" fill="#0000FF">real FP4 weight</text>
+  <text x="140" y="414" font-size="9" text-anchor="middle" fill="#555">不模拟，DeepGEMM 直接吃</text>
+
+  <rect x="40" y="440" width="200" height="44" rx="6" fill="#fff" stroke="#0000FF" stroke-width="2"/>
+  <text x="140" y="458" font-size="11" font-weight="700" text-anchor="middle" fill="#0000FF">FP8 activation</text>
+  <text x="140" y="474" font-size="9" text-anchor="middle" fill="#555">activation BW ↓ 50%</text>
+
+  <rect x="40" y="500" width="480" height="56" rx="6" fill="#efe3b7" stroke="#111111" stroke-width="2"/>
+  <text x="280" y="520" font-size="11" font-weight="700" text-anchor="middle" fill="#7a4e00">DeepGEMM MegaMoE · FP4 × FP8 GEMM</text>
+  <text x="280" y="536" font-size="9.5" text-anchor="middle" fill="#7a4e00">当前 HW: throughput 同 FP8×FP8 · Rubin+: 1.33×</text>
+  <text x="280" y="550" font-size="9" text-anchor="middle" fill="#555">batch-invariant + bit-reproducible</text>
+
+  <line x1="140" y1="424" x2="140" y2="438" stroke="#4b5563" marker-end="url(#cmp_ar)"/>
+  <line x1="140" y1="484" x2="140" y2="498" stroke="#4b5563" marker-end="url(#cmp_ar)"/>
+
+  <!-- Footer summary -->
+  <rect x="20" y="572" width="500" height="60" rx="6" fill="#fff"/>
+  <text x="30" y="590" font-size="10" fill="#1a5c1a">✔ <b>W4A8 同时压权重 + 激活带宽</b>，针对 1 M context</text>
+  <text x="30" y="606" font-size="10" fill="#1a5c1a">✔ FP4→FP8 无损 dequant，无需改 backward</text>
+  <text x="30" y="622" font-size="10" fill="#1a5c1a">✔ 量化范围：MoE 权重 + CSA indexer QK 路径</text>
 </g>
+
 <!-- RIGHT: LMSYS INT4 W4A16 -->
 <g transform="translate(620,68)">
-<rect fill="#eef3ff" height="640" rx="10" stroke="#4a6fd3" stroke-width="1.4" width="540" x="0" y="0"></rect>
-<text fill="#1a2d55" font-size="14" font-weight="700" text-anchor="middle" x="270" y="26">LMSYS · INT4 W4A16</text>
-<text fill="#1a2d55" font-size="10.5" font-style="italic" text-anchor="middle" x="270" y="46">H100 / H200 · 无原生 INT4，BF16 tensor core</text>
-<text fill="#0f1d3d" font-size="12" font-weight="700" x="20" y="78">[训练阶段 · Forward + Backward]</text>
-<rect fill="#fff" height="44" rx="6" stroke="#0000FF" stroke-width="2" width="200" x="40" y="88"></rect>
-<text fill="#0000FF" font-size="11" font-weight="700" text-anchor="middle" x="140" y="106">BF16 master W</text>
-<text fill="#555" font-size="9" text-anchor="middle" x="140" y="122">2 bytes/weight · 节省 master mem</text>
-<rect fill="#e1d5e7" height="44" rx="6" stroke="#9673a6" width="200" x="40" y="148"></rect>
-<text fill="#4a1a48" font-size="11" font-weight="700" text-anchor="middle" x="140" y="166">INT4 fake-quant</text>
-<text fill="#4a1a48" font-size="9" text-anchor="middle" x="140" y="180">per-group max-abs · ∈ [-7, 7]</text>
-<rect fill="#e1d5e7" height="44" rx="6" stroke="#9673a6" width="200" x="40" y="208"></rect>
-<text fill="#4a1a48" font-size="11" font-weight="700" text-anchor="middle" x="140" y="226">BF16 dequant</text>
-<text fill="#4a1a48" font-size="9" text-anchor="middle" x="140" y="240">int4 × scale → BF16</text>
-<rect fill="#efe3b7" height="50" rx="6" stroke="#111111" stroke-width="2" width="200" x="40" y="268"></rect>
-<text fill="#7a4e00" font-size="11" font-weight="700" text-anchor="middle" x="140" y="288">BF16 × BF16 GEMM</text>
-<text fill="#7a4e00" font-size="9.5" text-anchor="middle" x="140" y="304">BF16 tensor core (H100 1.0 PFLOPs)</text>
-<line marker-end="url(#cmp_ar)" stroke="#4b5563" x1="140" x2="140" y1="132" y2="146"></line>
-<line marker-end="url(#cmp_ar)" stroke="#4b5563" x1="140" x2="140" y1="192" y2="206"></line>
-<line marker-end="url(#cmp_ar)" stroke="#4b5563" x1="140" x2="140" y1="252" y2="266"></line>
-<rect fill="#fff5f0" height="230" rx="6" stroke="#b85450" stroke-dasharray="4 3" width="240" x="280" y="88"></rect>
-<text fill="#7a2f2b" font-size="11" font-weight="700" text-anchor="middle" x="400" y="108">反向 (STE)</text>
-<text fill="#7a2f2b" font-size="10" x="295" y="130">round() 视为 identity</text>
-<text fill="#7a2f2b" font-size="10" x="295" y="146">梯度回到 BF16 master</text>
-<text fill="#1a2d55" font-size="10" font-weight="700" x="295" y="172">→ Marlin kernel 适配</text>
-<text fill="#1a2d55" font-size="10" font-weight="700" x="295" y="188">需 unpack/re-pack 操作</text>
-<text fill="#555" font-size="9.5" font-style="italic" x="295" y="216">关键限制：</text>
-<text fill="#555" font-size="9" x="295" y="232">H 系列无原生 INT4 core</text>
-<text fill="#555" font-size="9" x="295" y="246">仅享 mem ↓ 75%，</text>
-<text fill="#555" font-size="9" x="295" y="260">单步 latency ≈ BF16 baseline</text>
-<text fill="#555" font-size="9" x="295" y="284">收益主要来自 HBM 带宽与</text>
-<text fill="#555" font-size="9" x="295" y="298">单卡部署能力</text>
-<line stroke="#4a6fd3" stroke-dasharray="3 2" x1="20" x2="520" y1="350" y2="350"></line>
-<text fill="#0f1d3d" font-size="12" font-weight="700" x="20" y="368">[推理阶段]</text>
-<rect fill="#fff" height="44" rx="6" stroke="#0000FF" stroke-width="2" width="200" x="40" y="380"></rect>
-<text fill="#0000FF" font-size="11" font-weight="700" text-anchor="middle" x="140" y="398">real INT4 (Marlin packed)</text>
-<text fill="#555" font-size="9" text-anchor="middle" x="140" y="414">8 个 INT4 → 1 个 INT32</text>
-<rect fill="#fff" height="44" rx="6" stroke="#0000FF" stroke-width="2" width="200" x="40" y="440"></rect>
-<text fill="#0000FF" font-size="11" font-weight="700" text-anchor="middle" x="140" y="458">BF16 activation</text>
-<text fill="#555" font-size="9" text-anchor="middle" x="140" y="474">activation BW 不变</text>
-<rect fill="#efe3b7" height="56" rx="6" stroke="#111111" stroke-width="2" width="480" x="40" y="500"></rect>
-<text fill="#7a4e00" font-size="11" font-weight="700" text-anchor="middle" x="280" y="520">SGLang Marlin · INT4 unpack + BF16 GEMM</text>
-<text fill="#7a4e00" font-size="9.5" text-anchor="middle" x="280" y="536">unpack: `&gt;&gt; 4 &amp; 0xF` · 然后 BF16 tensor core</text>
-<text fill="#555" font-size="9" text-anchor="middle" x="280" y="550">无 batch-invariance 保证</text>
-<line marker-end="url(#cmp_ar)" stroke="#4b5563" x1="140" x2="140" y1="424" y2="438"></line>
-<line marker-end="url(#cmp_ar)" stroke="#4b5563" x1="140" x2="140" y1="484" y2="498"></line>
-<rect fill="#fff" height="60" rx="6" width="500" x="20" y="572"></rect>
-<text fill="#1a2d55" font-size="10" x="30" y="590">✔ <b>W4A16 仅压权重</b>，存量 H 系列 fleet 立即可用</text>
-<text fill="#1a2d55" font-size="10" x="30" y="606">✔ 1 TB K2-like 模型 → 单 H200 (141 GB) 单卡部署</text>
-<text fill="#1a2d55" font-size="10" x="30" y="622">✔ 量化范围：全模型线性层（dense + MoE 混合）</text>
+  <rect x="0" y="0" width="540" height="640" rx="10" fill="#eef3ff" stroke="#4a6fd3" stroke-width="1.4"/>
+  <text x="270" y="26" font-size="14" font-weight="700" text-anchor="middle" fill="#1a2d55">LMSYS · INT4 W4A16</text>
+  <text x="270" y="46" font-size="10.5" text-anchor="middle" fill="#1a2d55" font-style="italic">H100 / H200 · 无原生 INT4，BF16 tensor core</text>
+
+  <text x="20" y="78" font-size="12" font-weight="700" fill="#0f1d3d">[训练阶段 · Forward + Backward]</text>
+
+  <rect x="40" y="88" width="200" height="44" rx="6" fill="#fff" stroke="#0000FF" stroke-width="2"/>
+  <text x="140" y="106" font-size="11" font-weight="700" text-anchor="middle" fill="#0000FF">BF16 master W</text>
+  <text x="140" y="122" font-size="9" text-anchor="middle" fill="#555">2 bytes/weight · 节省 master mem</text>
+
+  <rect x="40" y="148" width="200" height="44" rx="6" fill="#e1d5e7" stroke="#9673a6"/>
+  <text x="140" y="166" font-size="11" font-weight="700" text-anchor="middle" fill="#4a1a48">INT4 fake-quant</text>
+  <text x="140" y="180" font-size="9" text-anchor="middle" fill="#4a1a48">per-group max-abs · ∈ [-7, 7]</text>
+
+  <rect x="40" y="208" width="200" height="44" rx="6" fill="#e1d5e7" stroke="#9673a6"/>
+  <text x="140" y="226" font-size="11" font-weight="700" text-anchor="middle" fill="#4a1a48">BF16 dequant</text>
+  <text x="140" y="240" font-size="9" text-anchor="middle" fill="#4a1a48">int4 × scale → BF16</text>
+
+  <rect x="40" y="268" width="200" height="50" rx="6" fill="#efe3b7" stroke="#111111" stroke-width="2"/>
+  <text x="140" y="288" font-size="11" font-weight="700" text-anchor="middle" fill="#7a4e00">BF16 × BF16 GEMM</text>
+  <text x="140" y="304" font-size="9.5" text-anchor="middle" fill="#7a4e00">BF16 tensor core (H100 1.0 PFLOPs)</text>
+
+  <line x1="140" y1="132" x2="140" y2="146" stroke="#4b5563" marker-end="url(#cmp_ar)"/>
+  <line x1="140" y1="192" x2="140" y2="206" stroke="#4b5563" marker-end="url(#cmp_ar)"/>
+  <line x1="140" y1="252" x2="140" y2="266" stroke="#4b5563" marker-end="url(#cmp_ar)"/>
+
+  <rect x="280" y="88" width="240" height="230" rx="6" fill="#fff5f0" stroke="#b85450" stroke-dasharray="4 3"/>
+  <text x="400" y="108" font-size="11" font-weight="700" text-anchor="middle" fill="#7a2f2b">反向 (STE)</text>
+  <text x="295" y="130" font-size="10" fill="#7a2f2b">round() 视为 identity</text>
+  <text x="295" y="146" font-size="10" fill="#7a2f2b">梯度回到 BF16 master</text>
+  <text x="295" y="172" font-size="10" fill="#1a2d55" font-weight="700">→ Marlin kernel 适配</text>
+  <text x="295" y="188" font-size="10" fill="#1a2d55" font-weight="700">需 unpack/re-pack 操作</text>
+  <text x="295" y="216" font-size="9.5" fill="#555" font-style="italic">关键限制：</text>
+  <text x="295" y="232" font-size="9" fill="#555">H 系列无原生 INT4 core</text>
+  <text x="295" y="246" font-size="9" fill="#555">仅享 mem ↓ 75%，</text>
+  <text x="295" y="260" font-size="9" fill="#555">单步 latency ≈ BF16 baseline</text>
+  <text x="295" y="284" font-size="9" fill="#555">收益主要来自 HBM 带宽与</text>
+  <text x="295" y="298" font-size="9" fill="#555">单卡部署能力</text>
+
+  <line x1="20" y1="350" x2="520" y2="350" stroke="#4a6fd3" stroke-dasharray="3 2"/>
+  <text x="20" y="368" font-size="12" font-weight="700" fill="#0f1d3d">[推理阶段]</text>
+
+  <rect x="40" y="380" width="200" height="44" rx="6" fill="#fff" stroke="#0000FF" stroke-width="2"/>
+  <text x="140" y="398" font-size="11" font-weight="700" text-anchor="middle" fill="#0000FF">real INT4 (Marlin packed)</text>
+  <text x="140" y="414" font-size="9" text-anchor="middle" fill="#555">8 个 INT4 → 1 个 INT32</text>
+
+  <rect x="40" y="440" width="200" height="44" rx="6" fill="#fff" stroke="#0000FF" stroke-width="2"/>
+  <text x="140" y="458" font-size="11" font-weight="700" text-anchor="middle" fill="#0000FF">BF16 activation</text>
+  <text x="140" y="474" font-size="9" text-anchor="middle" fill="#555">activation BW 不变</text>
+
+  <rect x="40" y="500" width="480" height="56" rx="6" fill="#efe3b7" stroke="#111111" stroke-width="2"/>
+  <text x="280" y="520" font-size="11" font-weight="700" text-anchor="middle" fill="#7a4e00">SGLang Marlin · INT4 unpack + BF16 GEMM</text>
+  <text x="280" y="536" font-size="9.5" text-anchor="middle" fill="#7a4e00">unpack: `&gt;&gt; 4 &amp; 0xF` · 然后 BF16 tensor core</text>
+  <text x="280" y="550" font-size="9" text-anchor="middle" fill="#555">无 batch-invariance 保证</text>
+
+  <line x1="140" y1="424" x2="140" y2="438" stroke="#4b5563" marker-end="url(#cmp_ar)"/>
+  <line x1="140" y1="484" x2="140" y2="498" stroke="#4b5563" marker-end="url(#cmp_ar)"/>
+
+  <rect x="20" y="572" width="500" height="60" rx="6" fill="#fff"/>
+  <text x="30" y="590" font-size="10" fill="#1a2d55">✔ <b>W4A16 仅压权重</b>，存量 H 系列 fleet 立即可用</text>
+  <text x="30" y="606" font-size="10" fill="#1a2d55">✔ 1 TB K2-like 模型 → 单 H200 (141 GB) 单卡部署</text>
+  <text x="30" y="622" font-size="10" fill="#1a2d55">✔ 量化范围：全模型线性层（dense + MoE 混合）</text>
 </g>
 </svg>

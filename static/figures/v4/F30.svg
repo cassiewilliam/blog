@@ -1,54 +1,58 @@
-<svg viewbox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="opd_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
-<rect fill="#fff" height="400" width="1100"></rect>
-<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">OPD · Teacher scheduling &amp; memory-lean full-vocabulary KL</text>
+<svg width="100%" height="auto" viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="opd_ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="1100" height="400" fill="#fff"/>
+<text x="550" y="24" font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle">OPD · Teacher scheduling & memory-lean full-vocabulary KL</text>
+
 <!-- Teacher pool -->
-<rect fill="#fff4e0" height="300" rx="4" stroke="#e0b300" width="300" x="30" y="56"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="180" y="78">Distributed teacher pool (3FS)</text>
-<text font-family="monospace" font-size="11" x="45" y="102"> &gt; 10 teacher models</text>
-<text font-family="monospace" font-size="11" x="45" y="120"> trillions of parameters total</text>
-<text font-family="monospace" font-size="11" x="45" y="140"> Teacher E1 · math</text>
-<text font-family="monospace" font-size="11" x="45" y="156"> Teacher E2 · code</text>
-<text font-family="monospace" font-size="11" x="45" y="172"> Teacher E3 · agent</text>
-<text font-family="monospace" font-size="11" x="45" y="188"> Teacher E4 · instruction</text>
-<text font-family="monospace" font-size="11" x="45" y="204"> Teacher E5 · writing</text>
-<text font-family="monospace" font-size="11" x="45" y="220"> …</text>
-<text fill="#7a4e00" font-family="sans-serif" font-size="11" x="45" y="260">• ZeRO-like sharded load on demand</text>
-<text fill="#7a4e00" font-family="sans-serif" font-size="11" x="45" y="278">• cache LAST hidden state [T, 7168]</text>
-<text fill="#7a4e00" font-family="sans-serif" font-size="11" x="45" y="296">  — NOT full logits [T, 129280]</text>
-<text fill="#b85450" font-family="sans-serif" font-size="11" x="45" y="320">direct logits materialization ≈</text>
-<text fill="#b85450" font-family="sans-serif" font-size="11" x="45" y="338">T · |V| floats per teacher → infeasible</text>
+<rect x="30"  y="56" width="300" height="300" fill="#fff4e0" stroke="#e0b300" rx="4"/>
+<text x="180" y="78" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">Distributed teacher pool (3FS)</text>
+<text x="45"  y="102" font-family="monospace" font-size="11"> &gt; 10 teacher models</text>
+<text x="45"  y="120" font-family="monospace" font-size="11"> trillions of parameters total</text>
+<text x="45"  y="140" font-family="monospace" font-size="11"> Teacher E1 · math</text>
+<text x="45"  y="156" font-family="monospace" font-size="11"> Teacher E2 · code</text>
+<text x="45"  y="172" font-family="monospace" font-size="11"> Teacher E3 · agent</text>
+<text x="45"  y="188" font-family="monospace" font-size="11"> Teacher E4 · instruction</text>
+<text x="45"  y="204" font-family="monospace" font-size="11"> Teacher E5 · writing</text>
+<text x="45"  y="220" font-family="monospace" font-size="11"> …</text>
+<text x="45"  y="260" font-family="sans-serif" font-size="11" fill="#7a4e00">• ZeRO-like sharded load on demand</text>
+<text x="45"  y="278" font-family="sans-serif" font-size="11" fill="#7a4e00">• cache LAST hidden state [T, 7168]</text>
+<text x="45"  y="296" font-family="sans-serif" font-size="11" fill="#7a4e00">  — NOT full logits [T, 129280]</text>
+<text x="45"  y="320" font-family="sans-serif" font-size="11" fill="#b85450">direct logits materialization ≈</text>
+<text x="45"  y="338" font-family="sans-serif" font-size="11" fill="#b85450">T · |V| floats per teacher → infeasible</text>
+
 <!-- Minibatch ordering -->
-<rect fill="#eef3ff" height="300" rx="4" stroke="#4a6fd3" width="320" x="360" y="56"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="520" y="78">Minibatch ordering</text>
-<text font-family="monospace" font-size="11" x="375" y="102">sort training samples by teacher idx</text>
-<text font-family="monospace" font-size="11" x="375" y="120">[E1, E1, E1, E2, E2, E3, E3, E3, E4…]</text>
-<text font-family="monospace" font-size="11" x="375" y="142">for each minibatch:</text>
-<text font-family="monospace" font-size="11" x="375" y="160">  load current teacher's head [|V|, 7168]</text>
-<text font-family="monospace" font-size="11" x="375" y="178">  pass cached hidden through head</text>
-<text font-family="monospace" font-size="11" x="375" y="196">  → logits [T, |V|] on the fly</text>
-<text font-family="monospace" font-size="11" x="375" y="214">  compute D_KL(π_θ ‖ π_{E_i}) in TileLang</text>
-<text font-family="monospace" font-size="11" x="375" y="232">  free head before loading next</text>
-<text fill="#1a3a5c" font-family="sans-serif" font-size="11" x="375" y="258">→ at most ONE teacher head</text>
-<text fill="#1a3a5c" font-family="sans-serif" font-size="11" x="375" y="276">  resident in GPU memory at a time</text>
-<text fill="#1a3a5c" font-family="sans-serif" font-size="11" x="375" y="300">→ async background prefetch of</text>
-<text fill="#1a3a5c" font-family="sans-serif" font-size="11" x="375" y="318">  next head hidden from critical path</text>
+<rect x="360" y="56" width="320" height="300" fill="#eef3ff" stroke="#4a6fd3" rx="4"/>
+<text x="520" y="78" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">Minibatch ordering</text>
+<text x="375" y="102" font-family="monospace" font-size="11">sort training samples by teacher idx</text>
+<text x="375" y="120" font-family="monospace" font-size="11">[E1, E1, E1, E2, E2, E3, E3, E3, E4…]</text>
+<text x="375" y="142" font-family="monospace" font-size="11">for each minibatch:</text>
+<text x="375" y="160" font-family="monospace" font-size="11">  load current teacher's head [|V|, 7168]</text>
+<text x="375" y="178" font-family="monospace" font-size="11">  pass cached hidden through head</text>
+<text x="375" y="196" font-family="monospace" font-size="11">  → logits [T, |V|] on the fly</text>
+<text x="375" y="214" font-family="monospace" font-size="11">  compute D_KL(π_θ ‖ π_{E_i}) in TileLang</text>
+<text x="375" y="232" font-family="monospace" font-size="11">  free head before loading next</text>
+<text x="375" y="258" font-family="sans-serif" font-size="11" fill="#1a3a5c">→ at most ONE teacher head</text>
+<text x="375" y="276" font-family="sans-serif" font-size="11" fill="#1a3a5c">  resident in GPU memory at a time</text>
+<text x="375" y="300" font-family="sans-serif" font-size="11" fill="#1a3a5c">→ async background prefetch of</text>
+<text x="375" y="318" font-family="sans-serif" font-size="11" fill="#1a3a5c">  next head hidden from critical path</text>
+
 <!-- Student -->
-<rect fill="#f4faf4" height="300" rx="4" stroke="#5fa55f" width="360" x="710" y="56"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="890" y="78">Student (unified V4)</text>
-<text font-family="monospace" font-size="11" x="725" y="102">generate trajectories on-policy</text>
-<text font-family="monospace" font-size="11" x="725" y="120">sample from π_θ, compute π_θ logits</text>
-<text font-family="monospace" font-size="11" x="725" y="142">loss per token:</text>
-<text font-family="monospace" font-size="11" x="725" y="160">  Σ_v π_θ(v) · [log π_θ(v) − log π_{E_i}(v)]</text>
-<text font-family="monospace" font-size="11" x="725" y="180">across full |V| = 129280</text>
-<text fill="#1a3d1a" font-family="sans-serif" font-size="11" x="725" y="208">why full vocabulary:</text>
-<text font-family="monospace" font-size="11" x="725" y="226">• token-level KL approximation has</text>
-<text font-family="monospace" font-size="11" x="725" y="244">  high variance — slow, unstable</text>
-<text font-family="monospace" font-size="11" x="725" y="262">• exact KL = faithful distillation</text>
-<text font-family="monospace" font-size="11" x="725" y="280">• TileLang kernel fuses logit-diff,</text>
-<text font-family="monospace" font-size="11" x="725" y="298">  exp, sum, log — no huge temps</text>
-<text fill="#1a3d1a" font-family="sans-serif" font-size="11" x="725" y="322">result: V4 absorbs &gt; 10 specialists</text>
-<text fill="#1a3d1a" font-family="sans-serif" font-size="11" x="725" y="340">into one model without weight merge</text>
-<line marker-end="url(#opd_ar)" stroke="#333" x1="330" x2="358" y1="200" y2="200"></line>
-<line marker-end="url(#opd_ar)" stroke="#333" x1="680" x2="708" y1="200" y2="200"></line>
+<rect x="710" y="56" width="360" height="300" fill="#f4faf4" stroke="#5fa55f" rx="4"/>
+<text x="890" y="78" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">Student (unified V4)</text>
+<text x="725" y="102" font-family="monospace" font-size="11">generate trajectories on-policy</text>
+<text x="725" y="120" font-family="monospace" font-size="11">sample from π_θ, compute π_θ logits</text>
+<text x="725" y="142" font-family="monospace" font-size="11">loss per token:</text>
+<text x="725" y="160" font-family="monospace" font-size="11">  Σ_v π_θ(v) · [log π_θ(v) − log π_{E_i}(v)]</text>
+<text x="725" y="180" font-family="monospace" font-size="11">across full |V| = 129280</text>
+<text x="725" y="208" font-family="sans-serif" font-size="11" fill="#1a3d1a">why full vocabulary:</text>
+<text x="725" y="226" font-family="monospace" font-size="11">• token-level KL approximation has</text>
+<text x="725" y="244" font-family="monospace" font-size="11">  high variance — slow, unstable</text>
+<text x="725" y="262" font-family="monospace" font-size="11">• exact KL = faithful distillation</text>
+<text x="725" y="280" font-family="monospace" font-size="11">• TileLang kernel fuses logit-diff,</text>
+<text x="725" y="298" font-family="monospace" font-size="11">  exp, sum, log — no huge temps</text>
+<text x="725" y="322" font-family="sans-serif" font-size="11" fill="#1a3d1a">result: V4 absorbs &gt; 10 specialists</text>
+<text x="725" y="340" font-family="sans-serif" font-size="11" fill="#1a3d1a">into one model without weight merge</text>
+
+<line x1="330" y1="200" x2="358" y2="200" stroke="#333" marker-end="url(#opd_ar)"/>
+<line x1="680" y1="200" x2="708" y2="200" stroke="#333" marker-end="url(#opd_ar)"/>
 </svg>

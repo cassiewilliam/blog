@@ -1,37 +1,37 @@
-<svg viewbox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
-<rect fill="#fff" height="340" width="1000"></rect>
-<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="500" y="24">MegaMoE Pipeline · Fine-Grained EP Overlap (paper Figure 5)</text>
-<text font-family="sans-serif" font-size="12" font-weight="700" x="30" y="60">(a) Naive</text>
-<rect fill="#eef3ff" height="28" stroke="#4a6fd3" width="70" x="80" y="46"></rect><text font-family="monospace" font-size="10" text-anchor="middle" x="115" y="65">Dispatch</text>
-<rect fill="#fff5f0" height="28" stroke="#b85450" width="70" x="152" y="46"></rect><text font-family="monospace" font-size="10" text-anchor="middle" x="187" y="65">Linear-1</text>
-<rect fill="#fff4e0" height="28" stroke="#e0b300" width="60" x="224" y="46"></rect><text font-family="monospace" font-size="10" text-anchor="middle" x="254" y="65">SwiGLU</text>
-<rect fill="#fff5f0" height="28" stroke="#b85450" width="70" x="286" y="46"></rect><text font-family="monospace" font-size="10" text-anchor="middle" x="321" y="65">Linear-2</text>
-<rect fill="#eef3ff" height="28" stroke="#4a6fd3" width="70" x="358" y="46"></rect><text font-family="monospace" font-size="10" text-anchor="middle" x="393" y="65">Combine</text>
-<text font-family="monospace" font-size="10" x="470" y="65">(serial, 5 stages)</text>
-<text font-family="sans-serif" font-size="12" font-weight="700" x="30" y="122">(b) Comet</text>
-<rect fill="#eef3ff" height="28" stroke="#4a6fd3" width="70" x="80" y="108"></rect><text font-family="monospace" font-size="10" text-anchor="middle" x="115" y="127">Dispatch</text>
-<rect fill="#fff5f0" fill-opacity=".45" height="28" stroke="#b85450" width="140" x="80" y="138"></rect><text font-family="monospace" font-size="10" text-anchor="middle" x="150" y="157">Linear-1 overlapped</text>
-<rect fill="#fff4e0" height="28" stroke="#e0b300" width="110" x="220" y="108"></rect><text font-family="monospace" font-size="10" text-anchor="middle" x="275" y="127">SwiGLU + L2</text>
-<rect fill="#eef3ff" fill-opacity=".45" height="28" stroke="#4a6fd3" width="90" x="330" y="108"></rect><text font-family="monospace" font-size="10" text-anchor="middle" x="375" y="127">Combine ovl</text>
-<text fill="#5fa55f" font-family="monospace" font-size="10" x="470" y="125">theoretical 1.42×</text>
-<text font-family="sans-serif" font-size="12" font-weight="700" x="30" y="196">(c) DeepSeek-V4 · MegaMoE</text>
+<svg width="100%" height="auto" viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
+<rect width="1000" height="340" fill="#fff"/>
+<text x="500" y="24" font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle">MegaMoE Pipeline · Fine-Grained EP Overlap (paper Figure 5)</text>
+<text x="30" y="60" font-family="sans-serif" font-size="12" font-weight="700">(a) Naive</text>
+<rect x="80" y="46" width="70" height="28" fill="#eef3ff" stroke="#4a6fd3"/><text x="115" y="65" font-family="monospace" font-size="10" text-anchor="middle">Dispatch</text>
+<rect x="152" y="46" width="70" height="28" fill="#fff5f0" stroke="#b85450"/><text x="187" y="65" font-family="monospace" font-size="10" text-anchor="middle">Linear-1</text>
+<rect x="224" y="46" width="60" height="28" fill="#fff4e0" stroke="#e0b300"/><text x="254" y="65" font-family="monospace" font-size="10" text-anchor="middle">SwiGLU</text>
+<rect x="286" y="46" width="70" height="28" fill="#fff5f0" stroke="#b85450"/><text x="321" y="65" font-family="monospace" font-size="10" text-anchor="middle">Linear-2</text>
+<rect x="358" y="46" width="70" height="28" fill="#eef3ff" stroke="#4a6fd3"/><text x="393" y="65" font-family="monospace" font-size="10" text-anchor="middle">Combine</text>
+<text x="470" y="65" font-family="monospace" font-size="10">(serial, 5 stages)</text>
+<text x="30" y="122" font-family="sans-serif" font-size="12" font-weight="700">(b) Comet</text>
+<rect x="80" y="108" width="70" height="28" fill="#eef3ff" stroke="#4a6fd3"/><text x="115" y="127" font-family="monospace" font-size="10" text-anchor="middle">Dispatch</text>
+<rect x="80" y="138" width="140" height="28" fill="#fff5f0" stroke="#b85450" fill-opacity=".45"/><text x="150" y="157" font-family="monospace" font-size="10" text-anchor="middle">Linear-1 overlapped</text>
+<rect x="220" y="108" width="110" height="28" fill="#fff4e0" stroke="#e0b300"/><text x="275" y="127" font-family="monospace" font-size="10" text-anchor="middle">SwiGLU + L2</text>
+<rect x="330" y="108" width="90" height="28" fill="#eef3ff" stroke="#4a6fd3" fill-opacity=".45"/><text x="375" y="127" font-family="monospace" font-size="10" text-anchor="middle">Combine ovl</text>
+<text x="470" y="125" font-family="monospace" font-size="10" fill="#5fa55f">theoretical 1.42×</text>
+<text x="30" y="196" font-family="sans-serif" font-size="12" font-weight="700">(c) DeepSeek-V4 · MegaMoE</text>
 <g transform="translate(80,180)">
-<rect fill="#eef3ff" height="22" stroke="#4a6fd3" width="80" x="0" y="0"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="40" y="16">Disp W1</text>
-<rect fill="#fff5f0" height="22" stroke="#b85450" width="80" x="80" y="0"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="120" y="16">L1 W1</text>
-<rect fill="#fff5f0" height="22" stroke="#b85450" width="80" x="160" y="0"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="200" y="16">L2 W1</text>
-<rect fill="#eef3ff" height="22" stroke="#4a6fd3" width="80" x="240" y="0"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="280" y="16">Comb W1</text>
-<rect fill="#eef3ff" height="22" stroke="#4a6fd3" width="80" x="80" y="26"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="120" y="42">Disp W2</text>
-<rect fill="#fff5f0" height="22" stroke="#b85450" width="80" x="160" y="26"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="200" y="42">L1 W2</text>
-<rect fill="#fff5f0" height="22" stroke="#b85450" width="80" x="240" y="26"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="280" y="42">L2 W2</text>
-<rect fill="#eef3ff" height="22" stroke="#4a6fd3" width="80" x="320" y="26"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="360" y="42">Comb W2</text>
-<rect fill="#eef3ff" height="22" stroke="#4a6fd3" width="80" x="160" y="52"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="200" y="68">Disp W3</text>
-<rect fill="#fff5f0" height="22" stroke="#b85450" width="80" x="240" y="52"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="280" y="68">L1 W3</text>
-<rect fill="#fff5f0" height="22" stroke="#b85450" width="80" x="320" y="52"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="360" y="68">L2 W3</text>
-<rect fill="#eef3ff" height="22" stroke="#4a6fd3" width="80" x="400" y="52"></rect><text font-family="monospace" font-size="9" text-anchor="middle" x="440" y="68">Comb W3</text>
+<rect x="0"   y="0"  width="80" height="22" fill="#eef3ff" stroke="#4a6fd3"/><text x="40"  y="16" font-family="monospace" font-size="9" text-anchor="middle">Disp W1</text>
+<rect x="80"  y="0"  width="80" height="22" fill="#fff5f0" stroke="#b85450"/><text x="120" y="16" font-family="monospace" font-size="9" text-anchor="middle">L1 W1</text>
+<rect x="160" y="0"  width="80" height="22" fill="#fff5f0" stroke="#b85450"/><text x="200" y="16" font-family="monospace" font-size="9" text-anchor="middle">L2 W1</text>
+<rect x="240" y="0"  width="80" height="22" fill="#eef3ff" stroke="#4a6fd3"/><text x="280" y="16" font-family="monospace" font-size="9" text-anchor="middle">Comb W1</text>
+<rect x="80" y="26"  width="80" height="22" fill="#eef3ff" stroke="#4a6fd3"/><text x="120" y="42" font-family="monospace" font-size="9" text-anchor="middle">Disp W2</text>
+<rect x="160" y="26" width="80" height="22" fill="#fff5f0" stroke="#b85450"/><text x="200" y="42" font-family="monospace" font-size="9" text-anchor="middle">L1 W2</text>
+<rect x="240" y="26" width="80" height="22" fill="#fff5f0" stroke="#b85450"/><text x="280" y="42" font-family="monospace" font-size="9" text-anchor="middle">L2 W2</text>
+<rect x="320" y="26" width="80" height="22" fill="#eef3ff" stroke="#4a6fd3"/><text x="360" y="42" font-family="monospace" font-size="9" text-anchor="middle">Comb W2</text>
+<rect x="160" y="52" width="80" height="22" fill="#eef3ff" stroke="#4a6fd3"/><text x="200" y="68" font-family="monospace" font-size="9" text-anchor="middle">Disp W3</text>
+<rect x="240" y="52" width="80" height="22" fill="#fff5f0" stroke="#b85450"/><text x="280" y="68" font-family="monospace" font-size="9" text-anchor="middle">L1 W3</text>
+<rect x="320" y="52" width="80" height="22" fill="#fff5f0" stroke="#b85450"/><text x="360" y="68" font-family="monospace" font-size="9" text-anchor="middle">L2 W3</text>
+<rect x="400" y="52" width="80" height="22" fill="#eef3ff" stroke="#4a6fd3"/><text x="440" y="68" font-family="monospace" font-size="9" text-anchor="middle">Comb W3</text>
 </g>
-<text fill="#5fa55f" font-family="monospace" font-size="11" x="620" y="220">theoretical 1.92×  ·  measured 1.50 – 1.96×</text>
-<rect fill="#fafbfc" height="58" rx="4" stroke="#d0d7de" width="920" x="40" y="270"></rect>
-<text fill="#333" font-family="sans-serif" font-size="11" x="50" y="288">• key insight: comm &lt; compute, so fuse the 5 stages and hide comm inside compute to saturate SMs</text>
-<text fill="#333" font-family="sans-serif" font-size="11" x="50" y="305">• threshold: C/B ≤ 2d = 6144 FLOPs/Byte → 1 GBps interconnect hides 6.1 TFLOP/s (V4-Pro config)</text>
-<text fill="#333" font-family="sans-serif" font-size="11" x="50" y="322">• pull-based cross-GPU reads avoid the per-message notification cost of push</text>
+<text x="620" y="220" font-family="monospace" font-size="11" fill="#5fa55f">theoretical 1.92×  ·  measured 1.50 – 1.96×</text>
+<rect x="40" y="270" width="920" height="58" fill="#fafbfc" stroke="#d0d7de" rx="4"/>
+<text x="50" y="288" font-family="sans-serif" font-size="11" fill="#333">• key insight: comm &lt; compute, so fuse the 5 stages and hide comm inside compute to saturate SMs</text>
+<text x="50" y="305" font-family="sans-serif" font-size="11" fill="#333">• threshold: C/B ≤ 2d = 6144 FLOPs/Byte → 1 GBps interconnect hides 6.1 TFLOP/s (V4-Pro config)</text>
+<text x="50" y="322" font-family="sans-serif" font-size="11" fill="#333">• pull-based cross-GPU reads avoid the per-message notification cost of push</text>
 </svg>

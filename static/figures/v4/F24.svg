@@ -1,32 +1,35 @@
-<svg viewbox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="mh_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
-<rect fill="#fff" height="420" width="1100"></rect>
-<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">mHC 工程实现 · fused kernel + selective recompute + DualPipe overlap</text>
+<svg width="100%" height="auto" viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="mh_ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="1100" height="420" fill="#fff"/>
+<text x="550" y="24" font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle">mHC 工程实现 · fused kernel + selective recompute + DualPipe overlap</text>
+
 <!-- fused kernel -->
-<rect fill="#eef3ff" height="154" rx="4" stroke="#4a6fd3" width="510" x="30" y="56"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="285" y="78">① fused mhc_pre / mhc_post kernel</text>
-<text font-family="monospace" font-size="11" x="45" y="102">inputs  : x [T, n_hc=4, d=7168] bf16</text>
-<text font-family="monospace" font-size="11" x="45" y="120">        : hc_fn [mix_hc=24, n_hc·d=28672] float32 · hc_scale [3] · hc_base [24]</text>
-<text font-family="monospace" font-size="11" x="45" y="138">stages  : RMSNorm(flatten) → dynamic A/B/C gen → Sinkhorn 20 iters → mix</text>
-<text font-family="monospace" font-size="11" x="45" y="156">outputs : layer_input [T, d], post_mix [T, n_hc, d], res_mix [T, n_hc, d]</text>
-<text fill="#1a3a5c" font-family="monospace" font-size="11" x="45" y="178">• single kernel ⇒ no intermediate materialization</text>
-<text fill="#1a3a5c" font-family="monospace" font-size="11" x="45" y="196">• training &amp; inference share the same CUDA/TileLang kernel (byte-identical)</text>
+<rect x="30"  y="56" width="510" height="154" fill="#eef3ff" stroke="#4a6fd3" rx="4"/>
+<text x="285" y="78" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">① fused mhc_pre / mhc_post kernel</text>
+<text x="45"  y="102" font-family="monospace" font-size="11">inputs  : x [T, n_hc=4, d=7168] bf16</text>
+<text x="45"  y="120" font-family="monospace" font-size="11">        : hc_fn [mix_hc=24, n_hc·d=28672] float32 · hc_scale [3] · hc_base [24]</text>
+<text x="45"  y="138" font-family="monospace" font-size="11">stages  : RMSNorm(flatten) → dynamic A/B/C gen → Sinkhorn 20 iters → mix</text>
+<text x="45"  y="156" font-family="monospace" font-size="11">outputs : layer_input [T, d], post_mix [T, n_hc, d], res_mix [T, n_hc, d]</text>
+<text x="45"  y="178" font-family="monospace" font-size="11" fill="#1a3a5c">• single kernel ⇒ no intermediate materialization</text>
+<text x="45"  y="196" font-family="monospace" font-size="11" fill="#1a3a5c">• training & inference share the same CUDA/TileLang kernel (byte-identical)</text>
+
 <!-- Selective recompute -->
-<rect fill="#f4faf4" height="154" rx="4" stroke="#5fa55f" width="500" x="570" y="56"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="820" y="78">② Selective recompute (tensor-level checkpointing)</text>
-<text font-family="monospace" font-size="11" x="585" y="102">recompute : inter-layer hidden state [T, d=7168]</text>
-<text font-family="monospace" font-size="11" x="585" y="120">          : RMSNorm outputs [T, d]</text>
-<text font-family="monospace" font-size="11" x="585" y="138">retain    : wq/wkv GEMM outputs (compute-heavy)</text>
-<text font-family="monospace" font-size="11" x="585" y="156">          : compressor intermediates</text>
-<text fill="#1a3d1a" font-family="monospace" font-size="11" x="585" y="178">activation memory: n_hc=4 inflates 4× if naive</text>
-<text fill="#1a3d1a" font-family="monospace" font-size="11" x="585" y="196">after selective recompute: extra footprint ≤ 10%</text>
+<rect x="570" y="56" width="500" height="154" fill="#f4faf4" stroke="#5fa55f" rx="4"/>
+<text x="820" y="78" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">② Selective recompute (tensor-level checkpointing)</text>
+<text x="585" y="102" font-family="monospace" font-size="11">recompute : inter-layer hidden state [T, d=7168]</text>
+<text x="585" y="120" font-family="monospace" font-size="11">          : RMSNorm outputs [T, d]</text>
+<text x="585" y="138" font-family="monospace" font-size="11">retain    : wq/wkv GEMM outputs (compute-heavy)</text>
+<text x="585" y="156" font-family="monospace" font-size="11">          : compressor intermediates</text>
+<text x="585" y="178" font-family="monospace" font-size="11" fill="#1a3d1a">activation memory: n_hc=4 inflates 4× if naive</text>
+<text x="585" y="196" font-family="monospace" font-size="11" fill="#1a3d1a">after selective recompute: extra footprint ≤ 10%</text>
+
 <!-- DualPipe -->
-<rect fill="#fff4e0" height="180" rx="4" stroke="#e0b300" width="1040" x="30" y="224"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="550" y="246">③ DualPipe 1F1B schedule tuned for mHC extra traffic</text>
-<text font-family="monospace" font-size="11" x="45" y="270">conventional 1F1B: fwd[i] → comm → bwd[i]  ·  mHC adds n_hc× residual traffic between pipeline stages</text>
-<text font-family="monospace" font-size="11" x="45" y="290">V4 change 1: some mHC ops executed concurrently with adjacent compute — hc_pre of stage i+1 overlaps with hc_post of i</text>
-<text font-family="monospace" font-size="11" x="45" y="310">V4 change 2: send buffers grouped by n_hc slab so a single NVLink packet carries multiple mHC channels</text>
-<text fill="#7a4e00" font-family="monospace" font-size="11" x="45" y="332">wall-time overhead of mHC in production pipeline: 6.7%</text>
-<text fill="#7a4e00" font-family="monospace" font-size="11" x="45" y="354">for reference: naive residual adds zero comm → mHC's 6.7% is the whole cost of going from R^d to R^(n_hc·d)</text>
-<text fill="#555" font-family="monospace" font-size="11" x="45" y="378">see dedicated mHC paper (Xie et al., 2026) for engineering appendix</text>
+<rect x="30"  y="224" width="1040" height="180" fill="#fff4e0" stroke="#e0b300" rx="4"/>
+<text x="550" y="246" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">③ DualPipe 1F1B schedule tuned for mHC extra traffic</text>
+<text x="45"  y="270" font-family="monospace" font-size="11">conventional 1F1B: fwd[i] → comm → bwd[i]  ·  mHC adds n_hc× residual traffic between pipeline stages</text>
+<text x="45"  y="290" font-family="monospace" font-size="11">V4 change 1: some mHC ops executed concurrently with adjacent compute — hc_pre of stage i+1 overlaps with hc_post of i</text>
+<text x="45"  y="310" font-family="monospace" font-size="11">V4 change 2: send buffers grouped by n_hc slab so a single NVLink packet carries multiple mHC channels</text>
+<text x="45"  y="332" font-family="monospace" font-size="11" fill="#7a4e00">wall-time overhead of mHC in production pipeline: 6.7%</text>
+<text x="45"  y="354" font-family="monospace" font-size="11" fill="#7a4e00">for reference: naive residual adds zero comm → mHC's 6.7% is the whole cost of going from R^d to R^(n_hc·d)</text>
+<text x="45"  y="378" font-family="monospace" font-size="11" fill="#555">see dedicated mHC paper (Xie et al., 2026) for engineering appendix</text>
 </svg>

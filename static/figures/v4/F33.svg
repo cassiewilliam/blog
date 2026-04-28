@@ -1,35 +1,38 @@
-<svg viewbox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="mr_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
-<rect fill="#fff" height="420" width="1100"></rect>
-<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">DeepSeekMoE 在 V4 中的路由策略 · Hash (first 3 MoE layers) + Learned (rest)</text>
+<svg width="100%" height="auto" viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="mr_ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="1100" height="420" fill="#fff"/>
+<text x="550" y="24" font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle">DeepSeekMoE 在 V4 中的路由策略 · Hash (first 3 MoE layers) + Learned (rest)</text>
+
 <!-- Hash routing -->
-<rect fill="#eef3ff" height="200" rx="4" stroke="#4a6fd3" width="510" x="30" y="56"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="285" y="78">Layers 0–2 · Hash routing (zero parameter, deterministic)</text>
-<text font-family="monospace" font-size="11" x="45" y="102">expert_id = hash(token_id) % n_routed_experts</text>
-<text font-family="monospace" font-size="11" x="45" y="120">gating_score = fixed (no learned weights)</text>
-<text font-family="monospace" font-size="11" x="45" y="144">• no cold-start for router (starts balanced)</text>
-<text font-family="monospace" font-size="11" x="45" y="162">• deterministic per-token assignment</text>
-<text font-family="monospace" font-size="11" x="45" y="180">• early layers capture lexical features — learned</text>
-<text font-family="monospace" font-size="11" x="45" y="198">  routing gives little benefit here anyway</text>
-<text fill="#1a3a5c" font-family="sans-serif" font-size="11" x="45" y="224">→ replaces dense FFN from V3 and learned-router MoE</text>
-<text fill="#1a3a5c" font-family="sans-serif" font-size="11" x="45" y="242">→ saves training compute; Hash outputs one-hot mask</text>
+<rect x="30"  y="56" width="510" height="200" fill="#eef3ff" stroke="#4a6fd3" rx="4"/>
+<text x="285" y="78" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">Layers 0–2 · Hash routing (zero parameter, deterministic)</text>
+<text x="45"  y="102" font-family="monospace" font-size="11">expert_id = hash(token_id) % n_routed_experts</text>
+<text x="45"  y="120" font-family="monospace" font-size="11">gating_score = fixed (no learned weights)</text>
+<text x="45"  y="144" font-family="monospace" font-size="11">• no cold-start for router (starts balanced)</text>
+<text x="45"  y="162" font-family="monospace" font-size="11">• deterministic per-token assignment</text>
+<text x="45"  y="180" font-family="monospace" font-size="11">• early layers capture lexical features — learned</text>
+<text x="45"  y="198" font-family="monospace" font-size="11">  routing gives little benefit here anyway</text>
+<text x="45"  y="224" font-family="sans-serif" font-size="11" fill="#1a3a5c">→ replaces dense FFN from V3 and learned-router MoE</text>
+<text x="45"  y="242" font-family="sans-serif" font-size="11" fill="#1a3a5c">→ saves training compute; Hash outputs one-hot mask</text>
+
 <!-- Learned routing -->
-<rect fill="#f4faf4" height="200" rx="4" stroke="#5fa55f" width="500" x="570" y="56"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="820" y="78">Layers 3+ · Learned router (DeepSeekMoE)</text>
-<text font-family="monospace" font-size="11" x="585" y="102">score_ij = Sqrt(Softplus(hidden_i · W_gate_j))</text>
-<text font-family="monospace" font-size="11" x="585" y="120">top-6 routing · 1 shared + 256/384 routed experts</text>
-<text font-family="monospace" font-size="11" x="585" y="144">load balancing: auxiliary-loss-free (bias adjustment)</text>
-<text font-family="monospace" font-size="11" x="585" y="162">                + sequence-wise balance loss (w = 1e-4)</text>
-<text font-family="monospace" font-size="11" x="585" y="180">no constraint on # target nodes (V3 had a cap)</text>
-<text font-family="monospace" font-size="11" x="585" y="198">parallelism strategy redesigned for removed cap</text>
-<text fill="#1a3d1a" font-family="sans-serif" font-size="11" x="585" y="224">→ Sqrt(Softplus) vs Sigmoid: sharper gradient near 0,</text>
-<text fill="#1a3d1a" font-family="sans-serif" font-size="11" x="585" y="242">  compressed tail for stability</text>
+<rect x="570" y="56" width="500" height="200" fill="#f4faf4" stroke="#5fa55f" rx="4"/>
+<text x="820" y="78" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">Layers 3+ · Learned router (DeepSeekMoE)</text>
+<text x="585" y="102" font-family="monospace" font-size="11">score_ij = Sqrt(Softplus(hidden_i · W_gate_j))</text>
+<text x="585" y="120" font-family="monospace" font-size="11">top-6 routing · 1 shared + 256/384 routed experts</text>
+<text x="585" y="144" font-family="monospace" font-size="11">load balancing: auxiliary-loss-free (bias adjustment)</text>
+<text x="585" y="162" font-family="monospace" font-size="11">                + sequence-wise balance loss (w = 1e-4)</text>
+<text x="585" y="180" font-family="monospace" font-size="11">no constraint on # target nodes (V3 had a cap)</text>
+<text x="585" y="198" font-family="monospace" font-size="11">parallelism strategy redesigned for removed cap</text>
+<text x="585" y="224" font-family="sans-serif" font-size="11" fill="#1a3d1a">→ Sqrt(Softplus) vs Sigmoid: sharper gradient near 0,</text>
+<text x="585" y="242" font-family="sans-serif" font-size="11" fill="#1a3d1a">  compressed tail for stability</text>
+
 <!-- MTP -->
-<rect fill="#fff4e0" height="130" rx="4" stroke="#e0b300" width="1040" x="30" y="276"></rect>
-<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="550" y="298">Multi-Token Prediction (MTP) · unchanged from V3</text>
-<text font-family="monospace" font-size="11" x="60" y="322">depth = 1 (one draft token per step)</text>
-<text font-family="monospace" font-size="11" x="60" y="340">loss weight: 0.3 during most of training, dropped to 0.1 near LR decay</text>
-<text font-family="monospace" font-size="11" x="60" y="358">input: main model's last hidden → MTP decoder layer (same mHC + attention + MoE block shape)</text>
-<text font-family="monospace" font-size="11" x="60" y="378">output: predict next-next token → used as speculative draft at inference</text>
-<text fill="#7a4e00" font-family="monospace" font-size="11" x="60" y="398">reuse of same block shape = MTP shares tile_scheduler metadata with main decode at inference</text>
+<rect x="30"  y="276" width="1040" height="130" fill="#fff4e0" stroke="#e0b300" rx="4"/>
+<text x="550" y="298" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">Multi-Token Prediction (MTP) · unchanged from V3</text>
+<text x="60"  y="322" font-family="monospace" font-size="11">depth = 1 (one draft token per step)</text>
+<text x="60"  y="340" font-family="monospace" font-size="11">loss weight: 0.3 during most of training, dropped to 0.1 near LR decay</text>
+<text x="60"  y="358" font-family="monospace" font-size="11">input: main model's last hidden → MTP decoder layer (same mHC + attention + MoE block shape)</text>
+<text x="60"  y="378" font-family="monospace" font-size="11">output: predict next-next token → used as speculative draft at inference</text>
+<text x="60"  y="398" font-family="monospace" font-size="11" fill="#7a4e00">reuse of same block shape = MTP shares tile_scheduler metadata with main decode at inference</text>
 </svg>
