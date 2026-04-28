@@ -114,7 +114,8 @@ body.drawio-edit-mode .drawio-chrome { opacity: 1 !important; }
 /* On screens wide enough for the fixed-position left TOC, shift the
    article body right so it does not sit underneath the TOC panel. */
 @media (min-width: 1280px) {
-  .main {
+  /* Post pages only — list/home pages have body.list and stay centered. */
+  body:not(.list) .main {
     margin-right: auto !important;
     padding-left: 380px !important;
     box-sizing: border-box;
