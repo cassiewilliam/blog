@@ -33,12 +33,28 @@
     {{ $svg | safeHTML }}
   </div>
 
+  {{- /* github.dev secondary edit: GitHub session cookie auth (no OAuth round trip
+         to github.com/login — works behind GFW where the OAuth endpoint is
+         blocked). Append `?reopen-with=text` would be ideal but VSCode-web
+         doesn't honour it; user has to right-click → Open With → Text Editor
+         once after opening (then VSCode remembers the choice).        */ -}}
+  {{- $ghDev := "" -}}
+  {{- with $src -}}
+    {{- $ghDev = printf "https://github.dev/%s/blob/%s/static%s" $repo $branch . -}}
+  {{- end -}}
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
     {{- with $editURL }}
     <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
-       title="diagrams.net 中可视化编辑：拖拽、改文字、改连线，保存即提交到 main"
+       title="diagrams.net 可视化编辑（首次需要授权 jgraph 访问 GitHub；GFW 屏 github.com OAuth 时需 VPN 一次）"
        style="color:#fff;background:#0969da;text-decoration:none;border:1px solid #0969da;padding:3px 10px;border-radius:4px;font-weight:600">
-       ✏️ Edit on diagrams.net
+       ✏️ drawio
+    </a>
+    {{- end }}
+    {{- with $ghDev }}
+    <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
+       title="github.dev (VSCode web) — 用 GitHub session cookie 鉴权，不走 OAuth；打开后右键文件 → Open With → Text Editor 切到 SVG 源码"
+       style="color:#fff;background:#1f883d;text-decoration:none;border:1px solid #1f883d;padding:3px 10px;border-radius:4px;font-weight:600;margin-left:6px">
+       📝 github.dev
     </a>
     {{- end }}
     <a href="{{ $src | safeURL }}" target="_blank" rel="noopener"
