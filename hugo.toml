@@ -13,7 +13,7 @@ enableInlineShortcodes = true
   # Book section to display in the sidebar.
   BookSection = "posts"
   # Show table of contents on the right side.
-  BookToC = true
+  BookToC = false
   # Repo link for "Edit this page" button.
   BookRepo = "https://github.com/cassiewilliam/blog"
   BookEditPath = "edit/main/content"
