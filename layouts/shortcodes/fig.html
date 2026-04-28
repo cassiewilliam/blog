@@ -1,17 +1,16 @@
 {{- /* {{< fig src="/figures/v4/F1.svg" label="F1" caption="…" >}}
 
-       Inlines the SVG into the page so it renders pixel-perfect (no
-       lossy drawio-shape conversion, no mxgraph viewer layout issues).
-       The 'Edit' pill opens the SVG file in GitHub's web editor — direct
-       XML editing, save commits to main, ~8s later live.            */ -}}
+       Renders the .drawio companion via the mxgraph viewer so that the
+       page view = the drawio editor view (consistency over pixel-fidelity:
+       both use drawio's shape renderer). Edit pill links to /edit-fig/
+       which loads the same .drawio, edits visually, and saves back.    */ -}}
 {{- $src    := .Get "src" -}}
 {{- $cap    := .Get "caption" -}}
 {{- $label  := .Get "label" -}}
-{{- $svgPath := printf "static%s" $src -}}
-{{- $svg := "" -}}
-{{- if (fileExists $svgPath) -}}
-  {{- $svg = readFile $svgPath -}}
-{{- end -}}
+{{- /* Derive the .drawio path (e.g. /figures/v4/F1.svg → /drawio/v4/figures/F1.drawio). */ -}}
+{{- $drawio := replace (replace $src "/figures/" "/drawio/") ".svg" ".drawio" -}}
+{{- $drawio = replace $drawio "/drawio/v4/F" "/drawio/v4/figures/F" -}}
+{{- $url := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $drawio) -}}
 
 {{- $repo   := .Page.Site.Params.drawioGithubRepo | default "cassiewilliam/blog" -}}
 {{- $branch := .Page.Site.Params.drawioGithubBranch | default "main" -}}
@@ -23,8 +22,10 @@
 {{- with $src -}}{{- $editURL = printf "/edit-fig/?src=%s" . -}}{{- end -}}
 
 <figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
-  <div class="cc-fig-svg" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;line-height:0;overflow:hidden">
-    {{ $svg | safeHTML }}
+  <div class="cc-fig-mx" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:340px">
+    <div class="mxgraph"
+         style="max-width:100%;"
+         data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","url":"{{ $url | safeJS }}"}'></div>
   </div>
 
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">

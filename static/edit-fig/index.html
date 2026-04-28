@@ -80,31 +80,20 @@ window.addEventListener('message', e => {
     setStat('drawio 就绪 · 编辑后 ⌘S 保存', 'ok');
   }
   else if (m.event === 'save' && !saving) {
+    // m.xml is the new mxfile XML (drawio's native format). Save it back to
+    // the .drawio companion path — the live page renders that file via the
+    // mxgraph viewer, so the editor view and the page view always match.
     saving = true;
-    setStat('导出 SVG…');
-    post({ action: 'export', format: 'xmlsvg' });
-  }
-  else if (m.event === 'export') {
-    const url = m.data || '';
-    let svg;
-    if (url.startsWith('data:image/svg+xml;base64,')) {
-      svg = decodeURIComponent(escape(atob(url.split(',')[1])));
-    } else if (url.startsWith('<svg') || url.startsWith('<?xml')) {
-      svg = url;
-    } else {
-      saving = false;
-      setStat('导出格式异常: ' + url.slice(0, 60), 'err');
-      return;
-    }
     setStat('提交到 GitHub…');
+    const xml = m.xml || '';
     fetch('/oauth/save-fig', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         token, repo: 'cassiewilliam/blog', branch: 'main',
-        path: 'static' + src,
-        content: svg,
-        message: 'edit ' + src + ' via drawio embed',
+        path: 'static' + drawioPath,
+        content: xml,
+        message: 'edit ' + drawioPath + ' via drawio embed',
       }),
     })
     .then(r => r.json())
