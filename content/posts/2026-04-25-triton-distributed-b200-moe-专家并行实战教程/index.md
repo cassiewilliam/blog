@@ -4049,9 +4049,14 @@ sudolspci-s17:00.0-vvv|grep-A3"Correctable"|head
 
 ### 5.7 NUMA 拓扑实测（ACPI SLIT 表）
 
-$numactl-H
-nodedistances:
-node010:10211:2110
+```bash
+$ numactl -H
+node distances:
+node   0  1
+  0   10  21
+  1   21  10
+```
+
 **解读**：本节点 2-socket 系统，NUMA 距离 10（本地）/ 21（跨 socket，走 UPI）。**远端访问本地内存延迟 = 2.1× 本地**。这个 2.1× 不是理论值，是 ACPI BIOS 根据 UPI link 实测填在 SLIT 表里的。
 
 **每 NUMA node 配置**：
@@ -4083,9 +4088,12 @@ node010:10211:2110
 
 **验证 GPU-NUMA 亲和**：
 
+```bash
 forpciin0000:17:00.00000:3d:00.00000:60:00.00000:70:00.0\0000:98:00.00000:bb:00.00000:dd:00.00000:ed:00.0;doecho"$pci -> NUMA $(cat/sys/bus/pci/devices/$pci/numa_node)"done# 0000:17:00.0 -> NUMA 0    (GPU0)# 0000:3d:00.0 -> NUMA 0    (GPU1)# 0000:60:00.0 -> NUMA 0    (GPU2)# 0000:70:00.0 -> NUMA 0    (GPU3)# 0000:98:00.0 -> NUMA 1    (GPU4)# 0000:bb:00.0 -> NUMA 1    (GPU5)# 0000:dd:00.0 -> NUMA 1    (GPU6)# 0000:ed:00.0 -> NUMA 1    (GPU7)
 **NUMA-aware rank 绑定最佳实践**：
+```
 
+```bash
 # torchrun 启动时, 让 rank 0-3 绑 NUMA 0, rank 4-7 绑 NUMA 1# 做法 A: 用 numactl 包装
 numactl--cpunodebind=0--membind=0pythonworker.py--rank=0# 启 rank 0
 numactl--cpunodebind=0--membind=0pythonworker.py--rank=1# ...
@@ -4096,6 +4104,7 @@ taskset-cp$(pgrep-f"python.*worker.py"|head-1)# 如果 rank 0 的 CPU set 是 {0
 - GPU0-3 的 RDMA 通过 NUMA 0 的 CX-7 → **PIX 直连完全不跨 UPI**
 - GPU4-7 类似但在 NUMA 1
 - 如果 worker 进程在 NUMA 0 但绑了 GPU4：NVSHMEM bootstrap 走 NUMA 0 的 bond0 OK，但**内存 / 锁 / shared_tensor 分配会跨 UPI** → CPU 侧同步代价翻倍
+```
 
 ### 5.8 GPU-GPU P2P 能力矩阵实测
 
@@ -4710,6 +4719,7 @@ Physical state: LinkUp
 
 #### D. 快速自检清单
 
+```bash
 # 1. 总数应 = 13 (8 × RoCE 400G + 4 × IB 100G + 1 × bond)
 ibstat|grep-c"^CA '"# 期望输出: 13# 2. 所有端口必须 Active
 ibstat|grep-E"State:|Physical state:"|grep-v"Active\|LinkUp"# 期望: 空输出# 3. 400G 端口数 = 8
@@ -4720,6 +4730,7 @@ ls/sys/class/infiniband/mlx5_7/device/net2>/dev/null
 # 期望: eth2 和 eth3# 7. 验证 GPUDirect RDMA peermem 模块加载
 lsmod|grepnvidia_peermem
 # 期望: 有 nvidia_peermem 条目# 8. NCCL 看到几张 IB HCANCCL_DEBUG=INFOpython-c"import torch; torch.distributed.init_process_group('nccl', init_method='tcp://127.0.0.1:29500', world_size=1, rank=0)"2>&1|grep"NET/IB"# 期望: 枚举 8+ 张 HCA，每 GPU 选一个 PIX
+```
 
 ### 6.10 选路决策四层链
 
@@ -5232,14 +5243,18 @@ exportMASTER_PORT=23456exportVLLM_HOST_IP=$(ip-4addrshowbond0|awk'/inet /{print 
 exportNVSHMEM_BOOTSTRAP_UID_SOCK_IFNAME=bond0
 exportNVSHMEM_BOOTSTRAP_UID_SOCK_FAMILY=AF_INET
 
+```bash
 # 后向 NIC: 自动，不覆盖# export NCCL_IB_HCA=mlx5_0,mlx5_5,mlx5_8,mlx5_9,mlx5_10,mlx5_11,mlx5_12,mlx5_13# export NCCL_NET_GDR_LEVEL=PIX# ───── Node 0 (head) ─────
 vllmservedeepseek-ai/DeepSeek-V3\--host`VLLM_HOST_IP--port8000\--data-parallel-size16\--data-parallel-size-local8\--data-parallel-address`VLLM_HOST_IP\--data-parallel-rpc-port13345\--enable-expert-parallel\--all2all-backenddeepep_high_throughput\--enable-dbo--async-scheduling\--enable-eplb--eplb-config'{"num_redundant_experts":32}'# ───── Node 1 ─────
 vllmservedeepseek-ai/DeepSeek-V3\--host$VLLM_HOST_IP--port8000\--data-parallel-size16\--data-parallel-size-local8\--data-parallel-start-rank8\--data-parallel-address10.77.188.34# Node 0 的 bond0 IP \--data-parallel-rpc-port13345\--headless\--enable-expert-parallel\--all2all-backenddeepep_high_throughput\--enable-dbo--async-scheduling
+```
 
 验证启动正确：
 
+```bash
 # 验证 HTTP 在 bond0 上
 curlhttp://$VLLM_HOST_IP:8000/health
+```
 
 # 验证 NCCL bootstrap 使用 bond0NCCL_DEBUG=INFOvllmserve...2>&1|grep-i"using ifname"# 应看到: NCCL INFO NET/Socket: Using [0]bond0:10.77.188.34<0># 验证 RDMA 数据通道（打开 NCCL_DEBUG_SUBSYS=NET 时）NCCL_DEBUG=INFONCCL_DEBUG_SUBSYS=NETvllmserve...2>&1|grep"NET/IB"# 应看到 8 张 mlx5_* 被枚举，每 GPU 选一个 PIX 最近的# 验证 EP A2A 走 RDMA# 看 ibdump 里的 traffic 在 ens*np0 上能看到 RDMA WRITE
 ibdump-dmlx5_0-w/tmp/dump.pcap&
@@ -7268,7 +7283,7 @@ Warp Specialization = 流水线厨房
 Warp Specialization 要求**编译器能把 `if (wg == ...)` 静态展开**，每个 WG 跑独立的指令流（避免分支发散）。常用技巧：
 
 // 用 constexpr if + warp_specialize attribute (CUTLASS 风格)template<intWG_ID>__device____forceinline__voidrun_wg(){ifconstexpr(WG_ID==0){do_g2s();// 只编译这段}elseifconstexpr(WG_ID==1){do_rdma();}// ...}__global__voidkernel(){intwg=threadIdx.x/(WARP_SIZE*WARPS_PER_GROUP);switch(wg){case0:run_wg<0>();break;case1:run_wg<1>();break;case2:run_wg<2>();break;case3:run_wg<3>();break;}}
-CUTLASS 3.x / cute 库已经把这些抽象成 $cute::warp&#95;{specialize}<>$ helper。
+CUTLASS 3.x / cute 库已经把这些抽象成 `cute::warp_specialize<>` helper。
 
 ### 17.4 TMA 工作原理详解
 
@@ -8672,7 +8687,9 @@ MLIR TTGIR + layout + distributed lowering
 
 ### 23.2 distributed op 定义速览
 
+```tablegen
 //DistributedOps.tddefDistributedWait:DistributedOp<"wait",[...]>{letarguments=(insPtr<I32>:$signal&#95;{ptr},I32:$num_barriers,CommScope:$scope,MemSemantic:$semantic,I32:$wait&#95;{value});letresults=(outsToken:$token);}defDistributedConsumeToken:DistributedOp<"consume_token",[...]>{letarguments=(insAnyType:$value,Token:$token);letresults=(outsAnyType:$result);}defDistributedSymmAt:DistributedOp<"symm&#95;{at}",[...]>{letarguments=(insAnyPointer:$local,I32:$peer);letresults=(outsAnyPointer:$remote);}defDistributedNotify:DistributedOp<"notify",[...]>{letarguments=(insPtr:$signal,I32:$peer,I32:$signal&#95;{value},SignalOp:$sig_op,CommScope:$comm_scope);}
+```
 
 ### 23.3 NVIDIA lowering 核心映射
 
@@ -10052,8 +10069,10 @@ numactl--hardware
 # NIC 映射
 lspci|grep-imellanox
 ibstat|head-60
+```bash
 ifconfig|grep-A2'ens\|eth\|bond\|ibs'# Bond 配置
 cat/proc/net/bonding/bond0
+```
 
 # NIC-PCI 映射forifacein$(ls/sys/class/net/|grep-E'^{ens}|^{eth}|^{ibs}');doecho"=== $iface ==="readlink-f/sys/class/net/$iface/device2>/dev/null
 done# PCIe 速度

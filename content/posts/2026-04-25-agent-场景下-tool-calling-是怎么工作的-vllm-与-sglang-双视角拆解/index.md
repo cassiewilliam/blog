@@ -203,9 +203,9 @@ sglang 走标准的 HF Jinja 路径。DeepSeek V3.2 的模板
 ### 3.1 detector 的本质：状态机 + 字符串匹配
 
 无论 vLLM 还是 sglang，DSML 的 streaming detector 本质都是一个 3 状态状态机：
-`PLAIN_TEXT` → 看到 $<｜DSML｜tool&#95;{calls}>$ → `IN_TOOL_BLOCK`
+`PLAIN_TEXT` → 看到 `<｜DSML｜tool_calls>` → `IN_TOOL_BLOCK`
 → 看到 `</｜DSML｜invoke>` → emit 一个完整 tool_call → 回到 IN_TOOL_BLOCK 等下一个 invoke
-→ 看到 $</｜DSML｜tool&#95;{calls}>$ → 回到 PLAIN_TEXT。
+→ 看到 `</｜DSML｜tool_calls>` → 回到 PLAIN_TEXT。
 
 {{< fig src="/figures/2026-04-25-agent-场景下-tool-calling-是怎么工作的-vllm-与-sglang-双视角拆解/F6.svg" label="F6" caption="DSML streaming detector 的三态机：plain text → in-tool → in-invoke。状态切换由 4 个 marker 触发，每帧只用 substring 检查 + 一次正则匹配，复杂度 O(N)。" >}}
 
@@ -448,7 +448,7 @@ V32/V4 tool parser 的 `adjust_request` 强制把 `skip_special_tokens` 设为 F
 {{< dd title="为什么不直接给 DSML marker 注册成真 special token？" >}}
 三个原因：(1) 注册 special token 需要改 tokenizer 文件，已发布的模型不能动；
 (2) 模型训练时见到的就是普通 BPE 段而不是 special，注册成 special 会改变 embedding 行为；
-(3) 多版本兼容 —— V3 的 `<｜tool▁call▁begin｜>` 和 V4 的 $<｜DSML｜tool&#95;{calls}>$ 共存于同一 vocab，
+(3) 多版本兼容 —— V3 的 `<｜tool▁call▁begin｜>` 和 V4 的 `<｜DSML｜tool_calls>` 共存于同一 vocab，
 拆成普通 BPE 段反而避免冲突。代价就是 detector 必须能容忍 byte-level chunked emit。
 {{< /dd >}}
 
@@ -523,7 +523,7 @@ def encode_arguments_to_dsml(tool_call):
 ### 6.2 DSV4 把 role=tool 折成 user 内嵌 block
 
 OpenAI 协议有 `role=tool`，但 DeepSeek V4 训练时 prompt 里没有 tool 角色，
-而是用 $<tool&#95;{result}>...</tool&#95;{result}>$ 块嵌在 user 消息里。
+而是用 `<tool_result>...</tool_result>` 块嵌在 user 消息里。
 vLLM V4 tokenizer 通过 `merge_tool_messages` 自动转：
 
 # vllm/tokenizers/deepseek_v4_encoding.py:407
@@ -553,7 +553,7 @@ sglang 的 V3.2 detector 在 jinja 模板里直接处理 tool 角色，不需要
 ### 6.3 多 tool 并行执行
 
 OpenAI 协议支持模型在一轮里发**多个** tool_calls（数组），客户端可以并行执行后把所有结果一起回灌。
-DSML 格式天然支持：一个 $<｜DSML｜tool&#95;{calls}>$ 块里可以塞多个 `<｜DSML｜invoke>` 子块。
+DSML 格式天然支持：一个 `<｜DSML｜tool_calls>` 块里可以塞多个 `<｜DSML｜invoke>` 子块。
 检查时 detector 用 `findall` 抽出所有 invoke，按 index 顺序 emit。
 
 # 模型可能输出
@@ -882,8 +882,8 @@ async def agent_loop(
 12. **HTTP Client → Agent Runtime**：`aiter_lines` yield 一行，agent runtime 拿到首帧 —— TTFB 5.8 s 在这里到顶
 13. **LLM Engine [自调用]**：继续 decode 152 个 content token (~14 s)，每个走 step 12 同样的链路。tool parser 全程在 PLAIN_TEXT
 14. **LLM Engine → Agent Runtime**：~152 帧 content delta 流过来，agent runtime 累积成 reasoning 文本
-15. **LLM Engine [自调用]**：模型生成 $<｜DSML｜tool&#95;{calls}>$ token 序列，detokenizer 输出后 tool parser 切到 IN_TOOL_BLOCK，**停止 forward content**，开始内部缓冲
-16. **LLM Engine → Agent Runtime**：parser 看到 $<｜DSML｜invoke name="web&#95;{search}">$ 完整段，emit 第一帧 tool_call (id + name)
+15. **LLM Engine [自调用]**：模型生成 `<｜DSML｜tool_calls>` token 序列，detokenizer 输出后 tool parser 切到 IN_TOOL_BLOCK，**停止 forward content**，开始内部缓冲
+16. **LLM Engine → Agent Runtime**：parser 看到 `<｜DSML｜invoke name="web_search">` 完整段，emit 第一帧 tool_call (id + name)
 17. **LLM Engine [自调用]**：decode argument tokens, parser 增量 emit args delta（13 帧）
 18. **LLM Engine → Agent Runtime**：13 个 args 增量帧依次到 agent runtime, runtime 按 tool_call index 累加 arguments 字符串
 19. **LLM Engine → Agent Runtime**：模型生成 EOS token, engine 设 $finish&#95;{reason}="tool&#95;{calls}"$, 发 finish 帧 + `data: [DONE]`。HTTP stream 关闭
