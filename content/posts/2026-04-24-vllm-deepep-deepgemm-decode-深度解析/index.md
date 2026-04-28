@@ -24,15 +24,21 @@ Decode 阶段每步只新增 1 个 token，整个 batch 也就几十到两百。
 - **形状固定**：必须能进 **CUDA Graph**，否则 launch 开销就会吃掉毫秒。
 - **RDMA latency 主导**：带宽不是瓶颈（batch 小），发起 RDMA 请求的固定开销才是。
 
+```cpp
 {{< fig src="/figures/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/F1.svg" label="F1" caption="Decode 阶段的后端不是 “换个 kernel”，而是把整条路径从 Prefill 的 HT/Contiguous 切到 LL/Masked，换一套对延迟更友好的内存与通信模式。" >}}
+```
 
 ### ② LL 模式下的 Buffer 分配
 
+```cpp
 {{< fig src="/figures/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/F2.svg" label="F2" caption="Decode 初始化时 DeepEP LL 会申请三块显存：NVLink、RDMA、Staging。与 HT 最大区别是 num_sms=0，通信完全由 RDMA 硬件自己走，不跟 DeepGEMM 抢 SM。" >}}
+```
 
 ### ③ Masked Layout 的形状
 
+```cpp
 {{< fig src="/figures/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/F3.svg" label="F3" caption="Masked Layout 的核心是固定 shape。每个 expert 都保留 max_m 行，真实 token 数压在 expert_num_tokens 向量里；kernel 每到新 expert 只读一次向量。" >}}
+```
 
 ### ④ 符号速查表
 
@@ -66,7 +72,9 @@ Decode 阶段每步只新增 1 个 token，整个 batch 也就几十到两百。
 ## DeepEP LL · cooperative + 64 QPs
 *用 QP 并发覆盖 IB per-op 延迟*
 
+```cpp
 {{< fig src="/figures/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/F4.svg" label="F4" caption="HT vs LL：一个追吞吐、一个追延迟。Decode 要每个 step 严格稳定，所以愿意牺牲 padding 空间，换取固定 shape + CUDA Graph + 0 SM 通信。" >}}
+```
 
 LL 模式下 `DeepEPLLAll2AllManager` 的几个关键 knob：
 
@@ -96,19 +104,25 @@ Contiguous 读 `m_indices[row]` 判 expert；Masked 读 `expert_num_tokens[cur_e
 ## CUDA Graph · 形状冻结
 *配合 DP dummy batch，让 All2All 不 hang*
 
+```cpp
 {{< fig src="/figures/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/F5.svg" label="F5" caption="CUDA Graph 要求 Decode 的每一步都在“形状固定”的轨道上跑。LL + Masked + 双 staging 把这条轨道铺好，Prefill 的 HT/Contiguous 走不了这条路。" >}}
+```
 
 DP 场景下 CUDA Graph 还有一个隐形约束：**所有 rank 必须都进 MoE 层**。如果某个 rank 当前 batch 空，它仍然要执行一次 dummy batch，否则其他 rank 的 All2All 会 hang。`DPEngineCoreProc.execute_dummy_batch()` 就是干这个的。
 
 ## Decode 单步时序
 *DBO 把 Dispatch / GEMM / Combine 藏进同一步*
 
+```cpp
 {{< fig src="/figures/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/F6.svg" label="F6" caption="Decode 单步的时序：计算和通信都小，但只要配合 DBO + Graph，端到端每层能稳定压到个位数毫秒。" >}}
+```
 
 ## 性能 · RDMA latency 天花板
 *不是带宽，是 per-op 固定开销*
 
+```cpp
 {{< fig src="/figures/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/F7.svg" label="F7" caption="Decode 的延迟结构和 Prefill 差得最远的地方：Dispatch 和 Combine 不再被 RDMA 带宽压住，而是被 RDMA 的“发起一次请求”的固定开销卡住，优化点完全不同。" >}}
+```
 
 {{< dd title="为什么 Decode 不怕 combine 的 BF16 流量？" >}}
 Prefill 一次 MoE 层的 combine 是 ~700 MB RDMA，真的会被带宽卡；Decode 单步全模型才几 MB，跟 NVLink 分分钟就过去了。Decode 真正的瓶颈是**每次 RDMA 请求的启动延迟**——不管传多少字节，一次 RDMA write 总有固定 1-2 微秒 + IB switch hop。64 QPs 就是让这些小请求尽量并行出去。
@@ -117,7 +131,9 @@ Prefill 一次 MoE 层的 combine 是 ~700 MB RDMA，真的会被带宽卡；Dec
 ## max_m 甜点区间
 *太小被 RDMA 吞，太大被 staging 显存吞*
 
+```cpp
 {{< fig src="/figures/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/F8.svg" label="F8" caption="Decode 存在性能甜点：太小的 batch 被 RDMA 固定开销吞，太大的 batch 被 staging 显存吞。Masked 布局在 64～256 max_m 之间最稳。" >}}
+```
 
 实战经验：
 
@@ -203,4 +219,6 @@ num_sms=0
 7. 07 Prefill (HT) vs Decode (LL) 全面对比
 8. 08 DP Chunking + DBO 在 Decode 场景
 
+```cpp
 <div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:640px;margin:16px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"pages zoom layers tags lightbox","edit":"_blank","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/source.drawio"}'></div>
+```
