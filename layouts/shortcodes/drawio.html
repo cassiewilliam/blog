@@ -20,7 +20,11 @@
   <div class="mxgraph"
        style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;"
        data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","url":"{{ $url | safeJS }}"}'></div>
-  <div style="text-align:right;font-size:12px;margin-top:6px">
+
+  {{- /* Edit chrome — hidden by default, revealed on hover OR if URL has ?edit=1.
+         Visitors only see the clean diagram. Authors can hover or append ?edit=1
+         to discover the edit affordance. Saving still requires GitHub write access. */}}
+  <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
     <a href="{{ $edit | safeURL }}" target="_blank" rel="noopener"
        style="color:#0969da;text-decoration:none;border:1px solid #d0d7de;padding:3px 8px;border-radius:4px;background:#f6f8fa">
        ✏️ Edit on diagrams.net

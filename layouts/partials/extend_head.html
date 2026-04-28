@@ -36,3 +36,30 @@
 {{- if .Site.Params.busuanzi }}
 <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 {{- end }}
+
+{{- /* drawio Edit-chrome reveal:
+       - default: hidden (opacity:0)
+       - hover over the figure: shown
+       - URL has ?edit=1 OR ?edit: always shown (per session, persisted in localStorage)
+       - URL has ?edit=0: clear and hide                                     */ -}}
+<style>
+.drawio-fig:hover .drawio-chrome { opacity: 1 !important; }
+body.drawio-edit-mode .drawio-chrome { opacity: 1 !important; }
+</style>
+<script>
+(function () {
+  try {
+    var qs = new URLSearchParams(location.search);
+    if (qs.has('edit')) {
+      if (qs.get('edit') === '0') localStorage.removeItem('drawio-edit-mode');
+      else localStorage.setItem('drawio-edit-mode', '1');
+    }
+    if (localStorage.getItem('drawio-edit-mode') === '1') {
+      document.documentElement.classList.add('drawio-edit-mode');
+      document.addEventListener('DOMContentLoaded', function () {
+        document.body.classList.add('drawio-edit-mode');
+      });
+    }
+  } catch (e) {}
+})();
+</script>
