@@ -6,7 +6,10 @@
        paper PNGs to silently fail in some browsers.                  */ -}}
 {{- $src := .Get "src" -}}
 {{- $cap := .Get "caption" -}}
-{{- $url := relURL $src -}}
+{{- /* absURL prepends the full baseURL incl. any path component, so this
+       resolves to /paper_figs/... on Tencent (baseURL=/) and to
+       /blog/paper_figs/... on the GitHub Pages mirror (baseURL=/blog/). */ -}}
+{{- $url := absURL (strings.TrimPrefix "/" $src) -}}
 
 <figure class="cc-pfig" style="margin:18px 0">
   <div style="border:1px solid #d0d7de;border-radius:6px;background:#fff;padding:6px;line-height:0;text-align:center">
