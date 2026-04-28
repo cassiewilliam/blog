@@ -3547,47 +3547,17 @@ Token-Expert 条目总数: M × TopK = 4096 × 8 = 32,768 条
 **适用模型**: DeepSeek-V2/V3, Qwen3-Next等使用MLA+MoE的模型
 
 ## 📐 交互式 draw.io 图表（8 页）
-*完整 8 页原图 — 每页单独嵌入，可缩放 / 拖拽 / 编辑*
+*完整 8 页原图。viewer 底部有页签可在 8 页之间切换；可缩放、拖拽、点 ✏️ 进编辑*
 
-**目录**：
-- [1. 硬件拓扑与并行映射](#drawio-page-1)
-- [2. MoE Prefill 推理全流程](#drawio-page-2)
-- [3. DeepEP Dispatch/Combine 完整流程](#drawio-page-3)
-- [4. DeepGEMM Expert Compute 详解](#drawio-page-4)
-- [5. 混合并行策略 + 通信量计算详解](#drawio-page-5)
-- [6. WGMMA 三层循环计算分解](#drawio-page-6)
-- [7. Kernel Launch: Grid / Block / Cluster](#drawio-page-7)
-- [8. DBO (Dual Batch Overlap) 完整机制](#drawio-page-8)
+**页面索引**：
 
-### <span id="drawio-page-1"></span>1. 硬件拓扑与并行映射
+1. 01 硬件拓扑与并行映射
+2. 02 MoE Prefill 推理全流程
+3. 03 DeepEP Dispatch/Combine 完整流程
+4. 04 DeepGEMM Expert Compute 详解
+5. 05 混合并行策略 + 通信量计算详解
+6. 06 WGMMA 三层循环计算分解
+7. 07 Kernel Launch: Grid / Block / Cluster
+8. 08 DBO (Dual Batch Overlap) 完整机制
 
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":0,"pageId":"hardware-topology","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-2"></span>2. MoE Prefill 推理全流程
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":1,"pageId":"moe-full-flow","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-3"></span>3. DeepEP Dispatch/Combine 完整流程
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":2,"pageId":"deepep-dataflow","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-4"></span>4. DeepGEMM Expert Compute 详解
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":3,"pageId":"deepgemm-compute","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-5"></span>5. 混合并行策略 + 通信量计算详解
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":4,"pageId":"parallel-strategy","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-6"></span>6. WGMMA 三层循环计算分解
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":5,"pageId":"wgmma-decomposition","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-7"></span>7. Kernel Launch: Grid / Block / Cluster
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":6,"pageId":"grid-block-launch","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-8"></span>8. DBO (Dual Batch Overlap) 完整机制
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":7,"pageId":"dbo-detail","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>
-
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:640px;margin:16px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"pages zoom layers tags lightbox","edit":"_blank","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>

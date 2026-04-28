@@ -190,47 +190,17 @@ DP dummy batch
 num_sms=0
 
 ## 📐 交互式 draw.io 图表（8 页）
-*完整 8 页原图 — 每页单独嵌入，可缩放 / 拖拽 / 编辑*
+*完整 8 页原图。viewer 底部有页签可在 8 页之间切换；可缩放、拖拽、点 ✏️ 进编辑*
 
-**目录**：
-- [1. 硬件拓扑 + Decode 场景参数](#drawio-page-1)
-- [2. Decode MoE 端到端流程](#drawio-page-2)
-- [3. DeepEP LL Dispatch/Combine + HT 对比](#drawio-page-3)
-- [4. DeepGEMM Masked Expert Compute 详解](#drawio-page-4)
-- [5. CUDA Graph 兼容性分析](#drawio-page-5)
-- [6. Decode 通信量计算 + 延迟分析](#drawio-page-6)
-- [7. Prefill (HT) vs Decode (LL) 全面对比](#drawio-page-7)
-- [8. DP Chunking + DBO 在 Decode 场景](#drawio-page-8)
+**页面索引**：
 
-### <span id="drawio-page-1"></span>1. 硬件拓扑 + Decode 场景参数
+1. 01 硬件拓扑 + Decode 场景参数
+2. 02 Decode MoE 端到端流程
+3. 03 DeepEP LL Dispatch/Combine + HT 对比
+4. 04 DeepGEMM Masked Expert Compute 详解
+5. 05 CUDA Graph 兼容性分析
+6. 06 Decode 通信量计算 + 延迟分析
+7. 07 Prefill (HT) vs Decode (LL) 全面对比
+8. 08 DP Chunking + DBO 在 Decode 场景
 
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":0,"pageId":"hw-topo","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-2"></span>2. Decode MoE 端到端流程
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":1,"pageId":"e2e-flow","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-3"></span>3. DeepEP LL Dispatch/Combine + HT 对比
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":2,"pageId":"deepep-ll","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-4"></span>4. DeepGEMM Masked Expert Compute 详解
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":3,"pageId":"deepgemm-masked","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-5"></span>5. CUDA Graph 兼容性分析
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":4,"pageId":"cuda-graph","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-6"></span>6. Decode 通信量计算 + 延迟分析
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":5,"pageId":"comm-analysis","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-7"></span>7. Prefill (HT) vs Decode (LL) 全面对比
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":6,"pageId":"full-compare","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/source.drawio"}'></div>
-
-### <span id="drawio-page-8"></span>8. DP Chunking + DBO 在 Decode 场景
-
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:520px;margin:12px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":7,"pageId":"dbo-chunk","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/source.drawio"}'></div>
-
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:640px;margin:16px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"pages zoom layers tags lightbox","edit":"_blank","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-decode-深度解析/source.drawio"}'></div>
