@@ -56,17 +56,21 @@ enableInlineShortcodes = true
 # - 你需要先在 GitHub 仓库 Settings → Features 勾选 Discussions
 # - 然后到 https://giscus.app/ 配置一遍，把生成的 6 个值填进来
 [params.giscus]
-  repo = "cassiewilliam/blog"            # ✏️ 已默认，可不动
-  repoID = ""                             # ✏️ 从 giscus.app 复制
-  category = "Announcements"              # ✏️ 选一个 Discussions 分类
-  categoryID = ""                         # ✏️ 从 giscus.app 复制
+  repo = "cassiewilliam/blog"
+  repoID = "R_kgDOSOl71A"
+  category = "Announcements"
+  categoryID = "DIC_kwDOSOl71M4C73A_"
   mapping = "pathname"
   reactionsEnabled = "1"
   emitMetadata = "0"
-  inputPosition = "top"
+  inputPosition = "bottom"
   theme = "preferred_color_scheme"
   lang = "zh-CN"
   loading = "lazy"
+
+# drawio GitHub direct-edit (used by {{< drawio >}} shortcode)
+drawioGithubRepo = "cassiewilliam/blog"
+drawioGithubBranch = "main"
 
 [params.homeInfoParams]
   Title = "报告与笔记"

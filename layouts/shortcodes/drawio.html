@@ -1,14 +1,35 @@
-{{- /* Hugo shortcode: {{< drawio src="path/figure.drawio" caption="..." >}}
-       Renders an interactive draw.io viewer with edit-on-diagrams.net link.
+{{- /* Hugo shortcode: {{< drawio src="path/figure.drawio" caption="..." height="600" >}}
+       Renders an interactive draw.io viewer + an "Edit on diagrams.net" button
+       that opens the file straight from GitHub for in-browser editing.
        File should be in static/drawio/... — pass path relative to /static/. */ -}}
-{{- $src   := .Get "src" -}}
-{{- $cap   := .Get "caption" -}}
-{{- $h     := .Get "height" | default "600" -}}
-{{- $url   := printf "%s%s" .Page.Site.BaseURL $src -}}
-<figure class="drawio-fig" style="margin:18px 0">
+{{- $src    := .Get "src" -}}
+{{- $cap    := .Get "caption" -}}
+{{- $h      := .Get "height" | default "600" -}}
+{{- $url    := printf "%s%s" .Page.Site.BaseURL $src -}}
+
+{{- /* GitHub-direct edit URL.
+       Convention: $src starts with "/drawio/...", and the corresponding file
+       lives at <repo-root>/static<src> on the default branch.            */ -}}
+{{- $repo   := .Page.Site.Params.drawioGithubRepo | default "cassiewilliam/blog" -}}
+{{- $branch := .Page.Site.Params.drawioGithubBranch | default "main" -}}
+{{- $path   := printf "static%s" $src -}}
+{{- $editH  := printf "H%s%%2F%s%%2F%s" (replace $repo "/" "%2F") $branch (replace $path "/" "%2F") -}}
+{{- $edit   := printf "https://app.diagrams.net/?mode=github&url=https%%3A%%2F%%2Fraw.githubusercontent.com%%2F%s%%2F%s%%2F%s#%s" $repo $branch $path $editH -}}
+
+<figure class="drawio-fig" style="margin:18px 0;position:relative">
   <div class="mxgraph"
        style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;"
        data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","url":"{{ $url | safeJS }}"}'></div>
+  <div style="text-align:right;font-size:12px;margin-top:6px">
+    <a href="{{ $edit | safeURL }}" target="_blank" rel="noopener"
+       style="color:#0969da;text-decoration:none;border:1px solid #d0d7de;padding:3px 8px;border-radius:4px;background:#f6f8fa">
+       ✏️ Edit on diagrams.net
+    </a>
+    <a href="{{ $url | safeURL }}" target="_blank" rel="noopener"
+       style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">
+       {{ $src }}
+    </a>
+  </div>
   {{- with $cap }}
   <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55">{{ . | safeHTML }}</figcaption>
   {{- end }}
