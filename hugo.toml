@@ -1,7 +1,7 @@
 baseURL = "http://150.158.53.42/"
 languageCode = "zh-cn"
 defaultContentLanguage = "zh-cn"
-title = "Min Yang 的报告博客"
+title = "Yang Min 的技术博客"
 theme = "PaperMod"
 enableRobotsTXT = true
 buildDrafts = false
@@ -29,7 +29,7 @@ enableInlineShortcodes = true
 # 首页 profile 模式（左侧头像 + 简介 + 社交图标，比纯文章列表更像个人站）
 [params.profileMode]
   enabled = true
-  title = "Min Yang"
+  title = "Yang Min 的技术博客"
   subtitle = "GPU 内核工程 / LLM 推理系统 / 大模型基础设施"
   imageUrl = "/avatar.jpg"
   imageTitle = "avatar"
@@ -73,7 +73,7 @@ drawioGithubRepo = "cassiewilliam/blog"
 drawioGithubBranch = "main"
 
 [params.homeInfoParams]
-  Title = "报告与笔记"
+  Title = "Yang Min 的技术博客"
   Content = "自动化生成的分析报告。"
 
 [[menu.main]]
