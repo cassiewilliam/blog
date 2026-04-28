@@ -7,9 +7,9 @@
 {{- $src    := .Get "src" -}}
 {{- $cap    := .Get "caption" -}}
 {{- $label  := .Get "label" -}}
-{{- /* Derive the .drawio path (e.g. /figures/v4/F1.svg → /drawio/v4/figures/F1.drawio). */ -}}
-{{- $drawio := replace (replace $src "/figures/" "/drawio/") ".svg" ".drawio" -}}
-{{- $drawio = replace $drawio "/drawio/v4/F" "/drawio/v4/figures/F" -}}
+{{- /* Derive the .drawio path:
+         /figures/<slug>/F<N>.svg → /drawio/<slug>/figures/F<N>.drawio  */ -}}
+{{- $drawio := replaceRE "^/figures/(.+)/([^/]+)\\.svg$" "/drawio/$1/figures/$2.drawio" $src -}}
 {{- $url := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $drawio) -}}
 
 {{- $repo   := .Page.Site.Params.drawioGithubRepo | default "cassiewilliam/blog" -}}
