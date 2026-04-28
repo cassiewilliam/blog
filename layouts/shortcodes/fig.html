@@ -1,31 +1,24 @@
-{{- /* {{< fig src="/figures/v4/F1.svg" label="F1" caption="…" >}}
+{{- /* {{< fig src="/figures/<slug>/F1.svg" label="F1" caption="…" >}}
 
-       Renders the .drawio companion via the mxgraph viewer so that the
-       page view = the drawio editor view (consistency over pixel-fidelity:
-       both use drawio's shape renderer). Edit pill links to /edit-fig/
-       which loads the same .drawio, edits visually, and saves back.    */ -}}
+       Inlines the SVG into the page so it renders pixel-perfect (no
+       lossy svg2drawio conversion, no mxgraph viewer layout shift).
+       Edit pill links to /edit-fig/?src=… which loads the .drawio
+       companion in an embedded diagrams.net editor for visual edits.   */ -}}
 {{- $src    := .Get "src" -}}
 {{- $cap    := .Get "caption" -}}
 {{- $label  := .Get "label" -}}
-{{- /* Derive the .drawio path:
-         /figures/<slug>/F<N>.svg → /drawio/<slug>/figures/F<N>.drawio  */ -}}
-{{- $drawio := replaceRE "^/figures/(.+)/([^/]+)\\.svg$" "/drawio/$1/figures/$2.drawio" $src -}}
-{{- $url := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $drawio) -}}
+{{- $svgPath := printf "static%s" $src -}}
+{{- $svg := "" -}}
+{{- if (fileExists $svgPath) -}}
+  {{- $svg = readFile $svgPath -}}
+{{- end -}}
 
-{{- $repo   := .Page.Site.Params.drawioGithubRepo | default "cassiewilliam/blog" -}}
-{{- $branch := .Page.Site.Params.drawioGithubBranch | default "main" -}}
-{{- /* /edit-fig/ is our self-hosted drawio embed editor — iframes
-       embed.diagrams.net (postMessage protocol, no GitHub OAuth required)
-       and saves via /oauth/save-fig which uses the user's Decap PAT
-       to commit through api.github.com (Fastly CDN, not GFW-blocked). */ -}}
 {{- $editURL := "" -}}
 {{- with $src -}}{{- $editURL = printf "/edit-fig/?src=%s" . -}}{{- end -}}
 
 <figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
-  <div class="cc-fig-mx" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:340px">
-    <div class="mxgraph"
-         style="max-width:100%;"
-         data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","url":"{{ $url | safeJS }}"}'></div>
+  <div class="cc-fig-svg" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;line-height:0;overflow:hidden">
+    {{ $svg | safeHTML }}
   </div>
 
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
