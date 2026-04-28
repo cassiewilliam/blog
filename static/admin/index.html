@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Min Yang's Blog · CMS</title>
+</head>
+<body>
+  <!-- Decap CMS bundle from CDN -->
+  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+  <!-- KaTeX preview support inside the editor -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+    onload='document.addEventListener("DOMContentLoaded",function(){
+      setInterval(function(){
+        document.querySelectorAll(".cms-preview-pane,.frame-content").forEach(function(el){
+          if(!el.dataset.kxRendered){
+            renderMathInElement(el,{delimiters:[
+              {left:"$$",right:"$$",display:true},
+              {left:"$",right:"$",display:false}],
+              throwOnError:false});
+            el.dataset.kxRendered="1";
+          }
+        });
+      },800);
+    });'></script>
+</body>
+</html>

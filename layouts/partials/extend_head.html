@@ -1,0 +1,17 @@
+{{- /* KaTeX math rendering · added 2026-04-28 for Decap CMS migration */ -}}
+{{- if or .Params.math (.Site.Params | default dict).math }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload='renderMathInElement(document.body, {delimiters: [
+          {left: "$$", right: "$$", display: true},
+          {left: "$",  right: "$",  display: false},
+          {left: "\\(", right: "\\)", display: false},
+          {left: "\\[", right: "\\]", display: true}
+        ], throwOnError: false});'></script>
+{{- end }}
+
+{{- /* drawio viewer · render .drawio files via {{< drawio src="..." >}} shortcode */ -}}
+{{- if or .Params.drawio (.Site.Params | default dict).drawio }}
+<script type="text/javascript" src="https://viewer.diagrams.net/js/viewer-static.min.js" defer></script>
+{{- end }}
