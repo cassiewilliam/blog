@@ -1,0 +1,22 @@
+<svg style="width:100%;height:auto;background:#fffcf1;border:1px solid #d9b860;border-radius:4px;" viewbox="0 0 980 260" xmlns="http://www.w3.org/2000/svg">
+<!-- Algorithm layer -->
+<rect fill="#f8cecc" height="60" rx="6" stroke="#b85450" width="920" x="30" y="20"></rect>
+<text fill="#721c24" font-family="sans-serif" font-size="13" font-weight="700" x="50" y="42">算法层 (Algorithm)</text>
+<text fill="#721c24" font-family="sans-serif" font-size="12" x="50" y="62">消灭所有 O(TKd) cache · dS contraction reorder · A inline 重算 · forward 3 kernel + backward 3 kernel</text>
+<text fill="#721c24" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="end" x="940" y="62">activation −85%</text>
+<!-- Software layer -->
+<rect fill="#fff2cc" height="60" rx="6" stroke="#d6b656" width="920" x="30" y="95"></rect>
+<text fill="#5a3f00" font-family="sans-serif" font-size="13" font-weight="700" x="50" y="117">软件层 (QuACK)</text>
+<text fill="#5a3f00" font-family="sans-serif" font-size="12" x="50" y="137">三段式流水 · epi_visit_subtile 单注入点 · 算术 Mixin × 架构 Base · SonicMoE 仅 200 LoC 跨 SM90/100</text>
+<text fill="#5a3f00" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="end" x="940" y="137">跨架构代价 &lt; 100 LoC / 特性</text>
+<!-- Hardware layer -->
+<rect fill="#d5e8d4" height="60" rx="6" stroke="#5fa55f" width="920" x="30" y="170"></rect>
+<text fill="#1f5d1f" font-family="sans-serif" font-size="13" font-weight="700" x="50" y="192">硬件层 (Blackwell)</text>
+<text fill="#1f5d1f" font-family="sans-serif" font-size="12" x="50" y="212">UMMA + TMEM 双 buffer · 2CTA shared-B · CLC 调度 · TMA gather4 · async store · cluster barrier</text>
+<text fill="#1f5d1f" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="end" x="940" y="212">fwd +54% · bwd +35%</text>
+<!-- Arrows showing stacking -->
+<g fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1.5">
+<line marker-end="url(#arr-dep)" x1="490" x2="490" y1="80" y2="95"></line>
+<line marker-end="url(#arr-dep)" x1="490" x2="490" y1="155" y2="170"></line>
+</g>
+</svg>
