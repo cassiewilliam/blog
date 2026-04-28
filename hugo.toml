@@ -29,8 +29,8 @@ enableInlineShortcodes = true
 # 首页 profile 模式（左侧头像 + 简介 + 社交图标，比纯文章列表更像个人站）
 [params.profileMode]
   enabled = true
-  title = "Yang Min 的技术博客"
-  subtitle = "GPU 内核工程 / LLM 推理系统 / 大模型基础设施"
+  title = "Yang Min"
+  subtitle = "AI Infra  /  CUDA Hopper & Blackwell  /  LLM 推理系统  /  通算融合"
   imageUrl = "/avatar.jpg"
   imageTitle = "avatar"
   imageWidth = 140
