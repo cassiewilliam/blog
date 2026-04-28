@@ -19,7 +19,7 @@ UseHugoToc: true
 | DSV4 DeepGEMM | **3.07 ms** | @ BS=8192 / rank |
 | Qwen3.5 same-prec | **1.54×** | @ BS=8192 / rank |
 
-## 方法 + 哪些数据是干净的
+## 方法与数据清洗
 
 **测的就一件事：8 卡 EP=8、每 rank N tokens、跑 1 次 forward 的 wall-clock。**每个 rank 上 `cuda.synchronize() \to forward \to cuda.synchronize()` 之间的 perf_counter 差，5 warmup + 20 reps 取均值，`dist.barrier()` 同步，TRT-LLM 走 `NVLinkOneSided` alltoall（非 raw kernel）。
 
@@ -114,7 +114,7 @@ UseHugoToc: true
 **FINDING** · W4A8 慢，根因是 A2A dispatch 5403 us（NVFP4 才 251 us，21× 差距）——TRT-LLM 1.3.0rc9 的 W4A8+EP+alltoall 没走 NVFP4 那条 fast path。即便靠 multi-stream overlap 把 5.1 ms 藏掉，wall-clock 还是 7.74 ms。DeepGEMM 一发 fused kernel 3.08 ms，不需要靠 overlap 救场。
 {{< /tip >}}
 
-## TRT-LLM 全量 sweep（4 种 quant，单位 ms / rank）
+## TRT-LLM 全量 sweep
 
 ### DeepSeek-V4-Pro · DP=8+EP=8 · alltoall=NVLinkOneSided
 
@@ -144,7 +144,7 @@ UseHugoToc: true
 <tr><td class="num">8192</td><td class="num">3.41</td><td class="num">2.52</td><td class="num">2.33</td><td class="num">2.68</td></tr></tbody>
 </table>
 
-## DeepGEMM MegaMoE 8 卡 EP=8 原始数据
+## DeepGEMM MegaMoE 原始数据
 
 <table>
 <thead><tr>
@@ -169,7 +169,7 @@ UseHugoToc: true
 - **慢点诊断**：TRT-LLM W4A8+EP+alltoall 的 dispatch kernel 5403 us 是异常值（NVFP4 path 仅 251 us，21× 差距）。1.3.0rc9 这条 path 需要优化。
 - **DeepGEMM 的工程优势**：dispatch + L1 GEMM + SwiGLU + L2 GEMM + combine 全部融在*一个* CUDA kernel 里（NVLink 对称内存），TRT-LLM 拆成 8 个 kernel 靠 multi-stream overlap 部分掩盖通信开销。
 
-## 原始数据（可直接复制）
+## 原始数据
 
 {
   "measured_per_forward_ms": {
