@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 400" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">
+<rect width="1000" height="400" fill="#fff"/>
+<text x="500" y="22" font-size="14" font-weight="700" text-anchor="middle" fill="#222">Qwen3.5-Next-80B-A3B · DeepGEMM 优势倍数</text>
+<text x="500" y="40" font-size="11" text-anchor="middle" fill="#666">TRT-LLM ÷ DeepGEMM, 越大越优</text>
+<rect x="60" y="52" width="14" height="10" fill="#d62728"/>
+<text x="78" y="60" font-size="10.5" fill="#333">同精度: DeepGEMM 比 TRT-LLM W4A8MXFP4-FP8 快 N×</text>
+<rect x="510.0" y="52" width="14" height="10" fill="#888"/>
+<text x="528.0" y="60" font-size="10.5" fill="#333">跨精度: DeepGEMM 比 TRT-LLM NVFP4 快 N×</text>
+<line x1="60" y1="330" x2="960" y2="330" stroke="#333"/>
+<line x1="60" y1="80" x2="60" y2="330" stroke="#333"/>
+<line x1="56" y1="330.0" x2="960" y2="330.0" stroke="#eee" stroke-width="0.6"/>
+<text x="53" y="333.0" font-size="10" text-anchor="end" fill="#666">0.0×</text>
+<line x1="56" y1="280.0" x2="960" y2="280.0" stroke="#eee" stroke-width="0.6"/>
+<text x="53" y="283.0" font-size="10" text-anchor="end" fill="#666">0.9×</text>
+<line x1="56" y1="230.0" x2="960" y2="230.0" stroke="#eee" stroke-width="0.6"/>
+<text x="53" y="233.0" font-size="10" text-anchor="end" fill="#666">1.8×</text>
+<line x1="56" y1="180.0" x2="960" y2="180.0" stroke="#eee" stroke-width="0.6"/>
+<text x="53" y="183.0" font-size="10" text-anchor="end" fill="#666">2.7×</text>
+<line x1="56" y1="130.0" x2="960" y2="130.0" stroke="#eee" stroke-width="0.6"/>
+<text x="53" y="133.0" font-size="10" text-anchor="end" fill="#666">3.6×</text>
+<line x1="56" y1="80.0" x2="960" y2="80.0" stroke="#eee" stroke-width="0.6"/>
+<text x="53" y="83.0" font-size="10" text-anchor="end" fill="#666">4.5×</text>
+<text x="16" y="205.0" font-size="11" text-anchor="middle" fill="#333" transform="rotate(-90 16 205.0)">DeepGEMM 优势倍数 (越大越优)</text>
+<rect x="93.8" y="121.6" width="78.8" height="208.4" fill="#d62728"/>
+<text x="133.1" y="118.6" font-size="10.5" font-weight="700" text-anchor="middle" fill="#d62728">3.72×</text>
+<rect x="172.5" y="112.6" width="78.8" height="217.4" fill="#888"/>
+<text x="211.9" y="109.6" font-size="10.5" font-weight="700" text-anchor="middle" fill="#888">3.88×</text>
+<text x="172.5" y="348" font-size="11" text-anchor="middle" fill="#333">BS=128</text>
+<rect x="318.8" y="170.3" width="78.8" height="159.7" fill="#d62728"/>
+<text x="358.1" y="167.3" font-size="10.5" font-weight="700" text-anchor="middle" fill="#d62728">2.85×</text>
+<rect x="397.5" y="168.6" width="78.8" height="161.4" fill="#888"/>
+<text x="436.9" y="165.6" font-size="10.5" font-weight="700" text-anchor="middle" fill="#888">2.88×</text>
+<text x="397.5" y="348" font-size="11" text-anchor="middle" fill="#333">BS=512</text>
+<rect x="543.8" y="218.5" width="78.8" height="111.5" fill="#d62728"/>
+<text x="583.1" y="215.5" font-size="10.5" font-weight="700" text-anchor="middle" fill="#d62728">1.99×</text>
+<rect x="622.5" y="211.8" width="78.8" height="118.2" fill="#888"/>
+<text x="661.9" y="208.8" font-size="10.5" font-weight="700" text-anchor="middle" fill="#888">2.11×</text>
+<text x="622.5" y="348" font-size="11" text-anchor="middle" fill="#333">BS=2048</text>
+<rect x="768.8" y="243.7" width="78.8" height="86.3" fill="#d62728"/>
+<text x="808.1" y="240.7" font-size="10.5" font-weight="700" text-anchor="middle" fill="#d62728">1.54×</text>
+<rect x="847.5" y="236.4" width="78.8" height="93.6" fill="#888"/>
+<text x="886.9" y="233.4" font-size="10.5" font-weight="700" text-anchor="middle" fill="#888">1.67×</text>
+<text x="847.5" y="348" font-size="11" text-anchor="middle" fill="#333">BS=8192</text>
+</svg>
