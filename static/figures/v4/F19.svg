@@ -1,0 +1,23 @@
+<svg viewbox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#fff" height="420" width="1100"></rect>
+<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">FlashMLA sparse kernel I/O — shape summary</text>
+<text fill="#b85450" font-family="sans-serif" font-size="13" font-weight="700" x="30" y="56">flash_mla_sparse_fwd()  —  used in PREFILL</text>
+<rect fill="#fff5f0" height="130" rx="4" stroke="#b85450" width="1040" x="30" y="64"></rect>
+<text font-family="monospace" font-size="11" x="45" y="86">q              : [Tp, n_h_padded=128, 576]        bf16     query tokens (padded to 64/128 heads)</text>
+<text font-family="monospace" font-size="11" x="45" y="104">kv             : [M * PREFILL_CHUNK, 1, 576]      bf16     gathered dense KV workspace</text>
+<text font-family="monospace" font-size="11" x="45" y="122">indices        : [Tp, 1, K_total]                 int32    merged topk ∪ SWA, causal-masked</text>
+<text font-family="monospace" font-size="11" x="45" y="140">topk_length    : [Tp]                             int32    valid K per query</text>
+<text font-family="monospace" font-size="11" x="45" y="158">attn_sink      : [n_h=128] or [padded_heads]      float32  learnable z′ (prepended softmax denom)</text>
+<text font-family="monospace" font-size="11" x="45" y="176">out            : [Tp, 128, 576]                   bf16     pre-allocated slice of o_padded</text>
+<text fill="#5fa55f" font-family="sans-serif" font-size="13" font-weight="700" x="30" y="220">flash_mla_with_kvcache()  —  used in DECODE</text>
+<rect fill="#f4faf4" height="180" rx="4" stroke="#5fa55f" width="1040" x="30" y="228"></rect>
+<text font-family="monospace" font-size="11" x="45" y="250">q                          : [Td, 1, 128, 576]     bf16    (unsqueeze(1) for kernel)</text>
+<text font-family="monospace" font-size="11" x="45" y="268">k_cache                    : [B_s, 64, 1, 584 B]   uint8   SWA paged cache</text>
+<text font-family="monospace" font-size="11" x="45" y="286">indices                    : [Td, n_win=128]       int32   SWA window indices</text>
+<text font-family="monospace" font-size="11" x="45" y="304">topk_length                : [Td]                  int32   valid SWA len per query</text>
+<text font-family="monospace" font-size="11" x="45" y="322">extra_k_cache (if sparse)  : [B_c, 64, 1, 576 B]   uint8   compressed paged cache</text>
+<text font-family="monospace" font-size="11" x="45" y="340">extra_indices_in_kvcache   : [Td, 1, 1024]         int32   global top-k indices (CSA) / precomputed (HCA)</text>
+<text font-family="monospace" font-size="11" x="45" y="358">extra_topk_length          : [Td]                  int32   valid extra len per query</text>
+<text font-family="monospace" font-size="11" x="45" y="376">tile_scheduler_metadata    : opaque blob           int32   prebuilt per-layer-type, reused across layers + CG replay</text>
+<text font-family="monospace" font-size="11" x="45" y="394">out                        : [Td, 1, 128, 576]     bf16    written in place</text>
+</svg>

@@ -1,0 +1,49 @@
+<svg viewbox="0 0 1100 440" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="tl_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
+<rect fill="#fff" height="440" width="1100"></rect>
+<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">TileLang compiler pipeline · Host Codegen + Z3 SMT + bit-reproducible lowering</text>
+<rect fill="#fff4e0" height="70" rx="4" stroke="#e0b300" width="200" x="30" y="60"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="130" y="82">Python DSL source</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="130" y="100">T.prim_func(...)</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="130" y="114">T.annotate_layout</text>
+<rect fill="#eef3ff" height="70" rx="4" stroke="#4a6fd3" width="230" x="270" y="60"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="385" y="82">Language frontend → IR</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="385" y="100">extract dtype / rank / shape</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="385" y="114">stride / layout constraints</text>
+<rect fill="#fff5f0" height="50" rx="4" stroke="#b85450" width="240" x="540" y="40"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="660" y="60">Device kernel codegen</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="660" y="78">CUDA / TMA / WGMMA / UMMA</text>
+<rect fill="#f9eef8" height="50" rx="4" stroke="#a33ea1" width="240" x="540" y="100"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="660" y="120">Host launcher codegen</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="660" y="138">TVM-FFI · zero-copy tensor interop</text>
+<rect fill="#f4faf4" height="70" rx="4" stroke="#5fa55f" width="250" x="820" y="60"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="945" y="82">Python runtime</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="945" y="100">per-call host overhead &lt; 1 μs</text>
+<text fill="#5fa55f" font-family="monospace" font-size="10.5" text-anchor="middle" x="945" y="118">down from hundreds of μs</text>
+<line marker-end="url(#tl_ar)" stroke="#333" x1="230" x2="268" y1="95" y2="95"></line>
+<line marker-end="url(#tl_ar)" stroke="#333" x1="500" x2="538" y1="70" y2="62"></line>
+<line marker-end="url(#tl_ar)" stroke="#333" x1="500" x2="538" y1="120" y2="122"></line>
+<line marker-end="url(#tl_ar)" stroke="#333" x1="780" x2="818" y1="70" y2="80"></line>
+<line marker-end="url(#tl_ar)" stroke="#333" x1="780" x2="818" y1="120" y2="105"></line>
+<!-- Z3 -->
+<rect fill="#eef3ff" height="120" rx="4" stroke="#4a6fd3" width="510" x="30" y="170"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="285" y="192">Z3 SMT integration (QF_NIA, non-linear integer)</text>
+<text font-family="monospace" font-size="11" x="45" y="216">• translates tensor-index arithmetic → Z3 quantifier-free non-linear</text>
+<text font-family="monospace" font-size="11" x="45" y="234">• compile-time budget ≤ a few seconds</text>
+<text font-family="monospace" font-size="11" x="45" y="252">• unlocks passes:  vectorization · barrier insertion · bound check · code simplify</text>
+<text fill="#4a6fd3" font-family="monospace" font-size="11" x="45" y="270">→ handles vectorization over variable tensor shapes that static ILP alone cannot</text>
+<!-- Bitwise reproducibility -->
+<rect fill="#f4faf4" height="120" rx="4" stroke="#5fa55f" width="500" x="570" y="170"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="820" y="192">Bit-reproducibility &amp; IEEE-754 opt-in</text>
+<text font-family="monospace" font-size="11" x="585" y="216">• fast-math OFF by default (no --use_fast_math)</text>
+<text font-family="monospace" font-size="11" x="585" y="234">• lowering aligned with NVCC — no unexpected algebraic rewrites</text>
+<text font-family="monospace" font-size="11" x="585" y="252">• T.__exp / T.__log / T.__sin : explicit opt-in approximations</text>
+<text font-family="monospace" font-size="11" x="585" y="270">• T.ieee_fsqrt / T.ieee_fdiv / T.ieee_add : explicit rounding</text>
+<!-- Reason -->
+<rect fill="#fff5f0" height="110" rx="4" stroke="#b85450" width="1040" x="30" y="310"></rect>
+<text font-family="sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" x="550" y="332">Why V4 needs this particular combination</text>
+<text font-family="monospace" font-size="11" x="60" y="356">• V4 ships hundreds of one-off fused kernels (mHC, compressor, fused_qnorm+RoPE+KV-insert, indexer top-k, …)</text>
+<text font-family="monospace" font-size="11" x="60" y="374">• hand-written CUDA is too slow to iterate; hand-written Triton lacks bitwise reproducibility</text>
+<text font-family="monospace" font-size="11" x="60" y="392">• TileLang: prototype in Python, lower to CUDA, and keep the byte-identical contract needed for SFT → RL → serve</text>
+<text fill="#b85450" font-family="monospace" font-size="11" x="60" y="410">• result: kernel dev productivity ≈ Triton, numerical contract ≈ hand-written CUDA</text>
+</svg>

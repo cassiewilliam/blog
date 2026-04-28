@@ -1,0 +1,63 @@
+<svg viewbox="0 0 1100 360" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#fff" height="360" width="1100"></rect>
+<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">Layer interleave pattern · V4-Flash (L=43) vs V4-Pro (L=61)</text>
+<!-- V4-Flash -->
+<text fill="#4a6fd3" font-family="sans-serif" font-size="13" font-weight="700" x="30" y="66">V4-Flash · L = 43 (13 B active)</text>
+<g transform="translate(30,80)">
+<!-- first 2 SWA -->
+<rect fill="#eef3ff" height="40" stroke="#4a6fd3" width="30" x="0" y="0"></rect>
+<rect fill="#eef3ff" height="40" stroke="#4a6fd3" width="30" x="30" y="0"></rect>
+<!-- alternating -->
+<g transform="translate(60,0)">
+<rect fill="#fff5f0" height="40" stroke="#b85450" width="30" x="0" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="30" y="0"></rect>
+<rect fill="#fff5f0" height="40" stroke="#b85450" width="30" x="60" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="90" y="0"></rect>
+<rect fill="#fff5f0" height="40" stroke="#b85450" width="30" x="120" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="150" y="0"></rect>
+<rect fill="#fff5f0" height="40" stroke="#b85450" width="30" x="180" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="210" y="0"></rect>
+<rect fill="#fff5f0" height="40" stroke="#b85450" width="30" x="240" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="270" y="0"></rect>
+<!-- ... -->
+<rect fill="#fff" height="40" stroke="#333" stroke-dasharray="3 2" width="120" x="300" y="0"></rect>
+<text font-family="monospace" font-size="11" text-anchor="middle" x="360" y="24">… 交替到 L−1</text>
+</g>
+</g>
+<text fill="#4a6fd3" font-family="monospace" font-size="10" x="45" y="144">SWA (pure)</text>
+<text fill="#4a6fd3" font-family="monospace" font-size="10" x="45" y="158">layer 0, 1</text>
+<text fill="#b85450" font-family="monospace" font-size="10" x="115" y="144">CSA (m=4)</text>
+<text fill="#b85450" font-family="monospace" font-size="10" x="115" y="158">layer 2, 4, 6, …</text>
+<text fill="#5fa55f" font-family="monospace" font-size="10" x="210" y="144">HCA (m'=128)</text>
+<text fill="#5fa55f" font-family="monospace" font-size="10" x="210" y="158">layer 3, 5, 7, …</text>
+<!-- V4-Pro -->
+<text fill="#b85450" font-family="sans-serif" font-size="13" font-weight="700" x="30" y="200">V4-Pro · L = 61 (49 B active)</text>
+<g transform="translate(30,214)">
+<!-- first 2 HCA -->
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="0" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="30" y="0"></rect>
+<!-- alternating -->
+<g transform="translate(60,0)">
+<rect fill="#fff5f0" height="40" stroke="#b85450" width="30" x="0" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="30" y="0"></rect>
+<rect fill="#fff5f0" height="40" stroke="#b85450" width="30" x="60" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="90" y="0"></rect>
+<rect fill="#fff5f0" height="40" stroke="#b85450" width="30" x="120" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="150" y="0"></rect>
+<rect fill="#fff5f0" height="40" stroke="#b85450" width="30" x="180" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="210" y="0"></rect>
+<rect fill="#fff5f0" height="40" stroke="#b85450" width="30" x="240" y="0"></rect>
+<rect fill="#f4faf4" height="40" stroke="#5fa55f" width="30" x="270" y="0"></rect>
+<rect fill="#fff" height="40" stroke="#333" stroke-dasharray="3 2" width="120" x="300" y="0"></rect>
+<text font-family="monospace" font-size="11" text-anchor="middle" x="360" y="24">… 交替到 L−1</text>
+</g>
+</g>
+<text fill="#5fa55f" font-family="monospace" font-size="10" x="45" y="278">HCA (bootstrap)</text>
+<text fill="#5fa55f" font-family="monospace" font-size="10" x="45" y="292">layer 0, 1</text>
+<text fill="#b85450" font-family="monospace" font-size="10" x="115" y="278">CSA (m=4)</text>
+<text fill="#b85450" font-family="monospace" font-size="10" x="115" y="292">layer 2, 4, 6, …</text>
+<text fill="#5fa55f" font-family="monospace" font-size="10" x="210" y="278">HCA (m'=128)</text>
+<text fill="#5fa55f" font-family="monospace" font-size="10" x="210" y="292">layer 3, 5, 7, …</text>
+<text font-family="monospace" font-size="11" x="30" y="330">每层都额外带 n_win=128 的 sliding-window 分支 (uncompressed SWA KV)</text>
+<text font-family="monospace" font-size="11" x="30" y="348">Flash 前两层 SWA 更适合模型从短序列 warmup；Pro 前两层改为 HCA 以更早建立全局视野</text>
+</svg>

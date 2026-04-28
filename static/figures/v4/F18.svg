@@ -1,0 +1,41 @@
+<svg viewbox="0 0 1100 460" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ii_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
+<rect fill="#fff" height="460" width="1100"></rect>
+<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">Lightning Indexer internals  (tensor shapes, V4-Pro CSA, m=4, top_k=1024)</text>
+<!-- Inputs -->
+<rect fill="#eef3ff" height="66" rx="4" stroke="#4a6fd3" width="300" x="30" y="54"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="180" y="74">hidden_states / qr</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="180" y="92">hidden : [T, 7168]  bf16</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="180" y="108">qr     : [T, 1536]  (shared Q LoRA c^Q)</text>
+<rect fill="#f4faf4" height="66" rx="4" stroke="#5fa55f" width="300" x="360" y="54"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="510" y="74">indexer-K cache</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="510" y="92">FP8  : [B, 64, 128] uint8</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="510" y="108">FP4  : [B, 64, 64 + 64/MXFP4_BLOCK]</text>
+<rect fill="#fff4e0" height="66" rx="4" stroke="#e0b300" width="380" x="690" y="54"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="880" y="74">positions / metadata</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="880" y="92">positions : [T] int64   ·   slot_mapping : [T] int64</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="880" y="108">ks : [T] int64 (start blk) · ke : [T] int64 (end blk)</text>
+<!-- Step 1: Q projections -->
+<rect fill="#fff5f0" height="84" rx="4" stroke="#b85450" width="520" x="30" y="140"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="290" y="162">① low-rank indexer-Q projection</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="290" y="182">c^Q = hidden · W_DQ   →   [T, d_c=1536]</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="290" y="199">q^I = c^Q · W_IUQ     →   [T, n_h^I=64 · c_I=128] = [T, 8192]</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="290" y="216">reshape → [T, 64, 128]    +   weights w^I = hidden · W_w → [T, 64]</text>
+<rect fill="#f9eef8" height="84" rx="4" stroke="#a33ea1" width="490" x="580" y="140"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="825" y="162">② fused_indexer_q_rope_quant</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="825" y="182">input : [T, 64, 128] + positions + rotary cache</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="825" y="199">output q_quant : [T, 64, 128] (FP8) or [T, 64, 64] (packed FP4)</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="825" y="216">q_scale : [T, 64, 128/block] uint8 (UE8M0)</text>
+<!-- Step 3: fp8_mqa_logits -->
+<rect fill="#eef3ff" height="90" rx="4" stroke="#4a6fd3" stroke-width="2" width="1040" x="30" y="240"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="550" y="262">③ deep_gemm.fp8_mqa_logits(q_quant, q_scale, indexer_K_cache, w^I, ks, ke)</text>
+<text font-family="monospace" font-size="11" x="60" y="284">inputs  : q_quant [T, 64, 128]   ·   K_cache (paged, [B, 64, 128])   ·   w^I [T, 64]   ·   ks/ke [T]</text>
+<text font-family="monospace" font-size="11" x="60" y="302">formula : I_t = Σ_h w_h · ReLU(q_h^I · K^I_s)   ←   MQA logits per compressed block</text>
+<text font-family="monospace" font-size="11" x="60" y="318">output  : logits [T, n_blocks_visible]  (variable length via ks/ke, stored via masking)</text>
+<!-- Step 4: top-k -->
+<rect fill="#f4faf4" height="90" rx="4" stroke="#5fa55f" stroke-width="2" width="1040" x="30" y="346"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="550" y="368">④ TileLang fused top-k (RADIX_TOPK_WORKSPACE_SIZE = 1 MB)</text>
+<text font-family="monospace" font-size="11" x="60" y="390">input   : logits [T, n_blocks_visible]   (BF16 after index-score quantization)</text>
+<text font-family="monospace" font-size="11" x="60" y="406">action  : per row → select top 1024 indices → write directly into topk_indices_buffer slice</text>
+<text font-family="monospace" font-size="11" x="60" y="422">outputs : topk_indices_buffer[prefill_off : prefill_off + T, :1024]  int32</text>
+</svg>

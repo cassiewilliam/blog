@@ -1,0 +1,57 @@
+<svg viewbox="0 0 1100 500" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="fp4_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
+<rect fill="#fff" height="500" width="1100"></rect>
+<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">FP4 QAT · MoE expert 权重 &amp; CSA QK 路径的精度流 (MXFP4)</text>
+<!-- Training loop -->
+<text fill="#4a6fd3" font-family="sans-serif" font-size="13" font-weight="700" x="110" y="58">Training step (forward)</text>
+<rect fill="#eef3ff" height="78" rx="4" stroke="#4a6fd3" width="220" x="30" y="68"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="140" y="90">① FP32 master W</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="140" y="108">held by optimizer</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="140" y="124">only on rank that owns</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="140" y="140">the expert (ZeRO)</text>
+<rect fill="#fff5f0" height="78" rx="4" stroke="#b85450" width="220" x="300" y="68"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="410" y="90">② quantize → FP4 (MXFP4)</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="410" y="108">1×32 tiles</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="410" y="124">each tile: 1 ue8m0 scale</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="410" y="140">payload E2M1 · 4 bits/weight</text>
+<rect fill="#fff4e0" height="78" rx="4" stroke="#e0b300" width="220" x="570" y="68"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="680" y="90">③ dequant → FP8 (E4M3)</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="680" y="108">128×128 FP8 scaling tiles</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="680" y="124">absorbs per-32 ue8m0 scales</text>
+<text fill="#5fa55f" font-family="monospace" font-size="10.5" text-anchor="middle" x="680" y="140">lossless if ratio &lt; threshold</text>
+<rect fill="#f4faf4" height="78" rx="4" stroke="#5fa55f" width="220" x="840" y="68"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="950" y="90">④ FP8 × FP8 GEMM (SwiGLU)</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="950" y="108">gate / up / down</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="950" y="124">emits bf16 activations</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="950" y="140">→ next layer</text>
+<line marker-end="url(#fp4_ar)" stroke="#333" x1="250" x2="298" y1="107" y2="107"></line>
+<line marker-end="url(#fp4_ar)" stroke="#333" x1="520" x2="568" y1="107" y2="107"></line>
+<line marker-end="url(#fp4_ar)" stroke="#333" x1="790" x2="838" y1="107" y2="107"></line>
+<!-- Backward (STE) -->
+<text fill="#a33ea1" font-family="sans-serif" font-size="13" font-weight="700" x="110" y="190">Backward (STE)</text>
+<rect fill="#f9eef8" height="80" rx="4" stroke="#a33ea1" width="1040" x="30" y="200"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="550" y="222">grad w.r.t. FP8 weight  ≡  grad w.r.t. FP32 master  (Straight-Through Estimator)</text>
+<text font-family="monospace" font-size="11" x="60" y="244">∂L / ∂W_FP4 is NOT computed — quantization operator has identity gradient</text>
+<text font-family="monospace" font-size="11" x="60" y="260">∂L / ∂W_FP8 is already produced by the standard FP8 kernel and routed directly back to FP32 master W</text>
+<text fill="#a33ea1" font-family="monospace" font-size="11" x="60" y="276">⇒ no transposed re-quant, no backward kernel change — the entire FP8 training stack works unmodified</text>
+<!-- Inference vs training -->
+<rect fill="#fff5f0" height="180" rx="4" stroke="#b85450" width="510" x="30" y="300"></rect>
+<text font-family="sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" x="285" y="322">Inference / RL rollout</text>
+<text font-family="monospace" font-size="11" x="45" y="345">• weights shipped as real FP4 (not simulated)</text>
+<text font-family="monospace" font-size="11" x="45" y="363">• MXFP4 × FP8 GEMM kernel in DeepGEMM</text>
+<text font-family="monospace" font-size="11" x="45" y="381">• current HW: peak FLOPs same as FP8 × FP8</text>
+<text font-family="monospace" font-size="11" x="45" y="399">• future HW: FP4×FP8 can be 1/3 more efficient</text>
+<text font-family="monospace" font-size="11" x="45" y="421">• kernel memory loading halved vs FP8 weights</text>
+<text fill="#b85450" font-family="sans-serif" font-size="11" x="45" y="445">→ rollout logits match training exactly (same path as forward)</text>
+<text fill="#b85450" font-family="sans-serif" font-size="11" x="45" y="465">→ consistent with batch-invariant kernel library</text>
+<!-- CSA Indexer path -->
+<rect fill="#eef7ee" height="180" rx="4" stroke="#5fa55f" width="500" x="570" y="300"></rect>
+<text font-family="sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" x="820" y="322">CSA lightning-indexer QK path (FP4 everywhere)</text>
+<text font-family="monospace" font-size="11" x="585" y="345">• indexer Q quantized FP8/FP4 in fused kernel</text>
+<text font-family="monospace" font-size="11" x="585" y="363">• indexer K cached FP4 in DeepseekV4IndexerCache</text>
+<text font-family="monospace" font-size="11" x="585" y="381">• matmul FP4 × FP4 → fp8_mqa_logits emits logits</text>
+<text font-family="monospace" font-size="11" x="585" y="399">• index scores I_{:,:} further FP32 → BF16</text>
+<text font-family="monospace" font-size="11" x="585" y="421">• top-k selector: 2× faster with BF16 scores</text>
+<text fill="#1a3d1a" font-family="sans-serif" font-size="11" x="585" y="445">→ recall of compressed KV entries stays 99.7%</text>
+<text fill="#1a3d1a" font-family="sans-serif" font-size="11" x="585" y="465">→ this is the only place V4 uses FP4 at inference outside MoE</text>
+</svg>

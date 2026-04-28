@@ -1,0 +1,71 @@
+<svg viewbox="0 0 1100 560" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ds_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
+<rect fill="#fff" height="560" width="1100"></rect>
+<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">Decode · tensor-shape propagation (V4-Pro, compress_ratio=4 → C4A)</text>
+<text fill="#555" font-family="monospace" font-size="11" text-anchor="middle" x="550" y="42">Td = num_decode_tokens (= num_decodes under no-spec; = num_decodes·(1+MTP_depth) under speculative)</text>
+<!-- Row 1 -->
+<rect fill="#eef3ff" height="62" rx="4" stroke="#4a6fd3" width="340" x="30" y="62"></rect>
+<text font-family="sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" x="200" y="82">incoming decode q</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="200" y="100">q : [Td, 128, 576] bf16</text>
+<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="200" y="116">already QNormed + RoPEd by prior step's fused kernel</text>
+<rect fill="#fff5f0" height="62" rx="4" stroke="#b85450" width="340" x="390" y="62"></rect>
+<text font-family="sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" x="560" y="82">topk_indices_buffer[:Td]</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="560" y="100">[Td, 1024] int32  · already filled by indexer</text>
+<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="560" y="116">per-layer per-token local block idx</text>
+<rect fill="#f4faf4" height="62" rx="4" stroke="#5fa55f" width="320" x="750" y="62"></rect>
+<text font-family="sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" x="910" y="82">attn_metadata.block_table</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="910" y="100">[num_decodes, max_blocks] int32</text>
+<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="910" y="116">physical paged block ids</text>
+<!-- Row 2: global topk -->
+<rect fill="#fff5f0" height="82" rx="4" stroke="#b85450" width="700" x="30" y="142"></rect>
+<text font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle" x="380" y="163">compute_global_topk_indices_and_lens  (C4A only)</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="380" y="183">inputs  local_topk [Td,1024]  +  block_table  +  token→req  +  block_size=64/4=16  +  is_valid [Td]</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="380" y="200">outputs global_indices [Td, 1024] int32  ·  topk_lens [Td] int32</text>
+<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="380" y="216">translates local per-request block indices → global paged-cache indices</text>
+<rect fill="#fff4e0" height="82" rx="4" stroke="#e0b300" width="320" x="750" y="142"></rect>
+<text font-family="sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" x="910" y="163">C128A alternative (no indexer)</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="910" y="183">topk_indices = attn_metadata.</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="910" y="200">c128a_global_decode_topk_indices</text>
+<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="910" y="216">pre-computed in metadata builder</text>
+<!-- Row 3: SWA -->
+<rect fill="#fff4e0" height="82" rx="4" stroke="#e0b300" width="340" x="30" y="242"></rect>
+<text font-family="sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" x="200" y="262">swa_metadata.decode_swa_indices</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="200" y="280">swa_indices : [Td, n_win=128] int32</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="200" y="298">swa_lens    : [Td] int32 (≤ 128)</text>
+<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="200" y="316">recent-window view built in metadata phase</text>
+<rect fill="#f9eef8" height="82" rx="4" stroke="#a33ea1" width="340" x="390" y="242"></rect>
+<text font-family="sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" x="560" y="262">tile_scheduler_metadata (per type)</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="560" y="280">tile_sched_swaonly / c4a / c128a</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="560" y="298">opaque FlashMLA blob (tile_scheduler + num_splits)</text>
+<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="560" y="316">reserved once; CUDA-graph-safe</text>
+<rect fill="#f4faf4" height="82" rx="4" stroke="#5fa55f" width="320" x="750" y="242"></rect>
+<text font-family="sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" x="910" y="262">caches (unsqueezed)</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="910" y="280">swa_cache : [B_s, 64, 1, 584 B]</text>
+<text font-family="monospace" font-size="10.5" text-anchor="middle" x="910" y="298">kv_cache  : [B_c, 64, 1, 576 B]  (compressed)</text>
+<text fill="#555" font-family="monospace" font-size="10" text-anchor="middle" x="910" y="316">unsqueeze(-2) keeps strides for CG</text>
+<!-- Row 4: flash_mla_with_kvcache -->
+<rect fill="#eef7ee" height="150" rx="4" stroke="#5fa55f" stroke-width="2" width="1040" x="30" y="342"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="550" y="364">flash_mla_with_kvcache()  — single kernel fuses SWA + compressed attention</text>
+<text font-family="monospace" font-size="11" x="60" y="388">q                         : [Td, 1, 128, 576]       bf16   (unsqueeze(1) for kernel)</text>
+<text font-family="monospace" font-size="11" x="60" y="404">k_cache                   : [B_s, 64, 1, 584 B]     uint8  (SWA)</text>
+<text font-family="monospace" font-size="11" x="60" y="420">indices / topk_length     : [Td, n_win=128] int32 / [Td] int32   (window view)</text>
+<text font-family="monospace" font-size="11" x="60" y="436">extra_k_cache             : [B_c, 64, 1, 576 B]     uint8  (compressed, None if swa_only)</text>
+<text font-family="monospace" font-size="11" x="60" y="452">extra_indices_in_kvcache  : [Td, 1, 1024]           int32  (from global_topk)</text>
+<text font-family="monospace" font-size="11" x="60" y="468">extra_topk_length         : [Td]                    int32</text>
+<text font-family="monospace" font-size="11" x="60" y="484">attn_sink                 : [n_h=128]               float32</text>
+<text fill="#1a3d1a" font-family="monospace" font-size="11" x="800" y="388">out : [Td, 1, 128, 576] bf16</text>
+<text fill="#1a3d1a" font-family="monospace" font-size="11" x="800" y="405">head_dim_v=512 · softmax_scale=self.scale</text>
+<text fill="#1a3d1a" font-family="monospace" font-size="11" x="800" y="422">is_fp8_kvcache=True</text>
+<text fill="#555" font-family="monospace" font-size="11" x="800" y="448">one call covers BOTH</text>
+<text fill="#555" font-family="monospace" font-size="11" x="800" y="464">SWA window AND</text>
+<text fill="#555" font-family="monospace" font-size="11" x="800" y="480">compressed top-k paths</text>
+<!-- Row 5: writes back -->
+<rect fill="#fff" height="40" rx="4" stroke="#333" stroke-dasharray="4 2" width="1040" x="30" y="508"></rect>
+<text font-family="monospace" font-size="11.5" text-anchor="middle" x="550" y="532">output.unsqueeze(1) overwritten  → flattened back to [Td, 128, 576] → o_padded → wrapper §⑤⑥ (see Figure 14)</text>
+<line marker-end="url(#ds_ar)" stroke="#333" x1="200" x2="200" y1="124" y2="140"></line>
+<line marker-end="url(#ds_ar)" stroke="#333" x1="560" x2="560" y1="124" y2="140"></line>
+<line marker-end="url(#ds_ar)" stroke="#333" x1="200" x2="200" y1="224" y2="240"></line>
+<line marker-end="url(#ds_ar)" stroke="#333" x1="560" x2="560" y1="224" y2="240"></line>
+<line marker-end="url(#ds_ar)" stroke="#333" x1="910" x2="910" y1="224" y2="240"></line>
+<line marker-end="url(#ds_ar)" stroke="#333" x1="550" x2="550" y1="324" y2="340"></line>
+</svg>

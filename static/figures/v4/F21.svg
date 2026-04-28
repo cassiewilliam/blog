@@ -1,0 +1,68 @@
+<svg viewbox="0 0 1100 440" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#fff" height="440" width="1100"></rect>
+<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">DeepSeek-V3.2 → V4 · architectural diff summary</text>
+<!-- Header -->
+<rect fill="#fff" height="40" stroke="#333" width="340" x="30" y="56"></rect>
+<rect fill="#fff" height="40" stroke="#333" width="350" x="370" y="56"></rect>
+<rect fill="#fff" height="40" stroke="#333" width="350" x="720" y="56"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="200" y="80">Component</text>
+<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="545" y="80">V3.2 (Exp)</text>
+<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="895" y="80">V4</text>
+<!-- Rows -->
+<g font-family="sans-serif" font-size="11.5">
+<rect fill="#fafbfc" height="36" width="340" x="30" y="96"></rect>
+<rect fill="#fff5f0" height="36" width="350" x="370" y="96"></rect>
+<rect fill="#f4faf4" height="36" width="350" x="720" y="96"></rect>
+<text x="45" y="118">Attention</text>
+<text x="385" y="118">MLA + DSA (top-k over raw tokens)</text>
+<text x="735" y="118">hybrid CSA (m=4) + HCA (m'=128), interleaved</text>
+<rect fill="#fff" height="36" width="340" x="30" y="132"></rect>
+<rect fill="#fff5f0" height="36" width="350" x="370" y="132"></rect>
+<rect fill="#f4faf4" height="36" width="350" x="720" y="132"></rect>
+<text x="45" y="154">DSA top-k</text>
+<text x="385" y="154">2048 (raw token indices)</text>
+<text x="735" y="154">512 (Flash) / 1024 (Pro) — compressed blocks</text>
+<rect fill="#fafbfc" height="36" width="340" x="30" y="168"></rect>
+<rect fill="#fff5f0" height="36" width="350" x="370" y="168"></rect>
+<rect fill="#f4faf4" height="36" width="350" x="720" y="168"></rect>
+<text x="45" y="190">Residual</text>
+<text x="385" y="190">plain residual (X + F(X))</text>
+<text x="735" y="190">mHC · n_hc=4 · Birkhoff + Sinkhorn(20)</text>
+<rect fill="#fff" height="36" width="340" x="30" y="204"></rect>
+<rect fill="#fff5f0" height="36" width="350" x="370" y="204"></rect>
+<rect fill="#f4faf4" height="36" width="350" x="720" y="204"></rect>
+<text x="45" y="226">Optimizer</text>
+<text x="385" y="226">AdamW (main)</text>
+<text x="735" y="226">Muon (main) + AdamW (emb/head/norm/mHC bias)</text>
+<rect fill="#fafbfc" height="36" width="340" x="30" y="240"></rect>
+<rect fill="#fff5f0" height="36" width="350" x="370" y="240"></rect>
+<rect fill="#f4faf4" height="36" width="350" x="720" y="240"></rect>
+<text x="45" y="262">MoE routing</text>
+<text x="385" y="262">learned router, all layers</text>
+<text x="735" y="262">Hash routing for first 3 MoE layers, learned afterward</text>
+<rect fill="#fff" height="36" width="340" x="30" y="276"></rect>
+<rect fill="#fff5f0" height="36" width="350" x="370" y="276"></rect>
+<rect fill="#f4faf4" height="36" width="350" x="720" y="276"></rect>
+<text x="45" y="298">MoE affinity activation</text>
+<text x="385" y="298">Sigmoid</text>
+<text x="735" y="298">Sqrt(Softplus)</text>
+<rect fill="#fafbfc" height="36" width="340" x="30" y="312"></rect>
+<rect fill="#fff5f0" height="36" width="350" x="370" y="312"></rect>
+<rect fill="#f4faf4" height="36" width="350" x="720" y="312"></rect>
+<text x="45" y="334">MoE expert weight precision</text>
+<text x="385" y="334">FP8 (E4M3)</text>
+<text x="735" y="334">FP4 (MXFP4) with FP4→FP8 lossless dequant</text>
+<rect fill="#fff" height="36" width="340" x="30" y="348"></rect>
+<rect fill="#fff5f0" height="36" width="350" x="370" y="348"></rect>
+<rect fill="#f4faf4" height="36" width="350" x="720" y="348"></rect>
+<text x="45" y="370">KV cache</text>
+<text x="385" y="370">PagedAttention uniform</text>
+<text x="735" y="370">State cache pool + classical paged (compressed)</text>
+<rect fill="#fafbfc" height="36" width="340" x="30" y="384"></rect>
+<rect fill="#fff5f0" height="36" width="350" x="370" y="384"></rect>
+<rect fill="#f4faf4" height="36" width="350" x="720" y="384"></rect>
+<text x="45" y="406">Post-training</text>
+<text x="385" y="406">mixed RL stage</text>
+<text x="735" y="406">specialist GRPO+GRM → multi-teacher OPD (full-vocab)</text>
+</g>
+</svg>

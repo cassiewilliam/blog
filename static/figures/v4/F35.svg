@@ -1,0 +1,60 @@
+<svg viewbox="0 0 1100 360" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#fff" height="360" width="1100"></rect>
+<text font-family="sans-serif" font-size="15" font-weight="700" text-anchor="middle" x="550" y="24">Reasoning-effort vs quality · Pass@1 曲线（HLE / TerminalBench 2.0，论文 Figure 10）</text>
+<!-- HLE -->
+<g transform="translate(40,40)">
+<rect fill="#fafbfc" height="300" stroke="#d0d7de" width="500" x="0" y="0"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="600" text-anchor="middle" x="250" y="18">HLE (Pass@1, %)</text>
+<line stroke="#333" x1="50" x2="480" y1="280" y2="280"></line>
+<line stroke="#333" x1="50" x2="50" y1="40" y2="280"></line>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="35" y="50">40</text>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="35" y="160">20</text>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="35" y="280">0</text>
+<!-- Pro -->
+<polyline fill="none" points="70,260 180,170 310,80 460,55" stroke="#4a6fd3" stroke-width="2.5"></polyline>
+<circle cx="70" cy="260" fill="#4a6fd3" r="3.5"></circle>
+<circle cx="180" cy="170" fill="#4a6fd3" r="3.5"></circle>
+<circle cx="310" cy="80" fill="#4a6fd3" r="3.5"></circle>
+<circle cx="460" cy="55" fill="#4a6fd3" r="3.5"></circle>
+<text fill="#4a6fd3" font-family="sans-serif" font-size="11" x="470" y="55">V4-Pro 37.7</text>
+<!-- Flash -->
+<polyline fill="none" points="70,275 180,190 310,95 460,70" stroke="#5fa55f" stroke-width="2.5"></polyline>
+<circle cx="70" cy="275" fill="#5fa55f" r="3.5"></circle>
+<circle cx="180" cy="190" fill="#5fa55f" r="3.5"></circle>
+<circle cx="310" cy="95" fill="#5fa55f" r="3.5"></circle>
+<circle cx="460" cy="70" fill="#5fa55f" r="3.5"></circle>
+<text fill="#5fa55f" font-family="sans-serif" font-size="11" x="470" y="70">V4-Flash 34.8</text>
+<!-- V3.2 -->
+<polyline fill="none" points="70,278 180,240 310,210 460,195" stroke="#b85450" stroke-dasharray="4 3" stroke-width="2.5"></polyline>
+<text fill="#b85450" font-family="sans-serif" font-size="11" x="470" y="195">V3.2</text>
+<text fill="#555" font-family="sans-serif" font-size="11" text-anchor="middle" x="250" y="300">Total tokens  20k → 80k</text>
+<text fill="#555" font-family="sans-serif" font-size="11" text-anchor="middle" x="250" y="318">Non-think → Think High → Max / Speciale</text>
+</g>
+<!-- Terminal Bench -->
+<g transform="translate(580,40)">
+<rect fill="#fafbfc" height="300" stroke="#d0d7de" width="480" x="0" y="0"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="600" text-anchor="middle" x="240" y="18">TerminalBench 2.0 (Pass@1, %)</text>
+<line stroke="#333" x1="50" x2="460" y1="280" y2="280"></line>
+<line stroke="#333" x1="50" x2="50" y1="40" y2="280"></line>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="35" y="50">70</text>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="35" y="160">50</text>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="35" y="280">30</text>
+<!-- Pro -->
+<polyline fill="none" points="70,130 240,80 440,50" stroke="#4a6fd3" stroke-width="2.5"></polyline>
+<circle cx="70" cy="130" fill="#4a6fd3" r="3.5"></circle>
+<circle cx="240" cy="80" fill="#4a6fd3" r="3.5"></circle>
+<circle cx="440" cy="50" fill="#4a6fd3" r="3.5"></circle>
+<text fill="#4a6fd3" font-family="sans-serif" font-size="11" x="445" y="50">V4-Pro 67.9</text>
+<!-- Flash -->
+<polyline fill="none" points="70,205 240,150 440,140" stroke="#5fa55f" stroke-width="2.5"></polyline>
+<circle cx="70" cy="205" fill="#5fa55f" r="3.5"></circle>
+<circle cx="240" cy="150" fill="#5fa55f" r="3.5"></circle>
+<circle cx="440" cy="140" fill="#5fa55f" r="3.5"></circle>
+<text fill="#5fa55f" font-family="sans-serif" font-size="11" x="445" y="140">V4-Flash 56.9</text>
+<!-- V3.2 -->
+<polyline fill="none" points="70,240 240,225 440,215" stroke="#b85450" stroke-dasharray="4 3" stroke-width="2.5"></polyline>
+<text fill="#b85450" font-family="sans-serif" font-size="11" x="445" y="215">V3.2</text>
+<text fill="#555" font-family="sans-serif" font-size="11" text-anchor="middle" x="240" y="300">None → Think High → Max</text>
+<text fill="#555" font-family="sans-serif" font-size="11" text-anchor="middle" x="240" y="318">(reasoning effort, left → right)</text>
+</g>
+</svg>

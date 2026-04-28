@@ -1,0 +1,42 @@
+<svg viewbox="0 0 1100 360" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#fff" height="360" width="1100"></rect>
+<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">DSec · Agentic sandbox platform (Rust, 3FS-backed)</text>
+<!-- Components -->
+<rect fill="#fff4e0" height="90" rx="4" stroke="#e0b300" width="1040" x="30" y="56"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="550" y="78">Three Rust services</text>
+<g font-family="monospace" font-size="11">
+<text x="45" y="102">Apiserver · HTTP gateway, auth, scheduling RPC</text>
+<text x="45" y="120">Edge · per-host agent, exec/filesystem/TTY, integrates cgroups v2 + seccomp</text>
+<text x="45" y="138">Watcher · cluster monitor, SLA signals, failure detection</text>
+</g>
+<!-- Substrates -->
+<g font-family="sans-serif" font-size="11.5">
+<rect fill="#eef3ff" height="170" rx="4" stroke="#4a6fd3" width="250" x="30" y="170"></rect>
+<text font-weight="700" text-anchor="middle" x="155" y="192">Function</text>
+<text x="45" y="216">• stateless, dispatched to</text>
+<text x="45" y="234">  pre-warmed container pool</text>
+<text x="45" y="252">• zero cold-start for tool calls</text>
+<text fill="#1a3a5c" x="45" y="280">• best for: one-shot tools, query</text>
+<text fill="#1a3a5c" x="45" y="298">  classification, short code exec</text>
+<rect fill="#fff5f0" height="170" rx="4" stroke="#b85450" width="250" x="300" y="170"></rect>
+<text font-weight="700" text-anchor="middle" x="425" y="192">Container</text>
+<text x="315" y="216">• fully Docker-compatible</text>
+<text x="315" y="234">• EROFS on-demand layer load</text>
+<text x="315" y="252">• base + CoW overlay</text>
+<text fill="#b85450" x="315" y="280">• best for: dev environments,</text>
+<text fill="#b85450" x="315" y="298">  SWE-Bench-style rollouts</text>
+<rect fill="#f9eef8" height="170" rx="4" stroke="#a33ea1" width="250" x="570" y="170"></rect>
+<text font-weight="700" text-anchor="middle" x="695" y="192">microVM (Firecracker)</text>
+<text x="585" y="216">• VM isolation boundary</text>
+<text x="585" y="234">• overlaybd read-only base + CoW</text>
+<text x="585" y="252">• chainable snapshots</text>
+<text fill="#4a1a48" x="585" y="280">• best for: security-sensitive</text>
+<text fill="#4a1a48" x="585" y="298">  high-density sandboxes</text>
+<rect fill="#f4faf4" height="170" rx="4" stroke="#5fa55f" width="230" x="840" y="170"></rect>
+<text font-weight="700" text-anchor="middle" x="955" y="192">fullVM (QEMU)</text>
+<text x="855" y="216">• arbitrary guest OS</text>
+<text x="855" y="234">• heaviest but most flexible</text>
+<text fill="#1a3d1a" x="855" y="262">• best for: kernel drivers,</text>
+<text fill="#1a3d1a" x="855" y="280">  non-Linux guests, research</text>
+</g>
+</svg>

@@ -1,0 +1,28 @@
+<svg viewbox="0 0 1100 360" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="wal_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
+<rect fill="#fff" height="360" width="1100"></rect>
+<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="550" y="24">Preemptible rollout · token-granular WAL correctness (no length bias)</text>
+<!-- Naive -->
+<rect fill="#fff5f0" height="140" rx="4" stroke="#b85450" width="510" x="30" y="56"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="285" y="78">Naive: regenerate-from-scratch on preemption</text>
+<text font-family="monospace" font-size="11" x="45" y="102">• preempt → lose generated tokens + KV</text>
+<text font-family="monospace" font-size="11" x="45" y="120">• on resume → start over from prefill</text>
+<text fill="#b85450" font-family="monospace" font-size="11" x="45" y="144">SUBTLE BUG — length bias:</text>
+<text fill="#b85450" font-family="monospace" font-size="11" x="45" y="162">  shorter responses more likely to finish before preemption</text>
+<text fill="#b85450" font-family="monospace" font-size="11" x="45" y="180">  → surviving distribution skews short → model learns to output shorter sequences</text>
+<!-- WAL -->
+<rect fill="#f4faf4" height="140" rx="4" stroke="#5fa55f" width="500" x="570" y="56"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="820" y="78">V4: token-granular write-ahead log</text>
+<text font-family="monospace" font-size="11" x="585" y="102">• per-request WAL: append every generated token immediately</text>
+<text font-family="monospace" font-size="11" x="585" y="120">• preempt → pause engine → save KV cache to persistent storage</text>
+<text font-family="monospace" font-size="11" x="585" y="138">• resume → load KV, continue from last WAL token</text>
+<text font-family="monospace" font-size="11" x="585" y="158">• on fatal HW failure: rerun prefill using WAL tokens, rebuild KV</text>
+<text fill="#1a3d1a" font-family="monospace" font-size="11" x="585" y="180">→ preserves full sequence distribution</text>
+<!-- Why bit-invariance matters here -->
+<rect fill="#eef3ff" height="130" rx="4" stroke="#4a6fd3" width="1040" x="30" y="216"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle" x="550" y="238">Alternative if kernels are batch-invariant (what V4 has)</text>
+<text font-family="monospace" font-size="11" x="60" y="262">• regenerate from scratch BUT use fixed RNG seed for sampler → deterministic replay → same distribution, no length bias</text>
+<text font-family="monospace" font-size="11" x="60" y="280">• downside: repays entire decode cost (typically 10×–100× the WAL cost)</text>
+<text font-family="monospace" font-size="11" x="60" y="300">• so V4 prefers WAL for speed, but bit-invariance ensures it can FALL BACK to deterministic replay if WAL is lost</text>
+<text fill="#4a6fd3" font-family="monospace" font-size="11" x="60" y="326">→ dual safety net: fast path WAL + correctness floor via bit-invariant kernels</text>
+</svg>

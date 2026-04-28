@@ -1,0 +1,36 @@
+{{- /* {{< fig src="/figures/v4/F1.svg" drawio="/drawio/v4/figures/F1.drawio" label="F1" caption="…" >}}
+       Renders the SVG inline (clean reader view). On hover OR with ?edit=1, an
+       "Edit on diagrams.net" pill appears that opens the .drawio companion. */ -}}
+{{- $src   := .Get "src" -}}
+{{- $cap   := .Get "caption" -}}
+{{- $label := .Get "label" -}}
+{{- $drawio := .Get "drawio" -}}
+{{- $repo   := .Page.Site.Params.drawioGithubRepo | default "cassiewilliam/blog" -}}
+{{- $branch := .Page.Site.Params.drawioGithubBranch | default "main" -}}
+{{- $editURL := "" -}}
+{{- with $drawio -}}
+  {{- $path := printf "static%s" . -}}
+  {{- $editH := printf "H%s%%2F%s%%2F%s" (replace $repo "/" "%2F") $branch (replace $path "/" "%2F") -}}
+  {{- $editURL = printf "https://app.diagrams.net/?mode=github&url=https%%3A%%2F%%2Fraw.githubusercontent.com%%2F%s%%2F%s%%2F%s#%s" $repo $branch $path $editH -}}
+{{- end -}}
+
+<figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
+  <img src="{{ $src | safeURL }}" alt="{{ $cap }}" loading="lazy" style="display:block;max-width:100%;height:auto;border:1px solid #d0d7de;border-radius:6px;background:#fff">
+
+  {{- if $editURL }}
+  <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
+    <a href="{{ $editURL | safeURL }}" target="_blank" rel="noopener"
+       style="color:#0969da;text-decoration:none;border:1px solid #d0d7de;padding:3px 8px;border-radius:4px;background:#f6f8fa">
+       ✏️ Edit on diagrams.net
+    </a>
+    <a href="{{ $drawio | safeURL }}" target="_blank" rel="noopener"
+       style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">{{ $drawio }}</a>
+  </div>
+  {{- end }}
+
+  {{- with $cap }}
+  <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55">
+    {{- with $label }}<b>{{ . }}</b>&nbsp;&nbsp;{{ end }}{{ . | safeHTML }}
+  </figcaption>
+  {{- end }}
+</figure>

@@ -1,0 +1,37 @@
+<svg viewbox="0 0 1000 360" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#fff" height="360" width="1000"></rect>
+<text font-family="sans-serif" font-size="15" font-weight="700" text-anchor="middle" x="500" y="24">1 M-token: FLOPs / KV-cache curves (reproduces Figure 1 right)</text>
+<g transform="translate(40,40)">
+<rect fill="#fafbfc" height="280" stroke="#d0d7de" width="440" x="0" y="0"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="600" text-anchor="middle" x="220" y="18">Single-token FLOPs (T)</text>
+<line stroke="#333" x1="40" x2="420" y1="260" y2="260"></line>
+<line stroke="#333" x1="40" x2="40" y1="40" y2="260"></line>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="20" y="50">50</text>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="20" y="150">25</text>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="20" y="260">0</text>
+<polyline fill="none" points="40,255 120,245 200,215 280,175 360,115 420,55" stroke="#b85450" stroke-width="2.5"></polyline>
+<text fill="#b85450" font-family="sans-serif" font-size="11" x="425" y="55">V3.2</text>
+<polyline fill="none" points="40,255 120,252 200,245 280,230 360,210 420,185" stroke="#4a6fd3" stroke-width="2.5"></polyline>
+<text fill="#4a6fd3" font-family="sans-serif" font-size="11" x="425" y="185">V4-Pro (3.7× ↓)</text>
+<polyline fill="none" points="40,257 120,256 200,253 280,248 360,241 420,233" stroke="#5fa55f" stroke-width="2.5"></polyline>
+<text fill="#5fa55f" font-family="sans-serif" font-size="11" x="425" y="233">V4-Flash (9.8× ↓)</text>
+<text fill="#555" font-family="sans-serif" font-size="11" text-anchor="middle" x="220" y="275">Sequence length (K)  0 → 1024</text>
+</g>
+<g transform="translate(520,40)">
+<rect fill="#fafbfc" height="280" stroke="#d0d7de" width="440" x="0" y="0"></rect>
+<text font-family="sans-serif" font-size="13" font-weight="600" text-anchor="middle" x="220" y="18">Accumulated KV-cache (GB)</text>
+<line stroke="#333" x1="40" x2="420" y1="260" y2="260"></line>
+<line stroke="#333" x1="40" x2="40" y1="40" y2="260"></line>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="20" y="50">50</text>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="20" y="150">25</text>
+<text font-family="sans-serif" font-size="10" text-anchor="end" x="20" y="260">0</text>
+<polyline fill="none" points="40,255 120,240 200,200 280,145 360,85 420,45" stroke="#b85450" stroke-width="2.5"></polyline>
+<text fill="#b85450" font-family="sans-serif" font-size="11" x="425" y="45">V3.2</text>
+<polyline fill="none" points="40,257 120,254 200,247 280,235 360,220 420,205" stroke="#4a6fd3" stroke-width="2.5"></polyline>
+<text fill="#4a6fd3" font-family="sans-serif" font-size="11" x="425" y="205">V4-Pro (9.5× ↓)</text>
+<polyline fill="none" points="40,258 120,257 200,255 280,252 360,248 420,244" stroke="#5fa55f" stroke-width="2.5"></polyline>
+<text fill="#5fa55f" font-family="sans-serif" font-size="11" x="425" y="244">V4-Flash (13.7× ↓)</text>
+<text fill="#555" font-family="sans-serif" font-size="11" text-anchor="middle" x="220" y="275">Sequence length (K)  0 → 1024</text>
+</g>
+<text fill="#555" font-family="monospace" font-size="11" text-anchor="middle" x="500" y="350">V4-Pro @1M: 27% FLOPs, 10% KV · V4-Flash @1M: 10% FLOPs, 7% KV — reproduced from Figure 1</text>
+</svg>

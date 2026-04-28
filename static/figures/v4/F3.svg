@@ -1,0 +1,30 @@
+<svg viewbox="0 0 1000 360" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="mhc_ar" markerheight="7" markerwidth="7" orient="auto" refx="10" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#333"></path></marker></defs>
+<rect fill="#fff" height="360" width="1000"></rect>
+<text font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" x="500" y="24">mHC · Manifold-Constrained Hyper-Connections</text>
+<g transform="translate(40,56)">
+<text font-family="sans-serif" font-size="13" font-weight="600" text-anchor="middle" x="180" y="0">(a) Hyper-Connection (HC)</text>
+<rect fill="#fff5f0" height="128" rx="4" stroke="#b85450" width="360" x="0" y="16"></rect>
+<text font-family="sans-serif" font-size="12" text-anchor="middle" x="180" y="50">X_{l+1} = B_l · X_l + C_l · F_l(A_l · X_l)</text>
+<text font-family="sans-serif" font-size="11" text-anchor="middle" x="180" y="75">unconstrained B_l → ‖B_l‖₂ unbounded</text>
+<text fill="#b85450" font-family="sans-serif" font-size="11" text-anchor="middle" x="180" y="95">27B: signal amplified ≈3000×</text>
+<text fill="#b85450" font-family="sans-serif" font-size="11" text-anchor="middle" x="180" y="115">loss spike around step 12k</text>
+</g>
+<g transform="translate(460,56)">
+<text font-family="sans-serif" font-size="13" font-weight="600" text-anchor="middle" x="250" y="0">(b) Manifold-Constrained HC</text>
+<rect fill="#f4faf4" height="128" rx="4" stroke="#5fa55f" width="500" x="0" y="16"></rect>
+<text font-family="sans-serif" font-size="12" text-anchor="middle" x="250" y="44">B_l ∈ M := { M ≥ 0 : M·𝟙=𝟙, 𝟙ᵀM=𝟙ᵀ }   (Birkhoff polytope)</text>
+<text font-family="sans-serif" font-size="12" text-anchor="middle" x="250" y="68">‖B_l‖₂ ≤ 1   ·   A_l, C_l via Sigmoid (bounded)</text>
+<text font-family="sans-serif" font-size="11" text-anchor="middle" x="250" y="90">B_l = Sinkhorn-Knopp(exp(B̃_l), t_max=20)</text>
+<text fill="#1a3d1a" font-family="sans-serif" font-size="11" text-anchor="middle" x="250" y="108">total gain ≈1.6× · deep stacks converge</text>
+<text fill="#1a3d1a" font-family="sans-serif" font-size="11" text-anchor="middle" x="250" y="128">BBH 43.8 → 51.0 (vs HC 48.9)</text>
+</g>
+<text font-family="sans-serif" font-size="13" font-weight="600" text-anchor="middle" x="500" y="188">Sinkhorn-Knopp iteration (20 steps) · row + col normalize</text>
+<g transform="translate(120,200)"><rect fill="#fff" height="90" stroke="#555" width="120" x="0" y="0"></rect><text font-family="monospace" font-size="14" text-anchor="middle" x="60" y="50">exp(B̃_l)</text><text font-family="sans-serif" font-size="10" text-anchor="middle" x="60" y="110">positive matrix</text></g>
+<g transform="translate(320,200)"><rect fill="#fff" height="90" stroke="#555" width="120" x="0" y="0"></rect><text font-family="monospace" font-size="13" text-anchor="middle" x="60" y="50">T_r(T_c(·))</text><text font-family="sans-serif" font-size="10" text-anchor="middle" x="60" y="110">alternating norm.</text></g>
+<g transform="translate(520,200)"><rect fill="#eef7ee" height="90" stroke="#5fa55f" width="120" x="0" y="0"></rect><text font-family="monospace" font-size="13" text-anchor="middle" x="60" y="50">B_l ∈ M</text><text font-family="sans-serif" font-size="10" text-anchor="middle" x="60" y="110">doubly stochastic</text></g>
+<g transform="translate(720,200)"><rect fill="#fff4e0" height="90" stroke="#e0b300" width="180" x="0" y="0"></rect><text font-family="sans-serif" font-size="11" text-anchor="middle" x="90" y="44">non-expansive map</text><text font-family="sans-serif" font-size="11" text-anchor="middle" x="90" y="62">stable fwd + bwd</text><text font-family="sans-serif" font-size="11" text-anchor="middle" x="90" y="80">n_hc = 4 expansion</text></g>
+<line marker-end="url(#mhc_ar)" stroke="#333" stroke-width="1.4" x1="240" x2="318" y1="245" y2="245"></line>
+<line marker-end="url(#mhc_ar)" stroke="#333" stroke-width="1.4" x1="440" x2="518" y1="245" y2="245"></line>
+<line marker-end="url(#mhc_ar)" stroke="#333" stroke-width="1.4" x1="640" x2="718" y1="245" y2="245"></line>
+</svg>

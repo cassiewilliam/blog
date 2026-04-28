@@ -1,0 +1,93 @@
+<svg font-family="system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif" viewbox="0 0 1100 460" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="pp_ar" markerheight="6" markerwidth="6" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#4b5563"></path></marker></defs>
+<rect fill="#fff" height="460" width="1100"></rect>
+<text fill="#111827" font-size="16" font-weight="700" text-anchor="middle" x="550" y="26">Pull vs Push 通信原语 · 时序对比</text>
+<!-- PULL panel -->
+<g transform="translate(40,60)">
+<text fill="#1a3d1a" font-size="13" font-weight="700" text-anchor="middle" x="250" y="0">(a) Pull · V4 当前选择</text>
+<rect fill="#f4faf4" height="320" rx="8" stroke="#5fa55f" width="500" x="0" y="14"></rect>
+<!-- Lanes -->
+<text fill="#1a3d1a" font-size="11" font-weight="700" x="60" y="50">GPU_send</text>
+<text fill="#1a3d1a" font-size="11" font-weight="700" x="60" y="120">NVLink</text>
+<text fill="#1a3d1a" font-size="11" font-weight="700" x="60" y="190">GPU_recv</text>
+<line stroke="#9ca3af" stroke-width="0.5" x1="120" x2="500" y1="42" y2="42"></line>
+<line stroke="#9ca3af" stroke-width="0.5" x1="120" x2="500" y1="112" y2="112"></line>
+<line stroke="#9ca3af" stroke-width="0.5" x1="120" x2="500" y1="182" y2="182"></line>
+<!-- send: prepare buffer -->
+<rect fill="#fff5f0" height="20" rx="3" stroke="#b85450" width="80" x="125" y="32"></rect>
+<text font-size="9.5" text-anchor="middle" x="165" y="46">prep buf</text>
+<!-- send: barrier signal -->
+<rect fill="#fff4e0" height="20" rx="3" stroke="#e0b300" width="40" x="208" y="32"></rect>
+<text font-size="9" text-anchor="middle" x="228" y="46">barrier</text>
+<!-- recv: read request -->
+<rect fill="#eef3ff" height="20" rx="3" stroke="#4a6fd3" width="50" x="125" y="174"></rect>
+<text font-size="9" text-anchor="middle" x="150" y="188">poll rdy</text>
+<rect fill="#eef3ff" height="20" rx="3" stroke="#4a6fd3" width="60" x="178" y="174"></rect>
+<text font-size="9" text-anchor="middle" x="208" y="188">RDMA read</text>
+<!-- NVLink data: read req then payload -->
+<rect fill="#a33ea1" height="14" opacity="0.6" rx="2" width="20" x="180" y="104"></rect>
+<text fill="#4a1a48" font-size="8" text-anchor="middle" x="190" y="100">req</text>
+<rect fill="#5fa55f" height="14" opacity="0.6" rx="2" width="180" x="205" y="104"></rect>
+<text fill="#1a3d1a" font-size="9" text-anchor="middle" x="295" y="100">payload (bulk)</text>
+<!-- recv consume -->
+<rect fill="#f4faf4" height="20" rx="3" stroke="#5fa55f" width="80" x="395" y="174"></rect>
+<text font-size="9" text-anchor="middle" x="435" y="188">enqueue GEMM</text>
+<!-- Notes -->
+<text fill="#1a3d1a" font-size="10.5" x="20" y="240">+ 仅一次 round-trip：read req → payload</text>
+<text fill="#1a3d1a" font-size="10.5" x="20" y="256">+ 接收方主导时序 → 不需要 sender 通知</text>
+<text fill="#7a4e00" font-size="10.5" x="20" y="276">~ 接收方需轮询 ready 标志（~ns 级开销）</text>
+<text fill="#7a4e00" font-size="10.5" x="20" y="296">~ 适合 fine-grained wave (RDMA latency 主导)</text>
+<text fill="#1a3d1a" font-size="11" font-weight="700" x="20" y="320">总开销 ≈ RDMA RTT (亚 μs)</text>
+</g>
+<!-- PUSH panel -->
+<g transform="translate(580,60)">
+<text fill="#7a2f2b" font-size="13" font-weight="700" text-anchor="middle" x="250" y="0">(b) Push · 当前不可用</text>
+<rect fill="#fff5f0" height="320" rx="8" stroke="#b85450" width="500" x="0" y="14"></rect>
+<text fill="#7a2f2b" font-size="11" font-weight="700" x="60" y="50">GPU_send</text>
+<text fill="#7a2f2b" font-size="11" font-weight="700" x="60" y="120">NVLink</text>
+<text fill="#7a2f2b" font-size="11" font-weight="700" x="60" y="190">GPU_recv</text>
+<line stroke="#9ca3af" stroke-width="0.5" x1="120" x2="500" y1="42" y2="42"></line>
+<line stroke="#9ca3af" stroke-width="0.5" x1="120" x2="500" y1="112" y2="112"></line>
+<line stroke="#9ca3af" stroke-width="0.5" x1="120" x2="500" y1="182" y2="182"></line>
+<!-- send: write + signal per packet -->
+<rect fill="#fff5f0" height="20" rx="3" stroke="#b85450" width="60" x="125" y="32"></rect>
+<text font-size="9" text-anchor="middle" x="155" y="46">RDMA write</text>
+<rect fill="#a33ea1" height="20" rx="3" width="20" x="188" y="32"></rect>
+<text fill="#fff" font-size="9" text-anchor="middle" x="198" y="46">sig</text>
+<rect fill="#fff5f0" height="20" rx="3" stroke="#b85450" width="60" x="211" y="32"></rect>
+<text font-size="9" text-anchor="middle" x="241" y="46">RDMA write</text>
+<rect fill="#a33ea1" height="20" rx="3" width="20" x="274" y="32"></rect>
+<text fill="#fff" font-size="9" text-anchor="middle" x="284" y="46">sig</text>
+<rect fill="#fff5f0" height="20" rx="3" stroke="#b85450" width="60" x="297" y="32"></rect>
+<text font-size="9" text-anchor="middle" x="327" y="46">RDMA write</text>
+<rect fill="#a33ea1" height="20" rx="3" width="20" x="360" y="32"></rect>
+<text fill="#fff" font-size="9" text-anchor="middle" x="370" y="46">sig</text>
+<!-- NVLink: payload + doorbell flush -->
+<rect fill="#5fa55f" height="14" opacity="0.5" rx="2" width="60" x="125" y="104"></rect>
+<text font-size="8" text-anchor="middle" x="155" y="100">pkt</text>
+<rect fill="#a33ea1" height="14" rx="2" width="20" x="188" y="104"></rect>
+<text fill="#fff" font-size="8" text-anchor="middle" x="198" y="100">db</text>
+<rect fill="#5fa55f" height="14" opacity="0.5" rx="2" width="60" x="211" y="104"></rect>
+<text font-size="8" text-anchor="middle" x="241" y="100">pkt</text>
+<rect fill="#a33ea1" height="14" rx="2" width="20" x="274" y="104"></rect>
+<text fill="#fff" font-size="8" text-anchor="middle" x="284" y="100">db</text>
+<rect fill="#5fa55f" height="14" opacity="0.5" rx="2" width="60" x="297" y="104"></rect>
+<text font-size="8" text-anchor="middle" x="327" y="100">pkt</text>
+<rect fill="#a33ea1" height="14" rx="2" width="20" x="360" y="104"></rect>
+<text fill="#fff" font-size="8" text-anchor="middle" x="370" y="100">db</text>
+<!-- recv: handlers -->
+<rect fill="#eef3ff" height="20" rx="3" stroke="#4a6fd3" width="35" x="160" y="174"></rect>
+<text font-size="9" text-anchor="middle" x="178" y="188">irq</text>
+<rect fill="#eef3ff" height="20" rx="3" stroke="#4a6fd3" width="35" x="245" y="174"></rect>
+<text font-size="9" text-anchor="middle" x="263" y="188">irq</text>
+<rect fill="#eef3ff" height="20" rx="3" stroke="#4a6fd3" width="35" x="330" y="174"></rect>
+<text font-size="9" text-anchor="middle" x="348" y="188">irq</text>
+<text fill="#7a2f2b" font-size="10.5" x="20" y="240">– 每个 fine-grained packet 都要写 doorbell</text>
+<text fill="#7a2f2b" font-size="10.5" x="20" y="256">– 当前硬件 doorbell 写延迟 ~ 0.5 – 1 μs</text>
+<text fill="#7a2f2b" font-size="10.5" x="20" y="276">– wave 内若有 100 个 packet ⇒ 50 – 100 μs overhead</text>
+<text fill="#1a3d1a" font-size="10.5" x="20" y="296">+ 未来若 signaling &lt; 100 ns，push 重新可用</text>
+<text fill="#7a2f2b" font-size="11" font-weight="700" x="20" y="320">总开销 ≈ N · doorbell 延迟（&gt;&gt; pull）</text>
+</g>
+<text fill="#6b7280" font-size="10.5" font-style="italic" text-anchor="middle" x="550" y="430">论文 §3.1 ③：硬件若把 cross-GPU signaling 做到亚 100 ns，push 模式将允许更细粒度的 wave overlap，逼近 1.92× 理论上限。</text>
+<text fill="#6b7280" font-size="10.5" text-anchor="middle" x="550" y="448">绿色 = 数据传输；紫色 = 通知 / signaling；橙色 = barrier；蓝色 = 接收端处理</text>
+</svg>

@@ -1,0 +1,4 @@
+{{- /* {{< tip >}}…{{< /tip >}}  ·  blue-tinted callout, content rendered as markdown */ -}}
+<div class="cc-tip" style="background:#eef7ff;border-left:4px solid #4a90e2;padding:10px 16px;margin:14px 0;color:#1a3a5c;border-radius:4px;font-size:14px;line-height:1.7">
+{{ .Inner | .Page.RenderString (dict "display" "block") }}
+</div>
