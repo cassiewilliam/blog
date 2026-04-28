@@ -1,30 +1,46 @@
 {{- /* {{< fig src="/figures/<slug>/F1.svg" label="F1" caption="…" >}}
 
-       Inlines the SVG into the page so it renders pixel-perfect (no
-       lossy svg2drawio conversion, no mxgraph viewer layout shift).
-       Edit pill links to /edit-fig/?src=… which loads the .drawio
-       companion in an embedded diagrams.net editor for visual edits.   */ -}}
+       Renders the .drawio companion via the mxgraph viewer so page view
+       is byte-for-byte identical to what the user sees in the
+       diagrams.net editor (WYSIWYG).  Edit pill loads the same .drawio.
+
+       Falls back to inline SVG if the .drawio file isn't found.        */ -}}
 {{- $src    := .Get "src" -}}
 {{- $cap    := .Get "caption" -}}
 {{- $label  := .Get "label" -}}
 {{- $svgPath := printf "static%s" $src -}}
-{{- $svg := "" -}}
-{{- if (fileExists $svgPath) -}}
-  {{- $svg = readFile $svgPath -}}
-{{- end -}}
+
+{{- /* Derive .drawio path: /figures/<slug>/F<N>.svg → /drawio/<slug>/figures/F<N>.drawio
+       Special-case the V4 path which uses '/figures/v4/F<N>.svg' (without
+       the long slug). */ -}}
+{{- $drawioPath := replaceRE "^/figures/(.+)/([^/]+)\\.svg$" "/drawio/$1/figures/$2.drawio" $src -}}
+{{- $drawioFile := printf "static%s" $drawioPath -}}
+{{- $hasDrawio := fileExists $drawioFile -}}
+{{- $url := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $drawioPath) -}}
 
 {{- $editURL := "" -}}
 {{- with $src -}}{{- $editURL = printf "/edit-fig/?src=%s" . -}}{{- end -}}
 
 <figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
+  {{- if $hasDrawio }}
+  <div class="cc-fig-mx" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:340px">
+    <div class="mxgraph"
+         style="max-width:100%;"
+         data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","url":"{{ $url | safeJS }}"}'></div>
+  </div>
+  {{- else }}
+  {{- /* No .drawio — fall back to inline SVG. */ -}}
+  {{- $svg := "" -}}
+  {{- if (fileExists $svgPath) -}}{{- $svg = readFile $svgPath -}}{{- end -}}
   <div class="cc-fig-svg" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;line-height:0;overflow:hidden">
     {{ $svg | safeHTML }}
   </div>
+  {{- end }}
 
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
     {{- with $editURL }}
     <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
-       title="嵌入式 drawio 编辑器：可视化拖拽 / 改文字 / 改连线，⌘S 自动通过 PAT 提交 GitHub。首次使用先去 /admin/ 用 PAT 登录一次。"
+       title="嵌入式 drawio 编辑器：可视化拖拽 / 改文字 / 改连线，⌘S 自动通过 PAT 提交 GitHub。"
        style="color:#fff;background:#0969da;text-decoration:none;border:1px solid #0969da;padding:3px 10px;border-radius:4px;font-weight:600">
        ✏️ Edit (drawio)
     </a>
