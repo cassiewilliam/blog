@@ -1,34 +1,66 @@
-{{- /* Override the Hugo Book home so the landing page renders the full
-       post list directly (instead of an empty "landing" placeholder).  */ -}}
+{{- /* Custom home — PaperMod profile-mode look ported into hugo-book.
+
+         ┌────────────────────────┐
+         │       avatar           │
+         │   Min Yang             │  ← title
+         │   subtitle …           │
+         │  [归档] [标签] [关于]  │  ← buttons
+         │     GitHub  RSS …      │  ← social icons
+         └────────────────────────┘
+                ─── 文章列表 ───
+         · 文章 1 标题
+           日期 · tag · tag    summary
+         · 文章 2 标题
+           …
+                                                                       */ -}}
 {{ define "main" }}
-  <article class="markdown">
-    <h1>{{ .Site.Title }}</h1>
-    {{- with .Site.Params.description }}
-    <p style="color:var(--gray-700);font-size:1.05em;margin-bottom:2em">{{ . }}</p>
-    {{- end }}
-
-    {{ range where (sort .Site.RegularPages "Date" "desc") "Section" "posts" }}
-    <article class="book-post markdown" style="margin-bottom:2em;padding-bottom:1.6em;border-bottom:1px solid var(--gray-200)">
-      <h2 style="margin-bottom:.4em">
-        <a href="{{ .RelPermalink }}">{{ partial "docs/title" . }}</a>
-      </h2>
-      {{ partial "docs/post-meta" . }}
-      <div class="book-post-content markdown-inner" style="margin-top:.6em;color:var(--gray-700)">
-        {{- with .Params.summary -}}
-          {{ . | truncate 240 }}
-        {{- else -}}
-          {{ .Summary | truncate 240 }}
-        {{- end -}}
-      </div>
-    </article>
-    {{ end }}
-  </article>
-{{ end }}
-
-{{ define "toc-container" }}
-<aside class="book-toc">
-  <div class="book-toc-content">
-    {{ partial "docs/taxonomy" . }}
+<div class="home-profile" style="text-align:center;padding:2.6em 0 1.4em;border-bottom:1px solid var(--gray-200);margin-bottom:2em">
+  <img src="/avatar.jpg" alt="avatar"
+       style="width:140px;height:140px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 1em;border:2px solid var(--gray-200)">
+  <h1 style="margin:.2em 0 .25em;font-size:2em;font-weight:700">Min Yang</h1>
+  <p style="margin:.1em 0 1em;color:var(--gray-700);font-size:1.05em">
+    GPU 内核工程 · LLM 推理系统 · 大模型基础设施
+  </p>
+  <div class="profile-buttons" style="display:flex;justify-content:center;gap:.6em;flex-wrap:wrap;margin:1.2em 0 1.4em">
+    <a href="/posts/" style="padding:.5em 1.4em;border:1px solid var(--gray-300);border-radius:24px;text-decoration:none;color:var(--body-font-color);font-size:.95em">归档</a>
+    <a href="/tags/" style="padding:.5em 1.4em;border:1px solid var(--gray-300);border-radius:24px;text-decoration:none;color:var(--body-font-color);font-size:.95em">标签</a>
+    <a href="/about/" style="padding:.5em 1.4em;border:1px solid var(--gray-300);border-radius:24px;text-decoration:none;color:var(--body-font-color);font-size:.95em">关于</a>
+    <a href="/admin/" style="padding:.5em 1.4em;border:1px solid var(--gray-300);border-radius:24px;text-decoration:none;color:var(--body-font-color);font-size:.95em">编辑</a>
   </div>
-</aside>
+  <div class="profile-social" style="display:flex;justify-content:center;gap:1.2em;font-size:1.4em;color:var(--gray-700)">
+    <a href="https://github.com/cassiewilliam" target="_blank" rel="noopener" title="GitHub" style="color:inherit;text-decoration:none">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.9.1 3.2.9.8 1.3 1.9 1.3 3.1 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.2.9 2.3v3.4c0 .3.1.7.8.6A12 12 0 0 0 12 .3"/></svg>
+    </a>
+    <a href="/index.xml" target="_blank" rel="noopener" title="RSS" style="color:inherit;text-decoration:none">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3.4 9.6v3a8 8 0 0 1 8 8h3a11 11 0 0 0-11-11zm0-5.6v3a13.6 13.6 0 0 1 13.6 13.6h3A16.6 16.6 0 0 0 3.4 4zm2.6 12a2.6 2.6 0 1 0 0 5.2A2.6 2.6 0 0 0 6 16z"/></svg>
+    </a>
+    <a href="mailto:hmoore1000@mtmercy.edu" title="Email" style="color:inherit;text-decoration:none">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M2 4h20v16H2zm10 9 8.5-6.4H3.5z"/></svg>
+    </a>
+  </div>
+</div>
+
+<div class="home-posts">
+  {{ range where (sort .Site.RegularPages "Date" "desc") "Section" "posts" }}
+  <article class="book-post markdown" style="margin-bottom:2em;padding-bottom:1.6em;border-bottom:1px solid var(--gray-200)">
+    <h2 style="margin:.4em 0 .2em;font-size:1.4em">
+      <a href="{{ .RelPermalink }}" style="color:var(--body-font-color)">{{ partial "docs/title" . }}</a>
+    </h2>
+    <div style="color:var(--gray-700);font-size:.86em;margin-bottom:.4em">
+      {{ .Date.Format "2006-01-02" }}
+      {{- with .Params.tags -}}
+      &nbsp;·&nbsp;
+        {{- range $i, $t := . }}{{ if $i }} · {{ end }}<a href="/tags/{{ $t | urlize }}/" style="color:var(--gray-700)">#{{ $t }}</a>{{ end -}}
+      {{- end }}
+    </div>
+    <div class="markdown-inner" style="color:var(--gray-700);font-size:.95em;line-height:1.6">
+      {{- with .Params.summary -}}
+        {{ . | truncate 240 }}
+      {{- else -}}
+        {{ .Summary | truncate 240 }}
+      {{- end -}}
+    </div>
+  </article>
+  {{ end }}
+</div>
 {{ end }}
