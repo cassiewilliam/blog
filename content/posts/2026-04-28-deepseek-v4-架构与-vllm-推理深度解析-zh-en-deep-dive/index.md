@@ -251,7 +251,9 @@ MegaMoE 在 V4 的 vLLM 实现里是 **整个推理路径上唯一被 prefill / 
 gate:  W_gate · x   ∈ [d, h] · [h] = [d]    →  2·h·d FLOPs (MAC×2)
 up:    W_up   · x   ∈ [d, h] · [h] = [d]    →  2·h·d FLOPs
 down:  W_down · y   ∈ [h, d] · [d] = [h]    →  2·h·d FLOPs
+```text
 ──────────────────────────────────────────────────────
+```
 V_comp = 6 · h · d  FLOPs / token-expert pair
 {{< /formula >}}
 
@@ -262,7 +264,9 @@ V_comp = 6 · h · d  FLOPs / token-expert pair
 {{< formula type="sm" label="✔ Workload 通信量推导" >}}
 dispatch:  h × 1 B  (FP8 input  hidden)  =  h Bytes
 combine:   h × 2 B  (BF16 output hidden) = 2h Bytes
+```text
 ──────────────────────────────────────────
+```
 V_comm = 3 · h  Bytes / token-expert pair
 {{< /formula >}}
 
