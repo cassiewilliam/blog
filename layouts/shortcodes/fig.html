@@ -15,9 +15,17 @@
 
 {{- $repo   := .Page.Site.Params.drawioGithubRepo | default "cassiewilliam/blog" -}}
 {{- $branch := .Page.Site.Params.drawioGithubBranch | default "main" -}}
+{{- /* Open the SVG directly in diagrams.net — no XML editor. The web app
+       loads SVG files, lets the user move boxes / edit text visually, and
+       'File → Save' commits back to the same .svg path on GitHub with
+       drawio metadata embedded (so the file is both a renderable SVG and
+       a re-editable drawio doc). One round-trip, edits show on the live
+       page within ~8 s.                                              */ -}}
 {{- $editURL := "" -}}
 {{- with $src -}}
-  {{- $editURL = printf "https://github.com/%s/edit/%s/static%s" $repo $branch . -}}
+  {{- $path  := printf "static%s" . -}}
+  {{- $hash  := printf "H%s%%2F%s%%2F%s" (replace $repo "/" "%2F") $branch (replace $path "/" "%2F") -}}
+  {{- $editURL = printf "https://app.diagrams.net/?mode=github&url=https%%3A%%2F%%2Fraw.githubusercontent.com%%2F%s%%2F%s%%2F%s#%s" $repo $branch $path $hash -}}
 {{- end -}}
 
 <figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
@@ -28,9 +36,9 @@
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
     {{- with $editURL }}
     <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
-       title="GitHub 网页编辑器：直接改 SVG XML，提交即生效"
-       style="color:#fff;background:#1f883d;text-decoration:none;border:1px solid #1f883d;padding:3px 10px;border-radius:4px;font-weight:600">
-       ✏️ Edit on GitHub
+       title="diagrams.net 中可视化编辑：拖拽、改文字、改连线，保存即提交到 main"
+       style="color:#fff;background:#0969da;text-decoration:none;border:1px solid #0969da;padding:3px 10px;border-radius:4px;font-weight:600">
+       ✏️ Edit on diagrams.net
     </a>
     {{- end }}
     <a href="{{ $src | safeURL }}" target="_blank" rel="noopener"
