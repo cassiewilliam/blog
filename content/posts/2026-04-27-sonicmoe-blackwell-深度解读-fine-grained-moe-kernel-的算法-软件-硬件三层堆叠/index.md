@@ -9,6 +9,84 @@ ShowToc: true
 TocOpen: false
 ---
 
+      {
+            "title": "SonicMoE: A Hardware-Efficient and Software-Extensible Blueprint for Fine-Grained MoEs",
+            "description": "",
+            "published": "April 22, 2026",
+            "authors": [
+
+              {
+                "author": "Wentao Guo",
+                "authorURL": "",
+                "affiliations": [
+                  {
+                    "name": "Princeton University",
+                    "url": ""
+                  }
+                ]
+              },
+
+              {
+                "author": "Mayank Mishra",
+                "authorURL": "",
+                "affiliations": [
+                  {
+                    "name": "UC Berkeley",
+                    "url": ""
+                  }
+                ]
+              },
+
+              {
+                "author": "Xinle Cheng",
+                "authorURL": "",
+                "affiliations": [
+                  {
+                    "name": "Princeton University",
+                    "url": ""
+                  }
+                ]
+              },
+
+              {
+                "author": "Ion Stoica",
+                "authorURL": "",
+                "affiliations": [
+                  {
+                    "name": "UC Berkeley",
+                    "url": ""
+                  }
+                ]
+              },
+
+              {
+                "author": "Tri Dao",
+                "authorURL": "",
+                "affiliations": [
+                  {
+                    "name": "Princeton University",
+                    "url": ""
+                  }
+                ]
+              }
+
+            ],
+            "katex": {
+              "delimiters": [
+                {
+                  "left": "$",
+                  "right": "$",
+                  "display": false
+                },
+                {
+                  "left": "$$",
+                  "right": "$$",
+                  "display": true
+                }
+              ]
+            }
+          }
+     Dao AI Lab Toggle navigation
 - [Research Group ](https://dao-lab.ai/)
 - [publications ](https://dao-lab.ai/publications/)
 - [blog ](https://dao-lab.ai/blog/)
@@ -142,7 +220,250 @@ body { overflow-x: hidden; }
  ============ SVG: Standard MoE — paper Figure 2 conventions ============ 
 Standard MoE — 6 forward kernels + 9 backward kernels （按论文 Figure 2 conventions：黄色=kernel container · 蓝色=intermediate/weight · 红色边框=cached activation · 紫色=output）
 
- Legend kernelintermediate / weightcached for backwardoutput ============ FORWARD ============ Forward pass · 6 kernels π input above Gather π W₁ W₁ W₂ W₂ π for scatter π π, S for aggregation π, S X (input, cached red) Xcached Gather kernel Gather X̃ (cached) X̃cached · [TK,d] 2GB Up-proj GEMM kernel Up-projVarlen-M Grouped GEMM H (cached) Hcached · 1.5GB Act func kernel Act func A (cached) Acached · 768MB Down-proj GEMM kernel Down-projVarlen-M Grouped GEMM Y (cached) Ycached · 2GB ⚠ Scatter kernel Scatter Ỹ (cached) Ỹcached · 2GB Aggregation kernel Each tokensums weightedexpert outputs O (output, purple) Ooutput Forward summary ⚠ 5 个 cached O(TKd) 张量：X̃ + H + A + Y + Ỹ ≈ 8.3 GB / 层 Divider  ============ BACKWARD ACT GRAD ============ Backward pass — activation gradient · 6 kernels (right → left) W₂ above down-proj act grad W₂ W₁ above up-proj act grad W₁ π,S above aggregation back π, S π above scatter back π π above gather back π dO (input from right) dO arrow dO → aggregation back (going left)  Aggregation back kernel Aggregationbackward dỸ dỸ Scatter back kernel Scatterbackward dY dY Down-proj act grad kernel Down-proj act gradVarlen-M Grouped GEMM dA dA dAct func kernel (uses cached H) dAct funcuses cached H Cache arrow from H → dAct  dH dH Up-proj act grad kernel Up-proj act gradVarlen-M Grouped GEMM dX̃ dX̃ Gather back / Aggregation kernel Aggregation(gather back) dX (output, purple) dXoutput Divider  ============ BACKWARD WEIGHT GRAD + dS ============ Backward pass — weight gradient + dS · 3 kernels（每个都依赖一个 cached O(TKd) 张量） dW₁ kernel: uses dH + cached X̃ Up-proj weight gradVarlen-K Grouped GEMM需 cached X̃ + dH arrow down to output  input from dH  input from cached X̃  dW₁ output dW₁output dW₂ kernel: uses dY + cached A Down-proj weight gradVarlen-K Grouped GEMM需 cached A + dY input from dY  input from cached A  dW₂ output dW₂output dS kernel: uses dO + cached Y (the painful one!) dS = ⟨dO, Y⟩row-wise inner product⚠ MUST cache Y (2GB) input from cached Y  input from dO  dS output dSoutput
+<svg style="width:100%;height:auto;background:#fffefb;border:1px solid #d9b860;border-radius:4px;font-family:-apple-system,sans-serif;" viewbox="0 0 1280 740" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="arrk" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#222"></path></marker>
+<marker id="arrkr" markerheight="6" markerwidth="6" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#888"></path></marker>
+</defs>
+<!-- Legend -->
+<g font-size="11">
+<rect fill="#fff8d5" height="14" stroke="#e0b300" stroke-width="1.5" width="20" x="20" y="14"></rect>
+<text x="46" y="25">kernel</text>
+<rect fill="#dae8fc" height="14" stroke="#6c8ebf" width="20" x="100" y="14"></rect>
+<text x="126" y="25">intermediate / weight</text>
+<rect fill="#dae8fc" height="14" stroke="#b85450" stroke-width="2" width="20" x="265" y="14"></rect>
+<text fill="#b85450" font-weight="600" x="291" y="25">cached for backward</text>
+<rect fill="#e1d5e7" height="14" stroke="#9673a6" stroke-width="2" width="20" x="455" y="14"></rect>
+<text fill="#5a3475" font-weight="600" x="481" y="25">output</text>
+</g>
+<!-- ============ FORWARD ============ -->
+<text fill="#444" font-size="14" font-weight="700" x="20" y="64">Forward pass · 6 kernels</text>
+<!-- π input above Gather -->
+<text fill="#b85450" font-size="13" font-style="italic" font-weight="700" text-anchor="middle" x="135" y="78">π</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="135" x2="135" y1="84" y2="100"></line>
+<!-- W₁ -->
+<text font-size="13" font-style="italic" text-anchor="middle" x="365" y="78">W₁</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="365" x2="365" y1="84" y2="100"></line>
+<!-- W₂ -->
+<text font-size="13" font-style="italic" text-anchor="middle" x="755" y="78">W₂</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="755" x2="755" y1="84" y2="100"></line>
+<!-- π for scatter -->
+<text fill="#b85450" font-size="13" font-style="italic" font-weight="700" text-anchor="middle" x="945" y="78">π</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="945" x2="945" y1="84" y2="100"></line>
+<!-- π, S for aggregation -->
+<text font-size="13" text-anchor="middle" x="1115" y="78"><tspan fill="#b85450" font-style="italic" font-weight="700">π</tspan>, <tspan fill="#b85450" font-style="italic" font-weight="700">S</tspan></text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="1115" x2="1115" y1="84" y2="100"></line>
+<!-- X (input, cached red) -->
+<rect fill="#dae8fc" height="40" stroke="#b85450" stroke-width="2" width="55" x="10" y="125"></rect>
+<text fill="#b85450" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="38" y="150">X</text>
+<text fill="#b85450" font-size="9" font-weight="700" text-anchor="middle" x="38" y="183">cached</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="65" x2="80" y1="145" y2="145"></line>
+<!-- Gather kernel -->
+<rect fill="#fff8d5" height="90" rx="6" stroke="#e0b300" stroke-width="1.5" width="110" x="80" y="100"></rect>
+<text font-size="12" font-weight="600" text-anchor="middle" x="135" y="148">Gather</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="190" x2="205" y1="145" y2="145"></line>
+<!-- X̃ (cached) -->
+<rect fill="#dae8fc" height="40" stroke="#b85450" stroke-width="2" width="70" x="205" y="125"></rect>
+<text fill="#b85450" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="240" y="150">X̃</text>
+<text fill="#b85450" font-size="9" font-weight="700" text-anchor="middle" x="240" y="183">cached · [TK,d] 2GB</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="275" x2="290" y1="145" y2="145"></line>
+<!-- Up-proj GEMM kernel -->
+<rect fill="#fff8d5" height="90" rx="6" stroke="#e0b300" stroke-width="1.5" width="150" x="290" y="100"></rect>
+<text font-size="12" font-weight="600" text-anchor="middle" x="365" y="142">Up-proj</text>
+<text fill="#7a4e00" font-size="11" font-style="italic" text-anchor="middle" x="365" y="158">Varlen-M Grouped GEMM</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="440" x2="455" y1="145" y2="145"></line>
+<!-- H (cached) -->
+<rect fill="#dae8fc" height="40" stroke="#b85450" stroke-width="2" width="60" x="455" y="125"></rect>
+<text fill="#b85450" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="485" y="150">H</text>
+<text fill="#b85450" font-size="9" font-weight="700" text-anchor="middle" x="485" y="183">cached · 1.5GB</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="515" x2="530" y1="145" y2="145"></line>
+<!-- Act func kernel -->
+<rect fill="#fff8d5" height="90" rx="6" stroke="#e0b300" stroke-width="1.5" width="100" x="530" y="100"></rect>
+<text font-size="12" font-weight="600" text-anchor="middle" x="580" y="148">Act func</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="630" x2="645" y1="145" y2="145"></line>
+<!-- A (cached) -->
+<rect fill="#dae8fc" height="40" stroke="#b85450" stroke-width="2" width="60" x="645" y="125"></rect>
+<text fill="#b85450" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="675" y="150">A</text>
+<text fill="#b85450" font-size="9" font-weight="700" text-anchor="middle" x="675" y="183">cached · 768MB</text>
+<line stroke="none" x1="705" x2="680" y1="145" y2="145"></line>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="705" x2="720" y1="145" y2="145"></line>
+<!-- Down-proj GEMM kernel -->
+<rect fill="#fff8d5" height="90" rx="6" stroke="#e0b300" stroke-width="1.5" width="150" x="720" y="100"></rect>
+<text font-size="12" font-weight="600" text-anchor="middle" x="795" y="142">Down-proj</text>
+<text fill="#7a4e00" font-size="11" font-style="italic" text-anchor="middle" x="795" y="158">Varlen-M Grouped GEMM</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="870" x2="885" y1="145" y2="145"></line>
+<!-- Y (cached) -->
+<rect fill="#dae8fc" height="40" stroke="#b85450" stroke-width="2" width="60" x="885" y="125"></rect>
+<text fill="#b85450" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="915" y="150">Y</text>
+<text fill="#b85450" font-size="9" font-weight="700" text-anchor="middle" x="915" y="183">cached · 2GB ⚠</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="945" x2="960" y1="145" y2="145"></line>
+<!-- Scatter kernel -->
+<rect fill="#fff8d5" height="90" rx="6" stroke="#e0b300" stroke-width="1.5" width="100" x="960" y="100"></rect>
+<text font-size="12" font-weight="600" text-anchor="middle" x="1010" y="148">Scatter</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="1060" x2="1075" y1="145" y2="145"></line>
+<!-- Ỹ (cached) -->
+<rect fill="#dae8fc" height="40" stroke="#b85450" stroke-width="2" width="60" x="1075" y="125"></rect>
+<text fill="#b85450" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="1105" y="150">Ỹ</text>
+<text fill="#b85450" font-size="9" font-weight="700" text-anchor="middle" x="1105" y="183">cached · 2GB</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="1135" x2="1150" y1="145" y2="145"></line>
+<!-- Aggregation kernel -->
+<rect fill="#fff8d5" height="90" rx="6" stroke="#e0b300" stroke-width="1.5" width="100" x="1150" y="100"></rect>
+<text font-size="12" font-weight="600" text-anchor="middle" x="1200" y="142">Each token</text>
+<text fill="#7a4e00" font-size="11" text-anchor="middle" x="1200" y="156">sums weighted</text>
+<text fill="#7a4e00" font-size="11" text-anchor="middle" x="1200" y="170">expert outputs</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="1200" x2="1200" y1="190" y2="205"></line>
+<!-- O (output, purple) -->
+<rect fill="#e1d5e7" height="40" stroke="#9673a6" stroke-width="2" width="60" x="1170" y="205"></rect>
+<text fill="#5a3475" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="1200" y="230">O</text>
+<text fill="#5a3475" font-size="9" font-weight="700" text-anchor="middle" x="1200" y="262">output</text>
+<!-- Forward summary -->
+<text fill="#b85450" font-size="12" font-weight="700" text-anchor="middle" x="640" y="310">⚠ 5 个 cached O(TKd) 张量：X̃ + H + A + Y + Ỹ ≈ 8.3 GB / 层</text>
+<!-- Divider -->
+<line stroke="#999" stroke-dasharray="4,4" stroke-width="0.5" x1="20" x2="1260" y1="335" y2="335"></line>
+<!-- ============ BACKWARD ACT GRAD ============ -->
+<text fill="#444" font-size="14" font-weight="700" x="20" y="365">Backward pass — activation gradient · 6 kernels (right → left)</text>
+<!-- W₂ above down-proj act grad -->
+<text font-size="13" font-style="italic" text-anchor="middle" x="755" y="380">W₂</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="755" x2="755" y1="386" y2="402"></line>
+<!-- W₁ above up-proj act grad -->
+<text font-size="13" font-style="italic" text-anchor="middle" x="365" y="380">W₁</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="365" x2="365" y1="386" y2="402"></line>
+<!-- π,S above aggregation back -->
+<text font-size="13" text-anchor="middle" x="1115" y="380"><tspan fill="#b85450" font-style="italic" font-weight="700">π</tspan>, <tspan fill="#b85450" font-style="italic" font-weight="700">S</tspan></text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="1115" x2="1115" y1="386" y2="402"></line>
+<!-- π above scatter back -->
+<text fill="#b85450" font-size="13" font-style="italic" font-weight="700" text-anchor="middle" x="945" y="380">π</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="945" x2="945" y1="386" y2="402"></line>
+<!-- π above gather back -->
+<text fill="#b85450" font-size="13" font-style="italic" font-weight="700" text-anchor="middle" x="135" y="380">π</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="135" x2="135" y1="386" y2="402"></line>
+<!-- dO (input from right) -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="55" x="1255" y="425"></rect>
+<text font-size="14" font-style="italic" text-anchor="middle" x="1282" y="450">dO</text>
+<line stroke="none" x1="1255" x2="1250" y1="445" y2="445"></line>
+<line stroke="#222" stroke-width="1.3" x1="1255" x2="1250" y1="445" y2="445"></line>
+<!-- arrow dO → aggregation back (going left) -->
+<line stroke="#222" x1="1255" x2="1250" y1="445" y2="445"></line>
+<line stroke="#222" x1="1250" x2="1265" y1="445" y2="445"></line>
+<line x1="1250" x2="1250" y1="445" y2="445"></line>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="1255" x2="1250" y1="445" y2="445"></line>
+<!-- Aggregation back kernel -->
+<rect fill="#fff8d5" height="80" rx="6" stroke="#e0b300" stroke-width="1.5" width="100" x="1150" y="402"></rect>
+<text font-size="11" font-weight="600" text-anchor="middle" x="1200" y="437">Aggregation</text>
+<text font-size="11" font-weight="600" text-anchor="middle" x="1200" y="453">backward</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="1150" x2="1135" y1="442" y2="442"></line>
+<!-- dỸ -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="60" x="1075" y="422"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="1105" y="447">dỸ</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="1075" x2="1060" y1="442" y2="442"></line>
+<!-- Scatter back kernel -->
+<rect fill="#fff8d5" height="80" rx="6" stroke="#e0b300" stroke-width="1.5" width="100" x="960" y="402"></rect>
+<text font-size="11" font-weight="600" text-anchor="middle" x="1010" y="437">Scatter</text>
+<text font-size="11" font-weight="600" text-anchor="middle" x="1010" y="453">backward</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="960" x2="945" y1="442" y2="442"></line>
+<!-- dY -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="60" x="885" y="422"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="915" y="447">dY</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="885" x2="870" y1="442" y2="442"></line>
+<!-- Down-proj act grad kernel -->
+<rect fill="#fff8d5" height="80" rx="6" stroke="#e0b300" stroke-width="1.5" width="150" x="720" y="402"></rect>
+<text font-size="11" font-weight="600" text-anchor="middle" x="795" y="432">Down-proj act grad</text>
+<text fill="#7a4e00" font-size="10.5" font-style="italic" text-anchor="middle" x="795" y="450">Varlen-M Grouped GEMM</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="720" x2="705" y1="442" y2="442"></line>
+<!-- dA -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="60" x="645" y="422"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="675" y="447">dA</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="645" x2="630" y1="442" y2="442"></line>
+<!-- dAct func kernel (uses cached H) -->
+<rect fill="#fff8d5" height="80" rx="6" stroke="#e0b300" stroke-width="1.5" width="100" x="530" y="402"></rect>
+<text font-size="11" font-weight="600" text-anchor="middle" x="580" y="432">dAct func</text>
+<text fill="#b85450" font-size="9" text-anchor="middle" x="580" y="450">uses cached H</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="530" x2="515" y1="442" y2="442"></line>
+<!-- Cache arrow from H → dAct -->
+<line fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="485" x2="485" y1="165" y2="200"></line>
+<line fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="485" x2="565" y1="200" y2="200"></line>
+<line fill="none" marker-end="url(#arrkr)" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="565" x2="565" y1="200" y2="402"></line>
+<!-- dH -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="60" x="455" y="422"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="485" y="447">dH</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="455" x2="440" y1="442" y2="442"></line>
+<!-- Up-proj act grad kernel -->
+<rect fill="#fff8d5" height="80" rx="6" stroke="#e0b300" stroke-width="1.5" width="150" x="290" y="402"></rect>
+<text font-size="11" font-weight="600" text-anchor="middle" x="365" y="432">Up-proj act grad</text>
+<text fill="#7a4e00" font-size="10.5" font-style="italic" text-anchor="middle" x="365" y="450">Varlen-M Grouped GEMM</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="290" x2="275" y1="442" y2="442"></line>
+<!-- dX̃ -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="70" x="205" y="422"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="240" y="447">dX̃</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="205" x2="190" y1="442" y2="442"></line>
+<!-- Gather back / Aggregation kernel -->
+<rect fill="#fff8d5" height="80" rx="6" stroke="#e0b300" stroke-width="1.5" width="110" x="80" y="402"></rect>
+<text font-size="11" font-weight="600" text-anchor="middle" x="135" y="432">Aggregation</text>
+<text font-size="11" font-weight="600" text-anchor="middle" x="135" y="450">(gather back)</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="80" x2="65" y1="442" y2="442"></line>
+<!-- dX (output, purple) -->
+<rect fill="#e1d5e7" height="40" stroke="#9673a6" stroke-width="2" width="55" x="10" y="422"></rect>
+<text fill="#5a3475" font-size="13" font-style="italic" font-weight="700" text-anchor="middle" x="38" y="447">dX</text>
+<text fill="#5a3475" font-size="9" font-weight="700" text-anchor="middle" x="38" y="478">output</text>
+<!-- Divider -->
+<line stroke="#999" stroke-dasharray="4,4" stroke-width="0.5" x1="20" x2="1260" y1="510" y2="510"></line>
+<!-- ============ BACKWARD WEIGHT GRAD + dS ============ -->
+<text fill="#444" font-size="14" font-weight="700" x="20" y="540">Backward pass — weight gradient + dS · 3 kernels（每个都依赖一个 cached O(TKd) 张量）</text>
+<!-- dW₁ kernel: uses dH + cached X̃ -->
+<rect fill="#fff8d5" height="80" rx="6" stroke="#e0b300" stroke-width="1.5" width="170" x="180" y="565"></rect>
+<text font-size="11" font-weight="600" text-anchor="middle" x="265" y="595">Up-proj weight grad</text>
+<text fill="#7a4e00" font-size="10.5" font-style="italic" text-anchor="middle" x="265" y="613">Varlen-K Grouped GEMM</text>
+<text fill="#b85450" font-size="9" font-weight="600" text-anchor="middle" x="265" y="630">需 cached X̃ + dH</text>
+<!-- arrow down to output -->
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="265" x2="265" y1="645" y2="660"></line>
+<!-- input from dH -->
+<line fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="485" x2="485" y1="462" y2="540"></line>
+<line fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="485" x2="305" y1="540" y2="540"></line>
+<line fill="none" marker-end="url(#arrkr)" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="305" x2="305" y1="540" y2="565"></line>
+<!-- input from cached X̃ -->
+<line fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="240" x2="240" y1="165" y2="220"></line>
+<line fill="none" marker-end="url(#arrkr)" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="240" x2="240" y1="220" y2="565"></line>
+<!-- dW₁ output -->
+<rect fill="#e1d5e7" height="40" stroke="#9673a6" stroke-width="2" width="80" x="225" y="660"></rect>
+<text fill="#5a3475" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="265" y="685">dW₁</text>
+<text fill="#5a3475" font-size="9" font-weight="700" text-anchor="middle" x="265" y="717">output</text>
+<!-- dW₂ kernel: uses dY + cached A -->
+<rect fill="#fff8d5" height="80" rx="6" stroke="#e0b300" stroke-width="1.5" width="170" x="610" y="565"></rect>
+<text font-size="11" font-weight="600" text-anchor="middle" x="695" y="595">Down-proj weight grad</text>
+<text fill="#7a4e00" font-size="10.5" font-style="italic" text-anchor="middle" x="695" y="613">Varlen-K Grouped GEMM</text>
+<text fill="#b85450" font-size="9" font-weight="600" text-anchor="middle" x="695" y="630">需 cached A + dY</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="695" x2="695" y1="645" y2="660"></line>
+<!-- input from dY -->
+<line fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="915" x2="915" y1="462" y2="540"></line>
+<line fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="915" x2="735" y1="540" y2="540"></line>
+<line fill="none" marker-end="url(#arrkr)" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="735" x2="735" y1="540" y2="565"></line>
+<!-- input from cached A -->
+<line fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="675" x2="675" y1="165" y2="220"></line>
+<line fill="none" marker-end="url(#arrkr)" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="675" x2="675" y1="220" y2="565"></line>
+<!-- dW₂ output -->
+<rect fill="#e1d5e7" height="40" stroke="#9673a6" stroke-width="2" width="80" x="655" y="660"></rect>
+<text fill="#5a3475" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="695" y="685">dW₂</text>
+<text fill="#5a3475" font-size="9" font-weight="700" text-anchor="middle" x="695" y="717">output</text>
+<!-- dS kernel: uses dO + cached Y (the painful one!) -->
+<rect fill="#fff8d5" height="80" rx="6" stroke="#b85450" stroke-width="2.5" width="180" x="1010" y="565"></rect>
+<text fill="#b85450" font-size="11" font-weight="700" text-anchor="middle" x="1100" y="595">dS = ⟨dO, Y⟩</text>
+<text fill="#b85450" font-size="10.5" font-style="italic" text-anchor="middle" x="1100" y="613">row-wise inner product</text>
+<text fill="#b85450" font-size="9" font-weight="700" text-anchor="middle" x="1100" y="630">⚠ MUST cache Y (2GB)</text>
+<line marker-end="url(#arrk)" stroke="#222" stroke-width="1.3" x1="1100" x2="1100" y1="645" y2="660"></line>
+<!-- input from cached Y -->
+<line fill="none" stroke="#b85450" stroke-dasharray="4,3" stroke-width="1.5" x1="915" x2="915" y1="165" y2="220"></line>
+<line fill="none" stroke="#b85450" stroke-dasharray="4,3" stroke-width="1.5" x1="915" x2="1015" y1="220" y2="220"></line>
+<line fill="none" marker-end="url(#arrkr)" stroke="#b85450" stroke-dasharray="4,3" stroke-width="1.5" x1="1015" x2="1015" y1="220" y2="565"></line>
+<!-- input from dO -->
+<line fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="1282" x2="1282" y1="465" y2="540"></line>
+<line fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="1282" x2="1185" y1="540" y2="540"></line>
+<line fill="none" marker-end="url(#arrkr)" stroke="#888" stroke-dasharray="3,3" stroke-width="1" x1="1185" x2="1185" y1="540" y2="565"></line>
+<!-- dS output -->
+<rect fill="#e1d5e7" height="40" stroke="#9673a6" stroke-width="2" width="80" x="1060" y="660"></rect>
+<text fill="#5a3475" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="1100" y="685">dS</text>
+<text fill="#5a3475" font-size="9" font-weight="700" text-anchor="middle" x="1100" y="717">output</text>
+</svg>
+
 **读图：**实线 = kernel 之间数据流；灰色虚线 = 反向 kernel 依赖某个 cached forward 张量；红色虚线 = SonicMoE 要消灭的关键依赖（dS 必须 cache Y）。每个红色边框 blue box 是一个被 cache 的 O(TKd) activation；红色 π/S 标记表明这两个也是 cached（小张量，与 K 无关，无所谓）。
 
  Standard formulas 
@@ -172,7 +493,198 @@ Standard MoE — 6 forward kernels + 9 backward kernels （按论文 Figure 2 co
  ============ SVG: SonicMoE — paper Figure 3 conventions ============ 
 SonicMoE — 3 forward kernels + 5 backward kernels（严格按论文 Figure 3 conventions：黄色=kernel · 蓝色=intermediate/weight · 红色=cached（X, H, π, S） · 紫色=output（O, dX, dW₁, dW₂））
 
- Legend kernelintermediate / weightcached for backwardoutput ============ FORWARD ============ Forward pass · 3 kernels Inputs above kernels W₁, πW₂π, S X (cached input) Xcached · [T,d] Up-proj kernel (large yellow box containing GEMM + Act func) Up-proj Inner: Varlen-M Grouped GEMM box Varlen-MGrouped GEMM H output of inner GEMM, cached H Inner: Act func box Act func H cached marker below cached · 1.5GB ★ arrow Up-proj kernel → A intermediate  A intermediate A Down-proj kernel Down-proj Inner: Varlen-M Grouped GEMM Varlen-MGrouped GEMM Y intermediate Y Expert aggregation kernel Expert aggregationEach token gathersand sums expert outputs O (output, purple) Ooutput Forward summary ✓ 仅 X 与 H 被 cache（1.8 GB / 层）；A、Y 在 kernel 内 ephemeral，不写 HBM Divider  ============ BACKWARD ============ Backward pass · 5 kernels Inputs above W₂, H(cached H)W₁π dO input on right dO ===== Down-proj act grad kernel (the dH kernel — gemm_dgated) ===== Down-proj act grad — gemm_dgated (fused) Inner: Varlen-M Grouped GEMM (dA') Varlen-MGrouped GEMM dA' produced dA′ dAct func dAct func A (recomputed, sum over n) Asum over n arrow from dA' (top) and H input down to A  A' = s · A A′ ds path dS⟨dA′, A⟩ arrows for dA' → A and dA' → dS  S input below for A' = s·A S dH output of kernel  dH intermediate dH ===== Up-proj act grad kernel ===== Up-proj act gradVarlen-MGrouped GEMM dX̃ dX̃ ===== Expert aggregation backward ===== Expert aggregationEach token gathersand sums dX (purple output) dXoutput Divider  ============ Backward weight grad ============ Backward weight grad · 2 kernels（A′ 直接来自 dH kernel，无需额外 cache） Up-proj weight grad kernel Up-proj weight gradVarlen-K Grouped GEMMcached X (256MB) + dH inputs to up-proj weight grad: π, X (cached), dH π, X, dH dW₁ output dW₁output Down-proj weight grad kernel Down-proj weight gradVarlen-K Grouped GEMM用 A′（来自 dH kernel）+ dO inputs: dO, A', π dO, A′, π dW₂ output dW₂output Footer 合计 8 个 launched kernel（forward 3 + backward 5）；activation memory 与 K 解耦
+<svg style="width:100%;height:auto;background:#fafffa;border:1px solid #5fa55f;border-radius:4px;font-family:-apple-system,sans-serif;" viewbox="0 0 1280 740" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="arrs" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#222"></path></marker>
+<marker id="arrsr" markerheight="6" markerwidth="6" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#888"></path></marker>
+</defs>
+<!-- Legend -->
+<g font-size="11">
+<rect fill="#fff8d5" height="14" stroke="#e0b300" stroke-width="1.5" width="20" x="20" y="14"></rect>
+<text x="46" y="25">kernel</text>
+<rect fill="#dae8fc" height="14" stroke="#6c8ebf" width="20" x="100" y="14"></rect>
+<text x="126" y="25">intermediate / weight</text>
+<rect fill="#dae8fc" height="14" stroke="#b85450" stroke-width="2" width="20" x="265" y="14"></rect>
+<text fill="#b85450" font-weight="600" x="291" y="25">cached for backward</text>
+<rect fill="#e1d5e7" height="14" stroke="#9673a6" stroke-width="2" width="20" x="455" y="14"></rect>
+<text fill="#5a3475" font-weight="600" x="481" y="25">output</text>
+</g>
+<!-- ============ FORWARD ============ -->
+<text fill="#444" font-size="14" font-weight="700" x="20" y="64">Forward pass · 3 kernels</text>
+<!-- Inputs above kernels -->
+<text font-size="13" text-anchor="middle" x="290" y="78"><tspan font-style="italic">W₁</tspan>, <tspan fill="#b85450" font-style="italic" font-weight="700">π</tspan></text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="290" x2="290" y1="84" y2="100"></line>
+<text font-size="13" font-style="italic" text-anchor="middle" x="700" y="78">W₂</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="700" x2="700" y1="84" y2="100"></line>
+<text font-size="13" text-anchor="middle" x="1090" y="78"><tspan fill="#b85450" font-style="italic" font-weight="700">π</tspan>, <tspan fill="#b85450" font-style="italic" font-weight="700">S</tspan></text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="1090" x2="1090" y1="84" y2="100"></line>
+<!-- X (cached input) -->
+<rect fill="#dae8fc" height="40" stroke="#b85450" stroke-width="2" width="60" x="40" y="135"></rect>
+<text fill="#b85450" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="70" y="160">X</text>
+<text fill="#b85450" font-size="9" font-weight="700" text-anchor="middle" x="70" y="193">cached · [T,d]</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="100" x2="115" y1="155" y2="155"></line>
+<!-- Up-proj kernel (large yellow box containing GEMM + Act func) -->
+<rect fill="#fff8d5" height="125" rx="6" stroke="#e0b300" stroke-width="1.5" width="350" x="115" y="100"></rect>
+<text fill="#7a4e00" font-size="12" font-weight="700" text-anchor="middle" x="290" y="120">Up-proj</text>
+<!-- Inner: Varlen-M Grouped GEMM box -->
+<rect fill="#ffffff" height="50" stroke="#7a4e00" stroke-width="0.8" width="120" x="135" y="135"></rect>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="195" y="156">Varlen-M</text>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="195" y="170">Grouped GEMM</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.2" x1="255" x2="280" y1="160" y2="160"></line>
+<!-- H output of inner GEMM, cached -->
+<rect fill="#dae8fc" height="40" stroke="#b85450" stroke-width="2" width="50" x="280" y="140"></rect>
+<text fill="#b85450" font-size="13" font-style="italic" font-weight="700" text-anchor="middle" x="305" y="165">H</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.2" x1="330" x2="350" y1="160" y2="160"></line>
+<!-- Inner: Act func box -->
+<rect fill="#ffffff" height="50" stroke="#7a4e00" stroke-width="0.8" width="100" x="350" y="135"></rect>
+<text font-size="11" font-style="italic" text-anchor="middle" x="400" y="165">Act func</text>
+<!-- H cached marker below -->
+<text fill="#b85450" font-size="9" font-weight="700" text-anchor="middle" x="305" y="200">cached · 1.5GB ★</text>
+<!-- arrow Up-proj kernel → A intermediate -->
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="465" x2="490" y1="155" y2="155"></line>
+<!-- A intermediate -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="55" x="490" y="135"></rect>
+<text font-size="14" font-style="italic" text-anchor="middle" x="518" y="160">A</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="545" x2="565" y1="155" y2="155"></line>
+<!-- Down-proj kernel -->
+<rect fill="#fff8d5" height="125" rx="6" stroke="#e0b300" stroke-width="1.5" width="270" x="565" y="100"></rect>
+<text fill="#7a4e00" font-size="12" font-weight="700" text-anchor="middle" x="700" y="120">Down-proj</text>
+<!-- Inner: Varlen-M Grouped GEMM -->
+<rect fill="#ffffff" height="50" stroke="#7a4e00" stroke-width="0.8" width="200" x="600" y="135"></rect>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="700" y="156">Varlen-M</text>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="700" y="170">Grouped GEMM</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="835" x2="855" y1="155" y2="155"></line>
+<!-- Y intermediate -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="55" x="855" y="135"></rect>
+<text font-size="14" font-style="italic" text-anchor="middle" x="883" y="160">Y</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="910" x2="930" y1="155" y2="155"></line>
+<!-- Expert aggregation kernel -->
+<rect fill="#fff8d5" height="125" rx="6" stroke="#e0b300" stroke-width="1.5" width="290" x="930" y="100"></rect>
+<text fill="#7a4e00" font-size="12" font-weight="700" text-anchor="middle" x="1075" y="120">Expert aggregation</text>
+<rect fill="#ffffff" height="50" stroke="#7a4e00" stroke-width="0.8" width="250" x="950" y="135"></rect>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="1075" y="156">Each token gathers</text>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="1075" y="170">and sums expert outputs</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="1220" x2="1240" y1="155" y2="155"></line>
+<!-- O (output, purple) -->
+<rect fill="#e1d5e7" height="40" stroke="#9673a6" stroke-width="2" width="35" x="1240" y="135"></rect>
+<text fill="#5a3475" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="1257" y="160">O</text>
+<text fill="#5a3475" font-size="9" font-weight="700" text-anchor="middle" x="1257" y="193">output</text>
+<!-- Forward summary -->
+<text fill="#1f5d1f" font-size="12" font-weight="700" text-anchor="middle" x="640" y="280">✓ 仅 X 与 H 被 cache（1.8 GB / 层）；A、Y 在 kernel 内 ephemeral，不写 HBM</text>
+<!-- Divider -->
+<line stroke="#999" stroke-dasharray="4,4" stroke-width="0.5" x1="20" x2="1260" y1="305" y2="305"></line>
+<!-- ============ BACKWARD ============ -->
+<text fill="#444" font-size="14" font-weight="700" x="20" y="335">Backward pass · 5 kernels</text>
+<!-- Inputs above -->
+<text font-size="13" text-anchor="middle" x="985" y="350"><tspan font-style="italic">W₂</tspan>, <tspan fill="#b85450" font-style="italic" font-weight="700">H</tspan></text>
+<text fill="#b85450" font-size="9" text-anchor="middle" x="985" y="368">(cached H)</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="985" x2="985" y1="372" y2="388"></line>
+<text font-size="13" font-style="italic" text-anchor="middle" x="495" y="350">W₁</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="495" x2="495" y1="356" y2="388"></line>
+<text fill="#b85450" font-size="13" font-style="italic" font-weight="700" text-anchor="middle" x="180" y="350">π</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="180" x2="180" y1="356" y2="388"></line>
+<!-- dO input on right -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="35" x="1240" y="408"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="1257" y="433">dO</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="1240" x2="1230" y1="428" y2="428"></line>
+<!-- ===== Down-proj act grad kernel (the dH kernel — gemm_dgated) ===== -->
+<rect fill="#fff8d5" height="200" rx="6" stroke="#e0b300" stroke-width="2" width="380" x="850" y="388"></rect>
+<text fill="#7a4e00" font-size="12" font-weight="700" text-anchor="middle" x="1040" y="408">Down-proj act grad — gemm_dgated (fused)</text>
+<!-- Inner: Varlen-M Grouped GEMM (dA') -->
+<rect fill="#ffffff" height="50" stroke="#7a4e00" stroke-width="0.8" width="135" x="1080" y="425"></rect>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="1147" y="446">Varlen-M</text>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="1147" y="460">Grouped GEMM</text>
+<!-- dA' produced -->
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.2" x1="1080" x2="1060" y1="450" y2="450"></line>
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="50" x="1010" y="430"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="1035" y="455">dA′</text>
+<!-- dAct func -->
+<rect fill="#ffffff" height="50" stroke="#7a4e00" stroke-width="0.8" width="100" x="900" y="425"></rect>
+<text font-size="11" font-style="italic" text-anchor="middle" x="950" y="455">dAct func</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.2" x1="1010" x2="1000" y1="450" y2="450"></line>
+<!-- A (recomputed, sum over n) -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="50" x="1010" y="490"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="1035" y="515">A</text>
+<text fill="#666" font-size="9" text-anchor="middle" x="1035" y="544">sum over n</text>
+<!-- arrow from dA' (top) and H input down to A -->
+<line stroke="#222" stroke-dasharray="2,2" stroke-width="1" x1="1035" x2="1035" y1="470" y2="490"></line>
+<!-- A' = s · A -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="50" x="1085" y="490"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="1110" y="515">A′</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.2" x1="1060" x2="1085" y1="510" y2="510"></line>
+<!-- ds path -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="55" x="1160" y="490"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="1187" y="515">dS</text>
+<text fill="#666" font-size="9" text-anchor="middle" x="1187" y="544">⟨dA′, A⟩</text>
+<!-- arrows for dA' → A and dA' → dS -->
+<line stroke="#888" stroke-dasharray="3,2" stroke-width="0.8" x1="1035" x2="1035" y1="470" y2="490"></line>
+<line marker-end="url(#arrsr)" stroke="#888" stroke-dasharray="3,2" stroke-width="0.8" x1="1060" x2="1187" y1="450" y2="490"></line>
+<!-- S input below for A' = s·A -->
+<text fill="#b85450" font-size="11" font-style="italic" font-weight="700" text-anchor="middle" x="1110" y="568">S</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="1110" x2="1110" y1="570" y2="535"></line>
+<!-- dH output of kernel -->
+<line stroke="#222" stroke-width="1.5" x1="900" x2="850" y1="450" y2="450"></line>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.5" x1="850" x2="800" y1="450" y2="450"></line>
+<!-- dH intermediate -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="55" x="765" y="430"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="793" y="455">dH</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.5" x1="765" x2="700" y1="450" y2="450"></line>
+<!-- ===== Up-proj act grad kernel ===== -->
+<rect fill="#fff8d5" height="120" rx="6" stroke="#e0b300" stroke-width="1.5" width="320" x="380" y="388"></rect>
+<text fill="#7a4e00" font-size="12" font-weight="700" text-anchor="middle" x="540" y="408">Up-proj act grad</text>
+<rect fill="#ffffff" height="50" stroke="#7a4e00" stroke-width="0.8" width="220" x="430" y="425"></rect>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="540" y="446">Varlen-M</text>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="540" y="460">Grouped GEMM</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.5" x1="380" x2="350" y1="450" y2="450"></line>
+<!-- dX̃ -->
+<rect fill="#dae8fc" height="40" stroke="#6c8ebf" width="55" x="295" y="430"></rect>
+<text font-size="13" font-style="italic" text-anchor="middle" x="322" y="455">dX̃</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.5" x1="295" x2="270" y1="450" y2="450"></line>
+<!-- ===== Expert aggregation backward ===== -->
+<rect fill="#fff8d5" height="120" rx="6" stroke="#e0b300" stroke-width="1.5" width="170" x="100" y="388"></rect>
+<text fill="#7a4e00" font-size="12" font-weight="700" text-anchor="middle" x="185" y="408">Expert aggregation</text>
+<rect fill="#ffffff" height="50" stroke="#7a4e00" stroke-width="0.8" width="140" x="115" y="425"></rect>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="185" y="446">Each token gathers</text>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="185" y="460">and sums</text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.5" x1="100" x2="80" y1="450" y2="450"></line>
+<!-- dX (purple output) -->
+<rect fill="#e1d5e7" height="40" stroke="#9673a6" stroke-width="2" width="40" x="40" y="430"></rect>
+<text fill="#5a3475" font-size="13" font-style="italic" font-weight="700" text-anchor="middle" x="60" y="455">dX</text>
+<text fill="#5a3475" font-size="9" font-weight="700" text-anchor="middle" x="60" y="488">output</text>
+<!-- Divider -->
+<line stroke="#999" stroke-dasharray="4,4" stroke-width="0.5" x1="20" x2="1260" y1="608" y2="608"></line>
+<!-- ============ Backward weight grad ============ -->
+<text fill="#444" font-size="14" font-weight="700" x="20" y="635">Backward weight grad · 2 kernels（A′ 直接来自 dH kernel，无需额外 cache）</text>
+<!-- Up-proj weight grad kernel -->
+<rect fill="#fff8d5" height="65" rx="6" stroke="#e0b300" stroke-width="1.5" width="200" x="320" y="650"></rect>
+<text fill="#7a4e00" font-size="11" font-weight="700" text-anchor="middle" x="420" y="672">Up-proj weight grad</text>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="420" y="690">Varlen-K Grouped GEMM</text>
+<text fill="#1f5d1f" font-size="9" text-anchor="middle" x="420" y="708">cached X (256MB) + dH</text>
+<!-- inputs to up-proj weight grad: π, X (cached), dH -->
+<text font-size="11" x="270" y="640"><tspan fill="#b85450" font-style="italic" font-weight="700">π</tspan>, <tspan fill="#b85450" font-style="italic" font-weight="700">X</tspan>, <tspan font-style="italic">dH</tspan></text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.2" x1="295" x2="320" y1="643" y2="675"></line>
+<!-- dW₁ output -->
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="520" x2="540" y1="685" y2="685"></line>
+<rect fill="#e1d5e7" height="40" stroke="#9673a6" stroke-width="2" width="60" x="540" y="665"></rect>
+<text fill="#5a3475" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="570" y="690">dW₁</text>
+<text fill="#5a3475" font-size="9" font-weight="700" text-anchor="middle" x="570" y="722">output</text>
+<!-- Down-proj weight grad kernel -->
+<rect fill="#fff8d5" height="65" rx="6" stroke="#e0b300" stroke-width="1.5" width="220" x="780" y="650"></rect>
+<text fill="#7a4e00" font-size="11" font-weight="700" text-anchor="middle" x="890" y="672">Down-proj weight grad</text>
+<text font-size="10.5" font-style="italic" text-anchor="middle" x="890" y="690">Varlen-K Grouped GEMM</text>
+<text fill="#1f5d1f" font-size="9" text-anchor="middle" x="890" y="708">用 A′（来自 dH kernel）+ dO</text>
+<!-- inputs: dO, A', π -->
+<text font-size="11" x="730" y="640"><tspan font-style="italic">dO</tspan>, <tspan font-style="italic">A′</tspan>, <tspan fill="#b85450" font-style="italic" font-weight="700">π</tspan></text>
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.2" x1="760" x2="780" y1="643" y2="675"></line>
+<!-- dW₂ output -->
+<line marker-end="url(#arrs)" stroke="#222" stroke-width="1.3" x1="1000" x2="1020" y1="685" y2="685"></line>
+<rect fill="#e1d5e7" height="40" stroke="#9673a6" stroke-width="2" width="60" x="1020" y="665"></rect>
+<text fill="#5a3475" font-size="14" font-style="italic" font-weight="700" text-anchor="middle" x="1050" y="690">dW₂</text>
+<text fill="#5a3475" font-size="9" font-weight="700" text-anchor="middle" x="1050" y="722">output</text>
+<!-- Footer -->
+<text fill="#1f5d1f" font-size="12" font-weight="700" text-anchor="middle" x="640" y="730">合计 8 个 launched kernel（forward 3 + backward 5）；activation memory 与 K 解耦</text>
+</svg>
+
 **读图：**这张图严格对应论文 Figure 3。**关键差异**：dH kernel 的 yellow 容器内同时包含 Varlen-M Grouped GEMM (产 dA′)、dAct func (产 dH)、"sum over n" (重算 A)、以及通过 S/π 的加权得到 A′ —— 一发 kernel 同时输出 dH、A′、dS 三个张量。**没有任何 O(TKd) 中间张量需要 materialize 到 HBM**，A′ 的"写 HBM"虽然看起来仍是 [TK, n]，但它只是 forward 缓存项 H 的同等代价（4·T·I，与 K 无关），不属于 O(TKd) 类张量。
 
  SonicMoE formulas 
@@ -888,7 +1400,29 @@ epilogue 内，`colvec_scale` = $s$ 只作用在 `dx_out` 和 `postact_out`，�
 
 #### 🎯 三层优化如何叠加成最终 +54% / +35%
 
- Algorithm layer 算法层 (Algorithm)消灭所有 O(TKd) cache · dS contraction reorder · A inline 重算 · forward 3 kernel + backward 3 kernelactivation −85% Software layer 软件层 (QuACK)三段式流水 · epi_visit_subtile 单注入点 · 算术 Mixin × 架构 Base · SonicMoE 仅 200 LoC 跨 SM90/100跨架构代价 < 100 LoC / 特性 Hardware layer 硬件层 (Blackwell)UMMA + TMEM 双 buffer · 2CTA shared-B · CLC 调度 · TMA gather4 · async store · cluster barrierfwd +54% · bwd +35% Arrows showing stacking 
+<svg style="width:100%;height:auto;background:#fffcf1;border:1px solid #d9b860;border-radius:4px;" viewbox="0 0 980 260" xmlns="http://www.w3.org/2000/svg">
+<!-- Algorithm layer -->
+<rect fill="#f8cecc" height="60" rx="6" stroke="#b85450" width="920" x="30" y="20"></rect>
+<text fill="#721c24" font-family="sans-serif" font-size="13" font-weight="700" x="50" y="42">算法层 (Algorithm)</text>
+<text fill="#721c24" font-family="sans-serif" font-size="12" x="50" y="62">消灭所有 O(TKd) cache · dS contraction reorder · A inline 重算 · forward 3 kernel + backward 3 kernel</text>
+<text fill="#721c24" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="end" x="940" y="62">activation −85%</text>
+<!-- Software layer -->
+<rect fill="#fff2cc" height="60" rx="6" stroke="#d6b656" width="920" x="30" y="95"></rect>
+<text fill="#5a3f00" font-family="sans-serif" font-size="13" font-weight="700" x="50" y="117">软件层 (QuACK)</text>
+<text fill="#5a3f00" font-family="sans-serif" font-size="12" x="50" y="137">三段式流水 · epi_visit_subtile 单注入点 · 算术 Mixin × 架构 Base · SonicMoE 仅 200 LoC 跨 SM90/100</text>
+<text fill="#5a3f00" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="end" x="940" y="137">跨架构代价 &lt; 100 LoC / 特性</text>
+<!-- Hardware layer -->
+<rect fill="#d5e8d4" height="60" rx="6" stroke="#5fa55f" width="920" x="30" y="170"></rect>
+<text fill="#1f5d1f" font-family="sans-serif" font-size="13" font-weight="700" x="50" y="192">硬件层 (Blackwell)</text>
+<text fill="#1f5d1f" font-family="sans-serif" font-size="12" x="50" y="212">UMMA + TMEM 双 buffer · 2CTA shared-B · CLC 调度 · TMA gather4 · async store · cluster barrier</text>
+<text fill="#1f5d1f" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="end" x="940" y="212">fwd +54% · bwd +35%</text>
+<!-- Arrows showing stacking -->
+<g fill="none" stroke="#888" stroke-dasharray="3,3" stroke-width="1.5">
+<line marker-end="url(#arr-dep)" x1="490" x2="490" y1="80" y2="95"></line>
+<line marker-end="url(#arr-dep)" x1="490" x2="490" y1="155" y2="170"></line>
+</g>
+</svg>
+
 **为什么"算法 + 软件 + 硬件" 这种堆叠能跨架构复用？** 因为 **QuACK 的 `epi_visit_subtile` 单注入点**把"MoE-specific 算什么"与"底层硬件用哪条 MMA 指令、累加器放哪儿、怎么调度"彻底解耦 —— SM90 / SM100 / SM120 各自的 Base 类只负责第二块，epilogue 里的算术逻辑一份代码跑所有架构。从 Hopper 移植到 Blackwell 的 TMA gather4 仅 ~100 LoC、SM120 扩展仅 ~500 LoC，靠的就是这条缝画得对。
 
  ========================================= 
@@ -1941,4 +2475,8 @@ d-footnote-list a.footnote-backlink {
 }
 
 ### Footnotes
+
+ © Copyright 2026 Dao AI Lab. 
+
+<svg viewbox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>
 
