@@ -132,3 +132,55 @@ body.drawio-edit-mode .drawio-chrome { opacity: 1 !important; }
    when revealed. */
 .drawio-chrome { line-height:1.4 }
 </style>
+
+<style id="left-toc">
+/* PaperMod TOC moved from top-of-article to a left-side floating panel.
+   On wide screens (>1280px) it docks to the left edge and follows scroll;
+   on narrow screens it falls back to the inline collapsible default. */
+@media (min-width: 1280px) {
+  .post-single details.toc {
+    position: fixed;
+    left: max(8px, calc((100vw - 1280px) / 2 - 280px));
+    top: 80px;
+    width: 270px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    margin: 0 !important;
+    background: var(--theme);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px 14px;
+    font-size: 13px;
+    z-index: 5;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  }
+  .post-single details.toc[open] { padding: 8px 14px 14px; }
+  .post-single details.toc summary { font-size: 14px; font-weight: 600; cursor: pointer; }
+  .post-single details.toc .inner { padding: 6px 0 0 0; }
+  .post-single details.toc .inner ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  .post-single details.toc .inner ul ul {
+    padding-left: 1em;
+    border-left: 1px dashed var(--border);
+    margin-left: 4px;
+  }
+  .post-single details.toc .inner li {
+    margin: 2px 0;
+    line-height: 1.4;
+    font-size: 12.5px;
+  }
+  .post-single details.toc .inner a {
+    color: var(--secondary);
+    text-decoration: none;
+    display: block;
+    padding: 1px 0;
+  }
+  .post-single details.toc .inner a:hover {
+    color: var(--primary);
+  }
+}
+/* Below 1280px: keep PaperMod default (top-of-article inline TOC). */
+</style>
