@@ -6,7 +6,7 @@ tags: ["MoE", "EP", "Triton", "B200", "GPU", "NCCL", "DeepEP", "deep-dive"]
 math: true
 drawio: true
 ShowToc: true
-TocOpen: false
+TocOpen: true
 ---
 
 > **TL;DR** · 从 MoE 算法基础 → 14 个核心优化技术（含 NCCL Device API / DeepEP / Hybrid-EP / Wide-EP）→ Triton-distributed 编译栈 → 10 个可运行 Lab → 生产化清单。配套 25 页 drawio 架构图，**在文中引用处直接内嵌，可缩放可切页**。

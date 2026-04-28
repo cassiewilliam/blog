@@ -6,7 +6,7 @@ tags: ["mega-moe", "deepgemm", "blackwell", "gpu", "cuda", "deep-dive"]
 math: true
 drawio: true
 ShowToc: true
-TocOpen: false
+TocOpen: true
 ---
 
 ## 📖 Prologue · 背景知识与符号定义

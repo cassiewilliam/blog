@@ -132,11 +132,9 @@ body.drawio-edit-mode .drawio-chrome { opacity: 1 !important; }
    when revealed. */
 .drawio-chrome { line-height:1.4 }
 </style>
-
 <style id="left-toc">
 /* PaperMod TOC moved from top-of-article to a left-side floating panel.
-   On wide screens (>1280px) it docks to the left edge and follows scroll;
-   on narrow screens it falls back to the inline collapsible default. */
+   Opens by default; subsection nesting visualized with indent + bullets. */
 @media (min-width: 1280px) {
   .post-single details.toc {
     position: fixed;
@@ -149,38 +147,63 @@ body.drawio-edit-mode .drawio-chrome { opacity: 1 !important; }
     background: var(--theme);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 8px 14px 14px;
+    padding: 10px 14px 14px;
     font-size: 13px;
     z-index: 5;
     box-shadow: 0 1px 4px rgba(0,0,0,.04);
   }
-  .post-single details.toc[open] { padding: 8px 14px 14px; }
-  .post-single details.toc summary { font-size: 14px; font-weight: 600; cursor: pointer; }
-  .post-single details.toc .inner { padding: 6px 0 0 0; }
-  .post-single details.toc .inner ul {
-    list-style: none;
+  .post-single details.toc summary {
+    font-size: 13.5px; font-weight: 600; cursor: pointer;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+  .post-single details.toc .inner { padding: 0; }
+
+  /* Top-level (h2 → ul > li): bigger, bolder, no indent */
+  .post-single details.toc .inner > ul {
+    list-style: none; padding-left: 0; margin: 0;
+  }
+  .post-single details.toc .inner > ul > li {
+    margin: 6px 0;
     padding-left: 0;
-    margin: 0;
-  }
-  .post-single details.toc .inner ul ul {
-    padding-left: 1em;
-    border-left: 1px dashed var(--border);
-    margin-left: 4px;
-  }
-  .post-single details.toc .inner li {
-    margin: 2px 0;
-    line-height: 1.4;
-    font-size: 12.5px;
-  }
-  .post-single details.toc .inner a {
-    color: var(--secondary);
-    text-decoration: none;
-    display: block;
-    padding: 1px 0;
-  }
-  .post-single details.toc .inner a:hover {
+    font-size: 13px;
+    line-height: 1.35;
+    font-weight: 600;
     color: var(--primary);
   }
+  .post-single details.toc .inner > ul > li > a {
+    color: var(--primary); text-decoration: none; display: block;
+  }
+
+  /* Level 2 (h3): indent + lighter weight + smaller */
+  .post-single details.toc .inner > ul ul {
+    list-style: none;
+    padding-left: 14px;
+    margin: 4px 0 6px;
+    border-left: 2px solid var(--border);
+  }
+  .post-single details.toc .inner > ul ul li {
+    margin: 3px 0;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.35;
+    color: var(--secondary);
+  }
+  .post-single details.toc .inner > ul ul li a {
+    color: var(--secondary); text-decoration: none; display: block;
+  }
+
+  /* Level 3 (h4): even smaller, italic */
+  .post-single details.toc .inner > ul ul ul li {
+    font-size: 11.5px;
+    font-style: italic;
+    color: var(--secondary);
+  }
+
+  .post-single details.toc .inner a:hover {
+    color: var(--primary); background: var(--code-bg);
+  }
 }
-/* Below 1280px: keep PaperMod default (top-of-article inline TOC). */
+/* < 1280px: PaperMod default inline TOC. */
 </style>
+
