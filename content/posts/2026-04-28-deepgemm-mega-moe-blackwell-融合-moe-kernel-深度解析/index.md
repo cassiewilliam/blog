@@ -66,7 +66,7 @@ Blackwell B200 相对 Hopper 引入一个关键新层级 — **TMEM**（Tensor M
 
 把一个 MoE 层拆成**四个时序段**：两个通信受限段（Dispatch、Combine），两个计算受限段（Linear1、Linear2）。在 DeepSeek-V4-Pro（d=7168, I=3072, E=384, K=6）的 profile 里，**同一层内总通信时间小于总计算时间**。这意味着只要两条流水能完全并行，**计算就是性能下界**，通信完全不暴露 —— 系统因此可以容忍更低的互联带宽而端到端延迟不退化。
 
-{{< formula type="sm" label="✅ V4 提出的"硬件可编程平衡点"" >}}
+{{< formula type="sm" label="✅ V4 提出的'硬件可编程平衡点'" >}}
 设峰值算力 `C`（FLOPs/s），互联带宽 `B`（Bytes/s），层内总计算量 $V&#95;{comp}$，总通信量 $V&#95;{comm}$。要让通信完全藏住，需要：
 
 C / B  ≤  V_comp / V_comm
