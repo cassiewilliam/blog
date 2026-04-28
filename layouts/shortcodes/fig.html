@@ -1,19 +1,27 @@
 {{- /* {{< fig src="/figures/v4/F1.svg" drawio="/drawio/v4/figures/F1.drawio" label="F1" caption="…" >}}
-       Inlines the SVG into the rendered page so it scales naturally with its
-       parent (browsers' <img> sizing of viewBox-only SVG is inconsistent, esp.
-       in Safari/Firefox). On hover OR with ?edit=1 in the URL, an
-       "Edit on diagrams.net" pill appears that opens the .drawio companion. */ -}}
+
+       Renders the .drawio file (native shapes) via the mxgraph viewer. The
+       .drawio is the source of truth: editing it in diagrams.net and saving
+       commits back to GitHub, and the next page load (after the 8s sync)
+       shows the updated diagram — no Hugo rebuild needed for the figure.
+
+       The .svg file stays as a fallback / lightweight asset and is also
+       linked next to the edit pill.                                      */ -}}
 {{- $src    := .Get "src" -}}
+{{- $drawio := .Get "drawio" -}}
 {{- $cap    := .Get "caption" -}}
 {{- $label  := .Get "label" -}}
-{{- $drawio := .Get "drawio" -}}
-{{- $svgPath := printf "static%s" $src -}}
-{{- $svg := "" -}}
-{{- if (fileExists $svgPath) -}}
-  {{- $svg = readFile $svgPath -}}
-{{- end -}}
+
 {{- $repo   := .Page.Site.Params.drawioGithubRepo | default "cassiewilliam/blog" -}}
 {{- $branch := .Page.Site.Params.drawioGithubBranch | default "main" -}}
+
+{{- /* The mxgraph viewer URL — absolute, so the viewer-static.min.js script
+       can fetch it from any iframe/sandbox.                                 */}}
+{{- $url := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $drawio) -}}
+
+{{- /* "Edit on diagrams.net" — opens the .drawio file from raw GitHub in
+       drawio web. Native shapes mean the user can drag boxes / edit text /
+       reroute lines and save back via mode=github.                          */}}
 {{- $editURL := "" -}}
 {{- with $drawio -}}
   {{- $path := printf "static%s" . -}}
@@ -22,36 +30,25 @@
 {{- end -}}
 
 <figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
-  <div class="cc-fig-svg" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;line-height:0;overflow:hidden">
-    {{ $svg | safeHTML }}
+  <div class="cc-fig-mx" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden">
+    <div class="mxgraph"
+         style="max-width:100%;"
+         data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","url":"{{ $url | safeJS }}"}'></div>
   </div>
 
-  {{- /* GitHub's classic web editor (github.com/<repo>/edit/...) — always
-         opens any file (incl. .svg) as raw text. Click → edit XML → "Commit
-         changes" → saved straight to main. github.dev opens .svg in rendered
-         preview mode with no obvious way to switch to source, which is why
-         users found "no way to edit" through that route. */}}
-  {{- $editGH := "" -}}
-  {{- with $src -}}
-    {{- $editGH = printf "https://github.com/%s/edit/%s/static%s" $repo $branch . -}}
-  {{- end -}}
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
-    {{- with $editGH }}
-    <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
-       title="GitHub 自带网页编辑器：直接编辑 SVG XML，提交即生效"
-       style="color:#fff;background:#1f883d;text-decoration:none;border:1px solid #1f883d;padding:3px 10px;border-radius:4px;font-weight:600">
-       ✏️ Edit on GitHub
-    </a>
-    {{- end }}
     {{- if $editURL }}
     <a href="{{ $editURL | safeURL }}" target="_blank" rel="noopener"
-       title="diagrams.net 查看 / 整图替换（不能改 SVG 内部）"
-       style="color:#57606a;text-decoration:none;margin-left:6px;border:1px solid #d0d7de;padding:3px 8px;border-radius:4px;background:#fff">
-       🖼 View in drawio
+       title="在 diagrams.net 中编辑可拖拽的 drawio 形状，保存即提交到 main"
+       style="color:#fff;background:#1f883d;text-decoration:none;border:1px solid #1f883d;padding:3px 10px;border-radius:4px;font-weight:600">
+       ✏️ Edit on diagrams.net
     </a>
     {{- end }}
-    <a href="{{ $src | safeURL }}" target="_blank" rel="noopener"
-       style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">{{ $src }}</a>
+    {{- with $src }}
+    <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
+       title="原始 SVG (备用)"
+       style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">{{ . }}</a>
+    {{- end }}
   </div>
 
   {{- with $cap }}
