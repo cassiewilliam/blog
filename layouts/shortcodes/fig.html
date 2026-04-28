@@ -15,54 +15,26 @@
 
 {{- $repo   := .Page.Site.Params.drawioGithubRepo | default "cassiewilliam/blog" -}}
 {{- $branch := .Page.Site.Params.drawioGithubBranch | default "main" -}}
-{{- /* Open the SVG directly in diagrams.net — no XML editor. The web app
-       loads SVG files, lets the user move boxes / edit text visually, and
-       'File → Save' commits back to the same .svg path on GitHub with
-       drawio metadata embedded (so the file is both a renderable SVG and
-       a re-editable drawio doc). One round-trip, edits show on the live
-       page within ~8 s.                                              */ -}}
+{{- /* /edit-fig/ is our self-hosted drawio embed editor — iframes
+       embed.diagrams.net (postMessage protocol, no GitHub OAuth required)
+       and saves via /oauth/save-fig which uses the user's Decap PAT
+       to commit through api.github.com (Fastly CDN, not GFW-blocked). */ -}}
 {{- $editURL := "" -}}
-{{- with $src -}}
-  {{- $path  := printf "static%s" . -}}
-  {{- $hash  := printf "H%s%%2F%s%%2F%s" (replace $repo "/" "%2F") $branch (replace $path "/" "%2F") -}}
-  {{- $editURL = printf "https://app.diagrams.net/?mode=github&url=https%%3A%%2F%%2Fraw.githubusercontent.com%%2F%s%%2F%s%%2F%s#%s" $repo $branch $path $hash -}}
-{{- end -}}
+{{- with $src -}}{{- $editURL = printf "/edit-fig/?src=%s" . -}}{{- end -}}
 
 <figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
   <div class="cc-fig-svg" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;line-height:0;overflow:hidden">
     {{ $svg | safeHTML }}
   </div>
 
-  {{- /* github.dev secondary edit: GitHub session cookie auth (no OAuth round trip
-         to github.com/login — works behind GFW where the OAuth endpoint is
-         blocked). Append `?reopen-with=text` would be ideal but VSCode-web
-         doesn't honour it; user has to right-click → Open With → Text Editor
-         once after opening (then VSCode remembers the choice).        */ -}}
-  {{- $ghDev := "" -}}
-  {{- with $src -}}
-    {{- $ghDev = printf "https://github.dev/%s/blob/%s/static%s" $repo $branch . -}}
-  {{- end -}}
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
     {{- with $editURL }}
     <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
-       title="diagrams.net 可视化编辑（首次需要授权 jgraph 访问 GitHub；GFW 屏 github.com OAuth 时需 VPN 一次）"
+       title="嵌入式 drawio 编辑器：可视化拖拽 / 改文字 / 改连线，⌘S 自动通过 PAT 提交 GitHub。首次使用先去 /admin/ 用 PAT 登录一次。"
        style="color:#fff;background:#0969da;text-decoration:none;border:1px solid #0969da;padding:3px 10px;border-radius:4px;font-weight:600">
-       ✏️ drawio
+       ✏️ Edit (drawio)
     </a>
     {{- end }}
-    {{- with $ghDev }}
-    <a href="{{ . | safeURL }}" target="_blank" rel="noopener"
-       title="github.dev (VSCode web) — GitHub session cookie 鉴权不走 OAuth；右键文件 → Open With → Text Editor 切源码"
-       style="color:#fff;background:#1f883d;text-decoration:none;border:1px solid #1f883d;padding:3px 10px;border-radius:4px;font-weight:600;margin-left:6px">
-       📝 github.dev
-    </a>
-    {{- end }}
-    <a href="{{ printf "https://raw.githubusercontent.com/%s/%s/static%s" $repo $branch $src | safeURL }}"
-       download
-       title="下载 SVG 到本地，用 drawio Desktop 打开编辑（彻底绕过 OAuth）"
-       style="color:#57606a;text-decoration:none;border:1px solid #d0d7de;padding:3px 10px;border-radius:4px;background:#f6f8fa;margin-left:6px">
-       💾 Download
-    </a>
     <a href="{{ $src | safeURL }}" target="_blank" rel="noopener"
        style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">{{ $src }}</a>
   </div>

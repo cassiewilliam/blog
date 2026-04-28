@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Edit · drawio</title>
+<style>
+  html,body{margin:0;height:100%;font-family:-apple-system,Segoe UI,PingFang SC,sans-serif;color:#1f2328}
+  #bar{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid #d0d7de;background:#f6f8fa;font-size:13px}
+  #bar code{font-family:ui-monospace,Menlo,monospace;color:#57606b}
+  #bar .s{color:#57606b}
+  #bar .ok{color:#1f883d;font-weight:600}
+  #bar .err{color:#cf222e}
+  #frame{width:100%;height:calc(100vh - 38px);border:0}
+  .pane{max-width:540px;margin:80px auto;padding:0 20px}
+  .pane a{color:#0969da}
+</style>
+</head>
+<body>
+<div id="bar"><strong>drawio</strong> <code id="src">…</code> <span class="s" id="st">loading…</span></div>
+<iframe id="f" src="about:blank"></iframe>
+
+<script>
+const qs   = new URLSearchParams(location.search);
+const src  = qs.get('src');
+if (!src) {
+  document.body.innerHTML = '<div class="pane"><h2>缺少 ?src 参数</h2><p>用法：<code>/edit-fig/?src=/figures/v4/F1.svg</code></p></div>';
+  throw 0;
+}
+document.getElementById('src').textContent = src;
+const st = document.getElementById('st');
+const setStat = (t,c) => { st.textContent = t; st.className = c || 's'; };
+
+function readPAT() {
+  for (const k of ['netlify-cms-user','decap-cms-user','netlify-cms.user','decap-cms.user']) {
+    const v = localStorage.getItem(k);
+    if (!v) continue;
+    try { const u = JSON.parse(v); if (u && u.token) return u.token; } catch (e) {}
+  }
+  return null;
+}
+const token = readPAT();
+if (!token) {
+  document.body.innerHTML = '<div class="pane"><h2>需要先登录</h2><p>编辑器复用 Decap CMS 的 GitHub PAT。请先去 <a href="/admin/">/admin/</a> 用 PAT 登录一次（一次性，凭证存浏览器 localStorage），再回到这页。</p></div>';
+  throw 0;
+}
+
+const iframe = document.getElementById('f');
+let svgContent = null;
+
+fetch(src + '?_=' + Date.now())
+  .then(r => r.text())
+  .then(t => {
+    svgContent = t;
+    setStat('SVG 已读取，加载 drawio…');
+    iframe.src = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=1&proto=json&saveAndExit=0&noSaveBtn=0';
+  })
+  .catch(e => setStat('fetch failed: ' + e, 'err'));
+
+window.addEventListener('message', e => {
+  let m; try { m = JSON.parse(e.data); } catch (_) { return; }
+  if (!m || !m.event) return;
+  const post = obj => iframe.contentWindow.postMessage(JSON.stringify(obj), '*');
+
+  if (m.event === 'init') {
+    post({ action: 'load', xml: svgContent, autosave: 0 });
+    setStat('drawio 就绪 · 编辑后 ⌘S 保存（自动提交到 GitHub）', 'ok');
+  }
+  else if (m.event === 'save') {
+    // Re-export as SVG (with embedded drawio metadata for next round-trip).
+    post({ action: 'export', format: 'xmlsvg' });
+    setStat('导出 SVG…');
+  }
+  else if (m.event === 'export') {
+    // m.data is a data: URI; pull the SVG bytes out.
+    const url = m.data || '';
+    let svg;
+    if (url.startsWith('data:image/svg+xml;base64,')) {
+      svg = decodeURIComponent(escape(atob(url.split(',')[1])));
+    } else {
+      setStat('unexpected export format: ' + url.slice(0, 40), 'err');
+      return;
+    }
+    setStat('提交到 GitHub…');
+    fetch('/oauth/save-fig', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        token, repo: 'cassiewilliam/blog', branch: 'main',
+        path: 'static' + src,
+        content: svg,
+        message: 'edit ' + src + ' via drawio embed',
+      }),
+    })
+    .then(r => r.json())
+    .then(j => {
+      if (j.ok) setStat('✓ commit ' + (j.sha||'').slice(0,7) + '  ·  ~8s 后博客刷新', 'ok');
+      else setStat('commit 失败: ' + (j.error||'unknown'), 'err');
+    })
+    .catch(err => setStat('commit 失败: ' + err, 'err'));
+  }
+});
+</script>
+</body>
+</html>
