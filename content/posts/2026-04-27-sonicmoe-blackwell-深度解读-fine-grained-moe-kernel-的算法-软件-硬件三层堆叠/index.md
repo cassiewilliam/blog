@@ -1675,6 +1675,71 @@ SonicMoE started from a simple observation: the field is building MoEs that are 
 
 **Future directions.** The most immediate extension is expert parallelism: the IO-aware design principles transfer directly to the intra-node and inter-node setting, where network bandwidth is even more constraining than HBM. After that, we plan to add MXFP8 and MXFP4 support. Finally, the next GPU generation (Rubin) will bring new hardware primitives, and with the abstraction in place, we expect the port to require no more work than the Hopper-to-Blackwell migration did.
 
+## 📝 ICLR 2026 评审摘要
+
+> 数据源：[OpenReview · KzTJ1raEgB](https://openreview.net/forum?id=KzTJ1raEgB)　·　**Decision: Accept (Poster)**
+> 评审中论文内部代号是 **SNaX**，公开名 SonicMoE，本节遵循公开名。
+
+### 总体评分
+
+| Reviewer | Rating | Soundness | Presentation | Contribution |
+|---|---|---|---|---|
+| Y7dy | **8** (强接受) | 4 | 3 | 3 |
+| fRZc | **6** (弱接受) | 3 | 3 | 3 |
+| LFjW | **6** (弱接受) | 3 | 3 | 3 |
+| tULt | **4** (弱拒绝) | 3 | 3 | 2 |
+| **均值** | **6.0** | 3.25 | 3.0 | 2.75 |
+
+### Area Chair 总结的 4 条主要 concern
+
+1. **训练-推理路由不一致**：训练用 token rounding，推理切回 token-choice，可能影响生成质量与稳健性。
+2. **过度依赖 Hopper 特性**：TMA / 异步执行 / tile 尺寸 → 在 A100 / V100 / 其他加速器上是否适用？
+3. **Ping-pong scheduling 与 load-balancing routing 都不是新概念**，需更清晰区分「新 vs 改造」。
+4. **Baseline 模糊**："state-of-the-art BF16 MoE kernel" 具体指什么？kernel 参数定义需更精确。
+
+### 各 reviewer 的强弱点
+
+#### ✅ 一致认可的强项
+
+- **正确识别 fine-grained MoE 的瓶颈从 compute 转到 memory**（Y7dy / fRZc / LFjW / tULt 一致）
+- **Backward 重新排序避免 Y₂ materialize → 45% activation memory 节省**，数学等价性站得住（fRZc）
+- **Token Rounding 是新颖且巧妙的想法**，正面解决了被忽视的 tile quantization padding 浪费（tULt + fRZc）
+- **1.4B – 120B 全尺度对比 ScatterMoE / MoMoE / MegaBlocks 一致 1.86×–1.87× 提升**（4 篇 review 一致）
+- **将开源**生产级 kernel，对社区价值大（Y7dy / fRZc）
+
+#### ⚠ 共性弱点（被 ≥2 名 reviewer 提到）
+
+- **Token Rounding train / Token Choice inference 的失配**：作者承认"creates difficulty"但没给技术细节或解决方案；可能影响生成多样性、幻觉率，但没做实验（tULt + fRZc + LFjW）
+- **Hopper-specific**：没在 A100 / V100 / TPU 上测降速幅度（Y7dy + fRZc + tULt）
+- **Ping-pong / 异步 TMA 都是已有技术**，应更明确"贡献在于 MoE epilogue 适配"而非声称是新算法（tULt + fRZc）
+- **基线定义不清**："state-of-the-art BF16 MoE kernel" 与 GEMM 的 K 维定义都没说清（tULt + fRZc）
+- **Token Rounding 的硬件敏感性**：依赖 grouped GEMM tile 尺寸（随 GPU/库/精度变化）→ 用户在不同卡上 fine-tune 时可能行为异常（LFjW）
+
+#### 🔍 各 reviewer 的额外亮点 / 顾虑
+
+- **Y7dy (rating 8)**：唯一关注训练 vs 推理效率边界、能否用于无 top-K 的 MoE（如 ReMoE）；指出 Figure 6 文中没引用、术语 FLOPS/FLOPs 大小写不统一。
+- **fRZc**：质疑为什么 backward 重排不引入 BF16 mixed-precision 数值不稳定（→ 作者回复给了消融）。
+- **LFjW**：警告 routing 一致性在 RL / alignment 阶段尤其关键，train-infer 失配会放大 mode collapse 与 bias。
+- **tULt (rating 4，唯一弱拒)**：核心扣分点是 train-infer 失配既没解释清楚、也没和 TC 比较 loss 收敛曲线。
+
+### 作者 rebuttal 的关键回复
+
+| 关注点 | 回复要点 |
+|---|---|
+| Train-infer 失配 | 新增 token rounding vs **expert-choice** / **auxiliary-router** / **fine-tuned token-choice** 三组对照实验；token rounding 在 efficiency–quality Pareto frontier 上更优，且 train-infer gap 比同类 alternative 更小 |
+| 硬件依赖 | 明确区分：activation memory 节省 + 算法重排 = 硬件无关；IO/compute overlap = Hopper / Blackwell 专属。在老卡上不会比 baseline 更差 |
+| 新颖性边界 | 承认 ping-pong 不是新发明，但**应用到 fine-grained MoE 的 heavy epilogue + memory-bound 区间是新的**；token rounding 通过 tile 量化目标明确区别于 load-balancing / token-dropping |
+| Baseline 模糊 | 显式点名 ScatterMoE 是 SOTA BF16 baseline；GEMM 记号对齐 BLAS / CUTLASS 标准 |
+
+### 仍未消的（non-blocking）保留意见
+
+- 在非 Hopper 硬件上**没有实测数据**，作者只在概念上论证了通用性。AC 认为本文属基础设施 / kernels / systems 类，专注新硬件合理。
+- 部分贡献仍可被视为"系统改造"而非"新算法"。AC 认为对该 primary area 来说合适。
+
+### 一句话总结
+
+> **改造系统 + 算法重排 + 路由微调三连，把 fine-grained sparse MoE 从被 padding/IO 卡死的状态救回 Hopper 应有的算力区间**。技术上无重大未解疑问，最终以「**中位 6 分、最高 8 分**」被 ICLR 2026 录为 Poster。
+
 ## Citing this blogpost
 
 If you find SonicMoE helpful in your research or development, please consider citing us:
