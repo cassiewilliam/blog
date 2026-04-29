@@ -19,7 +19,7 @@
 {{- $url := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $drawioPath) -}}
 
 {{- $editURL := "" -}}
-{{- with $src -}}{{- $editURL = printf "/edit-fig/?src=%s" . -}}{{- end -}}
+{{- with $src -}}{{- $editURL = printf "http://150.158.53.42/edit-fig/?src=%s" . -}}{{- end -}}
 
 <figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
   {{- if $hasDrawio }}
