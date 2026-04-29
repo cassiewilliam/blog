@@ -109,7 +109,7 @@
         <mxCell id="v29" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#b85450;fontStyle=3;" value="X̃" vertex="1">
           <mxGeometry height="19" width="40" x="220" y="135.18" as="geometry" />
         </mxCell>
-        <mxCell id="v30" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached · [TK,d] 2GB" vertex="1">
+        <mxCell id="v30" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached · [TK,d]&amp;nbsp;" vertex="1">
           <mxGeometry height="12" width="106" x="187" y="173.64" as="geometry" />
         </mxCell>
         <mxCell id="v31" edge="1" parent="1" style="endArrow=classic;strokeColor=#222;strokeWidth=1.3;html=1" value="">
@@ -163,7 +163,7 @@
         <mxCell id="v44" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#b85450;fontStyle=3;" value="A" vertex="1">
           <mxGeometry height="19" width="40" x="655" y="135.18" as="geometry" />
         </mxCell>
-        <mxCell id="v45" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached · 768MB" vertex="1">
+        <mxCell id="v45" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached · [TK, n]&amp;nbsp;" vertex="1">
           <mxGeometry height="12" width="78" x="636" y="173.64" as="geometry" />
         </mxCell>
         <mxCell id="v46" edge="1" parent="1" style="endArrow=none;strokeColor=none;strokeWidth=1;html=1" value="">
@@ -199,7 +199,7 @@
         <mxCell id="v53" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#b85450;fontStyle=3;" value="Y" vertex="1">
           <mxGeometry height="19" width="40" x="895" y="135.18" as="geometry" />
         </mxCell>
-        <mxCell id="v54" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached · 2GB ⚠" vertex="1">
+        <mxCell id="v54" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached · [TK,d]&amp;nbsp;" vertex="1">
           <mxGeometry height="12" width="78" x="876" y="173.64" as="geometry" />
         </mxCell>
         <mxCell id="v55" edge="1" parent="1" style="endArrow=classic;strokeColor=#222;strokeWidth=1.3;html=1" value="">
@@ -226,8 +226,8 @@
         <mxCell id="v60" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#b85450;fontStyle=3;" value="Ỹ" vertex="1">
           <mxGeometry height="19" width="40" x="1085" y="135.18" as="geometry" />
         </mxCell>
-        <mxCell id="v61" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached · 2GB" vertex="1">
-          <mxGeometry height="12" width="66" x="1072" y="173.64" as="geometry" />
+        <mxCell id="v61" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached · [TK,d]&amp;nbsp;" vertex="1">
+          <mxGeometry height="12" width="70" x="1068" y="173.64" as="geometry" />
         </mxCell>
         <mxCell id="v62" edge="1" parent="1" style="endArrow=classic;strokeColor=#222;strokeWidth=1.3;html=1" value="">
           <mxGeometry relative="1" as="geometry">
@@ -733,8 +733,11 @@
             <mxPoint x="485" y="200" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="3" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached · [TK, 2n] 2GB" vertex="1">
-          <mxGeometry height="12" width="106" x="436.5" y="178" as="geometry" />
+        <mxCell id="3" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached · [TK, 2n]&amp;nbsp;" vertex="1">
+          <mxGeometry height="12" width="106" x="430.5" y="178" as="geometry" />
+        </mxCell>
+        <mxCell id="5" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#1A1A1A;fontStyle=1;" value="[T, d]&amp;nbsp;" vertex="1">
+          <mxGeometry height="12" width="106" x="1147" y="268" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
