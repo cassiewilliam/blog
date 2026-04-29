@@ -59,12 +59,12 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="v17" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#b85450;fontStyle=3;" value="π" vertex="1">
-          <mxGeometry height="18" width="40" x="925" y="63.96" as="geometry" />
+          <mxGeometry height="18" width="40" x="992" y="63.96" as="geometry" />
         </mxCell>
         <mxCell id="v18" edge="1" parent="1" style="endArrow=classic;strokeColor=#222;strokeWidth=1.3;html=1" value="">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="945" y="84" as="sourcePoint" />
-            <mxPoint x="945" y="100" as="targetPoint" />
+            <mxPoint x="1012" y="84" as="sourcePoint" />
+            <mxPoint x="1012" y="100" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="v19" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;" value="π, S" vertex="1">
