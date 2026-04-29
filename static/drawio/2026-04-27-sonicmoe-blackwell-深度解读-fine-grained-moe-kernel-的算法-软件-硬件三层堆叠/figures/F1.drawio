@@ -82,8 +82,8 @@
         <mxCell id="v22" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#b85450;fontStyle=3;" value="X" vertex="1">
           <mxGeometry height="19" width="40" x="18" y="135.18" as="geometry" />
         </mxCell>
-        <mxCell id="v23" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached" vertex="1">
-          <mxGeometry height="12" width="40" x="18" y="173.64" as="geometry" />
+        <mxCell id="v23" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#b85450;fontStyle=1;" value="cached [T, d]" vertex="1">
+          <mxGeometry height="12" width="62" x="6.5" y="171" as="geometry" />
         </mxCell>
         <mxCell id="v24" edge="1" parent="1" style="endArrow=classic;strokeColor=#222;strokeWidth=1.3;html=1" value="">
           <mxGeometry relative="1" as="geometry">
@@ -265,8 +265,8 @@
         <mxCell id="v70" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#5a3475;fontStyle=1;" value="output" vertex="1">
           <mxGeometry height="12" width="40" x="1180" y="252.64" as="geometry" />
         </mxCell>
-        <mxCell id="v71" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#CC0000;fontStyle=1;" value="⚠ 5 个 cached O(TKd) 张量：X̃ + H + A + Y + Ỹ ≈ 8.3 GB / 层" vertex="1">
-          <mxGeometry height="16" width="509.5" x="439.5" y="297.52" as="geometry" />
+        <mxCell id="v71" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#CC0000;fontStyle=1;" value="⚠ 5 个 cached O(TKd) 张量： X̃(Gathered X) + H + A + Y + Ỹ(Scattered Y)" vertex="1">
+          <mxGeometry height="39.48" width="653" x="297" y="285" as="geometry" />
         </mxCell>
         <mxCell id="v72" edge="1" parent="1" style="endArrow=none;strokeColor=#999;strokeWidth=0.5;dashed=1;html=1" value="">
           <mxGeometry relative="1" as="geometry">
