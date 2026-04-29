@@ -1,6 +1,6 @@
 <mxfile host="embed.diagrams.net" agent="svg2drawio">
   <diagram id="conv" name="Page-1">
-    <mxGraphModel dx="1491" dy="2381" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="600" math="0" shadow="0">
+    <mxGraphModel dx="1011" dy="1616" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="600" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -50,12 +50,12 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="v15" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;fontStyle=2;" value="W₂" vertex="1">
-          <mxGeometry height="18" width="40" x="735" y="63.96" as="geometry" />
+          <mxGeometry height="18" width="40" x="775" y="65.96000000000001" as="geometry" />
         </mxCell>
         <mxCell id="v16" edge="1" parent="1" style="endArrow=classic;strokeColor=#222;strokeWidth=1.3;html=1" value="">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="755" y="84" as="sourcePoint" />
-            <mxPoint x="755" y="100" as="targetPoint" />
+            <mxPoint x="795" y="84" as="sourcePoint" />
+            <mxPoint x="795" y="100" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="v17" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#b85450;fontStyle=3;" value="π" vertex="1">
