@@ -106,3 +106,7 @@ drawioGithubBranch = "main"
     startLevel = 2
     endLevel = 3
     ordered = false
+
+[params.footer]
+  text = "本站文章多由 <a href=\"https://claude.com/claude-code\" target=\"_blank\" rel=\"noopener\">Claude Code</a> 协作完成 · 用于梳理技术思路与实现细节 · 作者审校定稿，对内容负责。"
+
