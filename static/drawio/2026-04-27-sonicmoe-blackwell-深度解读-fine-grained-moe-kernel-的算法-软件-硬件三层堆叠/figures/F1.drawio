@@ -367,11 +367,8 @@
         <mxCell id="v99" parent="1" style="rounded=1;arcSize=7;fillColor=#fff8d5;strokeColor=#e0b300;strokeWidth=1.5;html=1;" value="" vertex="1">
           <mxGeometry height="80" width="76" x="972" y="402" as="geometry" />
         </mxCell>
-        <mxCell id="v100" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;" value="Scatter" vertex="1">
-          <mxGeometry height="15" width="47" x="986.5" y="425.3" as="geometry" />
-        </mxCell>
-        <mxCell id="v101" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;" value="backward" vertex="1">
-          <mxGeometry height="15" width="54" x="983" y="441.3" as="geometry" />
+        <mxCell id="v101" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#000000;" value="&lt;span style=&quot;color: rgb(184, 84, 80); font-weight: 700;&quot;&gt;dS = dO \cdot&amp;nbsp; S&lt;/span&gt;" vertex="1">
+          <mxGeometry height="15" width="72" x="976" y="436.18" as="geometry" />
         </mxCell>
         <mxCell id="v102" edge="1" parent="1" source="v99" style="endArrow=classic;strokeColor=#222;strokeWidth=1.3;html=1" value="">
           <mxGeometry relative="1" as="geometry">
@@ -621,7 +618,7 @@
             <mxPoint x="1015" y="565" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="v175" edge="1" parent="1" source="v84" style="endArrow=classic;strokeColor=#888;strokeWidth=2;dashed=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" value="">
+        <mxCell id="v175" edge="1" parent="1" source="v96" style="endArrow=classic;strokeColor=#888;strokeWidth=2;dashed=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" value="">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="1185" y="540" as="sourcePoint" />
             <mxPoint x="1185" y="565" as="targetPoint" />
