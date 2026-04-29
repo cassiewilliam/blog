@@ -31,14 +31,14 @@ enableInlineShortcodes = true
   enabled = true
   title = "Yang Min"
   subtitle = "AI Infra  /  CUDA Hopper & Blackwell  /  LLM 推理系统  /  通算融合"
-  imageUrl = "/profile-avatar.png"
+  imageUrl = "https://cassiewilliam.github.io/blog/profile-avatar.png"
   imageTitle = "avatar"
   imageWidth = 140
   imageHeight = 140
   buttons = [
-    { name = "归档", url = "/archives/" },
-    { name = "标签", url = "/tags/" },
-    { name = "关于", url = "/about/" },
+    { name = "归档", url = "https://cassiewilliam.github.io/blog/archives/" },
+    { name = "标签", url = "https://cassiewilliam.github.io/blog/tags/" },
+    { name = "关于", url = "https://cassiewilliam.github.io/blog/about/" },
   ]
 
 # 社交链接（在 profile 下方/页脚展示）
@@ -47,7 +47,7 @@ enableInlineShortcodes = true
   url = "https://github.com/cassiewilliam"
 [[params.socialIcons]]
   name = "rss"
-  url = "/index.xml"
+  url = "https://cassiewilliam.github.io/blog/index.xml"
 [[params.socialIcons]]
   name = "email"
   url = "mailto:cassiewilliam@example.com"   # ✏️ 改成你的邮箱
@@ -79,19 +79,19 @@ drawioGithubBranch = "main"
 [[menu.main]]
   identifier = "archives"
   name = "归档"
-  url = "/archives/"
+  url = "https://cassiewilliam.github.io/blog/archives/"
   weight = 10
 
 [[menu.main]]
   identifier = "tags"
   name = "标签"
-  url = "/tags/"
+  url = "https://cassiewilliam.github.io/blog/tags/"
   weight = 20
 
 [[menu.main]]
   identifier = "about"
   name = "关于"
-  url = "/about/"
+  url = "https://cassiewilliam.github.io/blog/about/"
   weight = 30
 
 [outputs]
