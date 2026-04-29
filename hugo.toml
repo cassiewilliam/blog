@@ -50,7 +50,7 @@ enableInlineShortcodes = true
   url = "https://cassiewilliam.github.io/blog/index.xml"
 [[params.socialIcons]]
   name = "email"
-  url = "mailto:cassiewilliam@example.com"   # ✏️ 改成你的邮箱
+  url = "mailto:2016202110015@whu.edu.cn"   # ✏️ 改成你的邮箱
 
 # Giscus 评论配置 (params.giscus)
 # - 你需要先在 GitHub 仓库 Settings → Features 勾选 Discussions
