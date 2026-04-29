@@ -13,5 +13,5 @@
   {{- with $label }}
   <div style="display:inline-block;font-weight:700;font-size:12px;padding:2px 10px;border-radius:3px;margin-bottom:8px;letter-spacing:.3px;background:{{ $border }};color:#fff">{{ . }}</div>
   {{- end }}
-  <pre style="margin:0;padding:0;background:transparent;border:none;color:inherit;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.7;white-space:pre-wrap;overflow-x:auto">{{ trim .Inner "\n" | safeHTML }}</pre>
+  <div style="margin:0;padding:0;background:transparent;border:none;color:inherit;font-size:14px;line-height:1.75;white-space:normal;overflow-x:auto">{{ trim .Inner "\n" | .Page.RenderString }}</div>
 </div>
