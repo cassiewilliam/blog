@@ -46,8 +46,8 @@ enableInlineShortcodes = true
   name = "github"
   url = "https://github.com/cassiewilliam"
 [[params.socialIcons]]
-  name = "rss"
-  url = "https://cassiewilliam.github.io/blog/index.xml"
+  name = "zhihu"
+  url = "https://www.zhihu.com/people/yang-min-64-15"
 [[params.socialIcons]]
   name = "email"
   url = "mailto:2016202110015@whu.edu.cn"   # ✏️ 改成你的邮箱
