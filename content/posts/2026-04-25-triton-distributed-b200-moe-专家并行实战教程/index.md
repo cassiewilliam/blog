@@ -2953,29 +2953,10 @@ Physical:          GPU 3 HBM 上的物理地址 P (对应 win 的某个 buffer)
 → 加法在某个 GPU 的 SM 上做, 走 HBM 中转
 → 占 SM, 占 HBM 带宽, 占 NVLink (要把 partial 都搬过去)
 Multimem 的做法：让 NVSwitch 自己加   GPU 0          GPU 1          GPU 2          GPU 3
-```text
-    │              │              │              │
-    │ partial_0    │ partial_1    │ partial_2    │ partial_3
-    │ store mm_addr│ store mm_addr│ store mm_addr│ store mm_addr  ← 4 个 GPU 同时 store
-    │              │              │              │                 到同一 multimem 地址
-    └──────┬───────┴──────┬───────┴──────┬───────┘
-           │              │              │
-           ▼              ▼              ▼
-    ┌─────────────────────────────────────────┐
-    │       NVSwitch  (5th gen, B200 HGX)     │
-    │   ┌─────────────────────────────────┐   │
-    │   │   SHARP reduction engine        │   │
-    │   │   收到 4 个 store 指向同一地址  │   │
-    │   │   ASIC 内部做 BF16 add reduce   │   │
-    │   │   sum = p0 + p1 + p2 + p3        │   │
-    │   └─────────────────────────────────┘   │
-    └──────────────────┬──────────────────────┘
-                       │ multicast write
-       ┌───────────┬───┴───┬───────────┐
-       ▼           ▼       ▼           ▼
-    GPU 0       GPU 1   GPU 2       GPU 3
-    收到 sum   收到 sum 收到 sum   收到 sum
-```
+<figure style="margin:18px 0">
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:560px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":25,"pageId":"page26-sharp-multimem","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 26 页</b>　NVSwitch SHARP Multimem 在网络内 reduce — 4 GPU 同时 store → ASIC 累加 → multicast 发回</figcaption>
+</figure>
 
 → 加法在 NVSwitch ASIC 里做, 不占任何 GPU SM
 → NVLink 上每 GPU 只发出 N 字节 (partial), 收到 N 字节 (sum)
