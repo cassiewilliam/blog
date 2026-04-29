@@ -1,5 +1,5 @@
 ---
-title: "SonicMoE × Blackwell 深度解读：fine-grained MoE kernel 的算法 × 软件 × 硬件三层堆叠"
+title: "SonicMoE × Blackwell 深度解读：fine-grained MoE kernel 的算法 × 软件 × 硬件三层堆叠【进行中...】"
 date: 2026-04-27T19:18:52+08:00
 draft: false
 tags: ["sonicmoe", "moe", "blackwell", "cuda", "gpu-kernel", "个人笔记"]

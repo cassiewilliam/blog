@@ -1,5 +1,5 @@
 ---
-title: "Agent 场景下 Tool Calling 是怎么工作的：vLLM 与 SGLang 双视角拆解"
+title: "Agent 场景下 Tool Calling 是怎么工作的：vLLM 与 SGLang 双视角拆解【进行中...】"
 date: 2026-04-25T23:46:44+08:00
 draft: false
 tags: ["deep-dive", "vllm", "sglang", "deepseek", "tool-calling", "agent", "llm-serving", "deepseek-v4", "llm", "async", "agent-runtime"]

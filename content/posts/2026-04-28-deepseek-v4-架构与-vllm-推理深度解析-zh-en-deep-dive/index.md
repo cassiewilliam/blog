@@ -1,5 +1,5 @@
 ---
-title: "DeepSeek-V4 架构与 vLLM 推理深度解析 (ZH/EN Deep Dive)"
+title: "DeepSeek-V4 架构与 vLLM 推理深度解析 (ZH/EN Deep Dive)【进行中...】"
 date: 2026-04-28T10:43:04+08:00
 draft: false
 summary: "DeepSeek-V4 论文 58 页章节级深度解读 + vLLM 推理实现：CSA / HCA 混合注意力、mHC 残差、MegaMoE、FP4 量化、KV cache 异构布局、Prefill / Decode 流程。中英对照 · 43 SVG。"

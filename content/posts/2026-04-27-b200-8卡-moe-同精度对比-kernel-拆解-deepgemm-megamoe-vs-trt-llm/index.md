@@ -1,5 +1,5 @@
 ---
-title: "B200 8卡 MoE 同精度对比 + kernel 拆解：DeepGEMM MegaMoE vs TRT-LLM"
+title: "B200 8卡 MoE 同精度对比 + kernel 拆解：DeepGEMM MegaMoE vs TRT-LLM【进行中...】"
 date: 2026-04-27T14:29:13+08:00
 draft: false
 tags: ["B200", "MoE", "DeepGEMM", "MegaMoE", "TensorRT-LLM", "NVFP4", "FP8", "nsys", "DeepSeek", "Qwen"]
