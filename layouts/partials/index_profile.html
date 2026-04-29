@@ -33,7 +33,11 @@
         <h1>{{ .title | default site.Title | markdownify }}</h1>
         <span>{{ .subtitle | markdownify }}</span>
         {{- with site.Params.signature }}
-        <p class="profile-signature" style="margin:1.4em auto 1em !important;max-width:560px !important;font-size:.96em;color:var(--secondary);font-style:italic;line-height:1.75;text-align:center">{{ . | markdownify }}</p>
+        <p class="profile-signature" style="margin:1.6em auto 1.1em !important;max-width:620px !important;font-family:Source Han Serif SC,Source Han Serif CN,Noto Serif CJK SC,STZhongsong,STSong,Georgia,Times New Roman,serif;font-size:1.04em;color:var(--secondary);font-style:normal;line-height:1.95;letter-spacing:.06em;text-align:center;position:relative;padding:0.6em 1.2em">
+          <span style="position:absolute;left:0;top:-.1em;font-family:Georgia,Times New Roman,serif;font-size:2.2em;line-height:1;color:var(--tertiary);opacity:.55;font-style:italic">&ldquo;</span>
+          {{ . | markdownify }}
+          <span style="position:absolute;right:0;bottom:-.6em;font-family:Georgia,Times New Roman,serif;font-size:2.2em;line-height:1;color:var(--tertiary);opacity:.55;font-style:italic">&rdquo;</span>
+        </p>
         {{- end }}
         {{- partial "social_icons.html" -}}
 
