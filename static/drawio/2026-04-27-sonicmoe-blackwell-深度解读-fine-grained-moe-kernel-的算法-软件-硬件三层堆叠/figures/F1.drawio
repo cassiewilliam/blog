@@ -1,6 +1,6 @@
 <mxfile host="embed.diagrams.net" agent="svg2drawio">
   <diagram id="conv" name="Page-1">
-    <mxGraphModel dx="1416" dy="2262" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="600" math="0" shadow="0">
+    <mxGraphModel dx="1491" dy="2381" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="600" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -265,8 +265,8 @@
         <mxCell id="v70" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#5a3475;fontStyle=1;" value="output" vertex="1">
           <mxGeometry height="12" width="40" x="1180" y="252.64" as="geometry" />
         </mxCell>
-        <mxCell id="v71" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#b85450;fontStyle=1;" value="⚠ 5 个 cached O(TKd) 张量：X̃ + H + A + Y + Ỹ ≈ 8.3 GB / 层" vertex="1">
-          <mxGeometry height="16" width="401" x="439.5" y="297.52" as="geometry" />
+        <mxCell id="v71" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#CC0000;fontStyle=1;" value="⚠ 5 个 cached O(TKd) 张量：X̃ + H + A + Y + Ỹ ≈ 8.3 GB / 层" vertex="1">
+          <mxGeometry height="16" width="509.5" x="439.5" y="297.52" as="geometry" />
         </mxCell>
         <mxCell id="v72" edge="1" parent="1" style="endArrow=none;strokeColor=#999;strokeWidth=0.5;dashed=1;html=1" value="">
           <mxGeometry relative="1" as="geometry">
@@ -592,7 +592,7 @@
             <mxPoint x="240" y="220" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="v148" edge="1" parent="1" style="endArrow=classic;strokeColor=#888;strokeWidth=1;dashed=1;html=1" value="">
+        <mxCell id="v148" edge="1" parent="1" style="endArrow=classic;strokeColor=#1A1A1A;strokeWidth=1;dashed=1;html=1" value="">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="240" y="220" as="sourcePoint" />
             <mxPoint x="240" y="565" as="targetPoint" />
