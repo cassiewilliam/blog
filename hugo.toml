@@ -23,7 +23,7 @@ enableInlineShortcodes = true
   DateFormat = "2006-01-02"
   comments = true                       # show Giscus on posts
   busuanzi = true
-  signature = "知识的价值不在于占有，而在于形成判断力；<br>学习的意义不止于理解，而在于支撑决策感。"
+  signature = "知识的终点不是占有，而是判断；<br>学习的终点不是理解，而是决策。"
                        # show 不蒜子 PV/UV counter site-wide
   math = false                          # per-post can override via frontmatter math: true
   drawio = false                        # per-post override
