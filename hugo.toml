@@ -31,7 +31,7 @@ enableInlineShortcodes = true
   enabled = true
   title = "Yang Min"
   subtitle = "AI Infra  /  CUDA Hopper & Blackwell  /  LLM 推理系统  /  通算融合"
-  imageUrl = "/avatar.png?v=2"
+  imageUrl = "/profile-avatar.png"
   imageTitle = "avatar"
   imageWidth = 140
   imageHeight = 140
