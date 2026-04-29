@@ -1554,7 +1554,7 @@ DeepSeek-V3：B=4096、K=8、d=7168、BF16 → **每层 938 MiB / 单 micro-batc
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":14,"pageId":"page15-moe-evolution","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":14,"pageId":"page15-moe-evolution","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 15 页</b>　15 MoE 算法演进时间线</figcaption>
 </figure>
@@ -1623,7 +1623,7 @@ attention   MLA (Multi-head Latent Attention)，KV ~70 KB/token
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":8,"pageId":"page09-ep-moe","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":8,"pageId":"page09-ep-moe","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 9 页</b>　09 EP MoE Dispatch Combine</figcaption>
 </figure>
@@ -2489,7 +2489,7 @@ MoE 网格 (同 64 GPU 上折叠)
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":9,"pageId":"page10-b200-topology","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":9,"pageId":"page10-b200-topology","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 10 页</b>　10 B200 单机与多机拓扑</figcaption>
 </figure>
@@ -2954,7 +2954,7 @@ Physical:          GPU 3 HBM 上的物理地址 P (对应 win 的某个 buffer)
 → 占 SM, 占 HBM 带宽, 占 NVLink (要把 partial 都搬过去)
 Multimem 的做法：让 NVSwitch 自己加   GPU 0          GPU 1          GPU 2          GPU 3
 <figure style="margin:18px 0">
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:560px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":25,"pageId":"page26-sharp-multimem","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:560px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":25,"pageId":"page26-sharp-multimem","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 26 页</b>　NVSwitch SHARP Multimem 在网络内 reduce — 4 GPU 同时 store → ASIC 累加 → multicast 发回</figcaption>
 </figure>
 
@@ -3457,7 +3457,7 @@ DeepEP / Pplx-kernels / SGLang DeepEPDispatcher / vLLM modular dispatcher / Mega
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":3,"pageId":"page04-primitive-backend","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":3,"pageId":"page04-primitive-backend","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 4 页</b>　04 Primitive 后端映射</figcaption>
 </figure>
@@ -3908,7 +3908,7 @@ NVL72 让 **EP=72 跨整个 rack** 变得可能——这就是 TensorRT-LLM Wide
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":13,"pageId":"page14-hw-topology","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":13,"pageId":"page14-hw-topology","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 14 页</b>　14 HGX B200 x8 硬件拓扑详图</figcaption>
 </figure>
@@ -6160,7 +6160,7 @@ EPLB 是 **运行时把 hot expert 跨 rank 重新放置 / 复制** 的机制。
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":15,"pageId":"page16-eplb","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":15,"pageId":"page16-eplb","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 16 页</b>　16 EPLB hot-expert 重排</figcaption>
 </figure>
@@ -6434,7 +6434,7 @@ Stage 3: 目标节点 receiver 通过 NVLink 散发给本地 expert owner
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":16,"pageId":"page17-deepep-modes","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":16,"pageId":"page17-deepep-modes","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 17 页</b>　17 DeepEP normal/LL 时序</figcaption>
 </figure>
@@ -6788,7 +6788,7 @@ Lab 5 演示这个 hook 模式。
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":20,"pageId":"page21-tbo-timeline","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":20,"pageId":"page21-tbo-timeline","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 21 页</b>　21 TBO/DBO Nsight 时间线</figcaption>
 </figure>
@@ -7012,7 +7012,7 @@ fromtriton_dist.utilsimportnvshmem_create_tensor,nvshmem_free_tensor_syncclassEP
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":17,"pageId":"page18-pd-disagg","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":17,"pageId":"page18-pd-disagg","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 18 页</b>　18 PD 分离 + EP 数据流</figcaption>
 </figure>
@@ -7190,7 +7190,7 @@ KV transfer 复用 Mooncake / NIXL（不用自己造轮子）。
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":18,"pageId":"page19-wide-ep-nvl72","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":18,"pageId":"page19-wide-ep-nvl72","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 19 页</b>　19 Wide-EP NVL72 rack-scale</figcaption>
 </figure>
@@ -7458,7 +7458,7 @@ Hybrid-EP 是 NVIDIA 2026-03 博客提出的 EP kernel 设计范式。把一个 
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":21,"pageId":"page22-hybrid-ep-warps","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":21,"pageId":"page22-hybrid-ep-warps","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 22 页</b>　22 Hybrid-EP 4 warp-group</figcaption>
 </figure>
@@ -8471,7 +8471,7 @@ NCCL Device API 暴露 **4 类 transport 抽象**：
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":10,"pageId":"page11-nccl-ep-roadmap","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":10,"pageId":"page11-nccl-ep-roadmap","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 11 页</b>　11 NCCL EP 接入路线</figcaption>
 </figure>
@@ -8480,7 +8480,7 @@ NCCL Device API 暴露 **4 类 transport 抽象**：
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":19,"pageId":"page20-primitive-mapping","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":19,"pageId":"page20-primitive-mapping","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 20 页</b>　20 Primitive ↔ 通信库 Mapping</figcaption>
 </figure>
@@ -8933,7 +8933,7 @@ one-sided communication
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":1,"pageId":"page02-programming-model","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":1,"pageId":"page02-programming-model","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 2 页</b>　02 分布式编程模型</figcaption>
 </figure>
@@ -8995,7 +8995,7 @@ MLIR 对应 `include/TritonDistributed/Dialect/SIMT/IR/SIMTOps.td`。
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":2,"pageId":"page03-compiler-stack","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":2,"pageId":"page03-compiler-stack","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 3 页</b>　03 编译器栈</figcaption>
 </figure>
@@ -9129,7 +9129,7 @@ METAX / MACA 走 MXSHMEM，接口与 NVSHMEM 接近但部分能力需按 kernel 
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":4,"pageId":"page05-runtime","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":4,"pageId":"page05-runtime","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 5 页</b>　05 Runtime SHMEM 生命周期</figcaption>
 </figure>
@@ -10144,7 +10144,7 @@ importtorch# 1. 预热（必须，warmup 完成 autotune 和 lazy init）for_inr
 
 <figure style="margin:18px 0">
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":12,"pageId":"page13-validation","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:480px" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","edit":"_blank","page":12,"pageId":"page13-validation","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```
 <figcaption style="color:#55606b;font-size:12.8px;padding:8px 4px 0;line-height:1.55;font-family:ui-monospace,Menlo,monospace"><b>drawio 第 13 页</b>　13 验证与调优</figcaption>
 </figure>
@@ -13448,5 +13448,5 @@ NVSHMEM_DISABLE_CUDA_VMM=0 bash ./scripts/launch.sh ./python/triton_dist/test/nv
 25. 25 NVSwitch5 内部架构详解
 
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:720px;margin:16px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"pages zoom layers tags lightbox","edit":"_blank","url":"http://150.158.53.42/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:720px;margin:16px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"pages zoom layers tags lightbox","edit":"_blank","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-25-triton-distributed-b200-moe-专家并行实战教程/source.drawio"}'></div>
 ```

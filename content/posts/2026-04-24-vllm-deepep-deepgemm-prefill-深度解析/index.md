@@ -3577,5 +3577,5 @@ Token-Expert 条目总数: M × TopK = 4096 × 8 = 32,768 条
 8. 08 DBO (Dual Batch Overlap) 完整机制
 
 ```cpp
-<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:640px;margin:16px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"pages zoom layers tags lightbox","edit":"_blank","url":"http://150.158.53.42/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>
+<div class="mxgraph" style="max-width:100%;border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:640px;margin:16px 0" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"pages zoom layers tags lightbox","edit":"_blank","url":"https://cassiewilliam.github.io/blog/drawio/2026-04-24-vllm-deepep-deepgemm-prefill-深度解析/source.drawio"}'></div>
 ```

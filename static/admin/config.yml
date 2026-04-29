@@ -12,8 +12,8 @@ local_backend: false
 publish_mode: simple
 media_folder: "static/uploads"           # 图片 / 文件 上传目录 (相对仓库根)
 public_folder: "/uploads"                # URL prefix
-site_url: "http://150.158.53.42"
-display_url: "http://150.158.53.42"
+site_url: "https://cassiewilliam.github.io/blog/"
+display_url: "https://cassiewilliam.github.io/blog/"
 
 collections:
   - name: "posts"
