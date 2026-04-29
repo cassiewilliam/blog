@@ -68,12 +68,12 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="v19" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#000000;" value="π, S" vertex="1">
-          <mxGeometry height="18" width="40" x="1095" y="63.96" as="geometry" />
+          <mxGeometry height="18" width="40" x="1180" y="63.96" as="geometry" />
         </mxCell>
         <mxCell id="v20" edge="1" parent="1" style="endArrow=classic;strokeColor=#222;strokeWidth=1.3;html=1" value="">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="1115" y="84" as="sourcePoint" />
-            <mxPoint x="1115" y="100" as="targetPoint" />
+            <mxPoint x="1200" y="84" as="sourcePoint" />
+            <mxPoint x="1200" y="100" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="v21" parent="1" style="rounded=0;fillColor=#dae8fc;strokeColor=#b85450;strokeWidth=2;html=1;" value="" vertex="1">
@@ -247,20 +247,20 @@
         <mxCell id="v66" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#7a4e00;" value="expert outputs" vertex="1">
           <mxGeometry height="15" width="95" x="1152.5" y="158.3" as="geometry" />
         </mxCell>
-        <mxCell id="v67" edge="1" parent="1" style="endArrow=classic;strokeColor=#222;strokeWidth=1.3;html=1" value="">
+        <mxCell id="v67" edge="1" parent="1" style="endArrow=classic;strokeColor=#222;strokeWidth=1.3;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="v68" value="">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="1200" y="190" as="sourcePoint" />
             <mxPoint x="1200" y="205" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="v68" parent="1" style="rounded=0;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;html=1;" value="" vertex="1">
-          <mxGeometry height="40" width="60" x="1170" y="205" as="geometry" />
+          <mxGeometry height="40" width="60" x="1170" y="215" as="geometry" />
         </mxCell>
         <mxCell id="v69" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#5a3475;fontStyle=3;" value="O" vertex="1">
-          <mxGeometry height="19" width="40" x="1180" y="215.18" as="geometry" />
+          <mxGeometry height="19" width="40" x="1180" y="225.18" as="geometry" />
         </mxCell>
         <mxCell id="v70" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#5a3475;fontStyle=1;" value="output" vertex="1">
-          <mxGeometry height="12" width="40" x="1180" y="252.64" as="geometry" />
+          <mxGeometry height="12" width="40" x="1180" y="262.64" as="geometry" />
         </mxCell>
         <mxCell id="v71" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#CC0000;fontStyle=1;" value="⚠ 5 个 cached O(TKd) 张量： X̃(Gathered X) + H + A + Y + Ỹ(Scattered Y)" vertex="1">
           <mxGeometry height="39.48" width="653" x="297" y="285" as="geometry" />
@@ -737,7 +737,7 @@
           <mxGeometry height="12" width="106" x="430.5" y="178" as="geometry" />
         </mxCell>
         <mxCell id="5" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=9;fontColor=#1A1A1A;fontStyle=1;" value="[T, d]&amp;nbsp;" vertex="1">
-          <mxGeometry height="12" width="106" x="1147" y="268" as="geometry" />
+          <mxGeometry height="12" width="106" x="1147" y="278" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
