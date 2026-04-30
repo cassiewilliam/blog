@@ -32,7 +32,7 @@ enableInlineShortcodes = true
 [params.profileMode]
   enabled = true
   title = "Yang Min"
-  subtitle = "AI Infra  /  CUDA Hopper & Blackwell  /  LLM 推理系统  /  大规模 LLM 训练优化  /  通算融合"
+  subtitle = "AI Infra  /  LLM 推理系统  /  大规模 LLM 训练优化  /  通算融合  /  CUDA with Hopper & Blackwell GPU"
   imageUrl = "https://cassiewilliam.github.io/blog/profile-avatar.png"
   imageTitle = "avatar"
   imageWidth = 140
