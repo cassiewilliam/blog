@@ -127,22 +127,18 @@ body.drawio-edit-mode .drawio-chrome { opacity: 1 !important; }
    doesn't jump when each viewer asynchronously renders. */
 .cc-fig-mx { min-height: 340px; }
 
-/* mxgraph viewer\u2019s zoom/print/edit/close toolbar — push from center to right */
-.mxgraph > div[style*="position: absolute"],
-.mxgraph .geToolbar,
-.mxgraph [style*="vertical-align"][style*="position:absolute"] {
-  left: auto !important;
-  right: 8px !important;
-  margin-left: auto !important;
-  transform: none !important;
-}
-/* the popup zoom-control floater that overlays in lightbox/preview mode */
-body > div[style*="position: fixed"][style*="box-shadow"]:has(img[src*="zoom"]),
-body > div[style*="position: absolute"][style*="z-index"]:has(img[src*="zoom"]) {
+/* mxgraph viewer toolbar (zoom/print/edit/close) is positioned at
+   left:50%;margin-left:-64px (centered).  Push it to the right edge. */
+.mxgraph div[style*="margin-left:-64px"] {
   left: auto !important;
   right: 12px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
+  margin-left: 0 !important;
+}
+/* lightbox / fullscreen variant (when figure is clicked open) — same trick */
+div[style*="margin-left:-64px"][style*="left:50%"][style*="top:50%"] {
+  left: auto !important;
+  right: 12px !important;
+  margin-left: 0 !important;
 }
 .cc-fig-mx .mxgraph { width: 100%; }
 .cc-fig-mx .mxgraph svg { display:block; max-width:100%; height:auto; }
