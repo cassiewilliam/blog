@@ -135,9 +135,9 @@ cache 实际只保存 `compressed_kv ∈ ℝ^{d_kv_lora}` + `k_pe ∈ ℝ^{d_rop
 Decode 阶段的 batch 维通常 << head_num，所以可以提前把上投影矩阵吸收进 Q/O：
 
 {{< formula type="sm" label="✅ 矩阵吸收等价" >}}
-QK^T = (q W_{q\_b})(c_{kv} W_{kv\_b})^T
-     = q (W_{q\_b} W_{kv\_b}^T) c_{kv}^T
-     = q W^{abs}_{qk} c_{kv}^T
+QK^T = (q W&#95;{q&#95;b})(c&#95;{kv} W&#95;{kv&#95;b})^T
+     = q (W&#95;{q&#95;b} W&#95;{kv&#95;b}^T) c&#95;{kv}^T
+     = q W^{abs}&#95;{qk} c&#95;{kv}^T
 {{< /formula >}}
 
 吸收后：
@@ -510,8 +510,8 @@ WGMMA 的发射协议（Hopper PTX）：
 ### 5.7 Scale Promotion 数学等价
 
 {{< formula type="sm" label="✅ 累加公式（每 K-block 的 scale 后置累加）" >}}
-C[i,j] = Σ_g  A_scale[i,g] · B_scale[g] · Σ_k A_fp8[i,k+g·128] · B_fp8[j,k+g·128]
-         \_________ scale ________/    \______ WGMMA raw result (FP32) ______/
+C[i,j] = Σ_g  A&#95;scale[i,g] · B&#95;scale[g] · Σ_k A&#95;fp8[i,k+g·128] · B&#95;fp8[j,k+g·128]
+         [scale term]                  [WGMMA raw result (FP32)]
 {{< /formula >}}
 
 每 K-block 结束后立刻做一次 `final_accum += scale × accum`，在 FP32 精度下累加 — 数值上等价于先反量化再做全精度乘加，但省去了显式反量化的带宽和寄存器开销。

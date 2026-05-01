@@ -84,9 +84,9 @@ MLA 的核心是低秩 KV cache。传统 MHA 缓存完整 K/V；MLA 缓存低维
 Decode 阶段 batch 小、head 多，可以把 `W_kv_b` 提前吸收到 Q 和输出投影中：
 
 {{< formula type="sm" label="矩阵吸收的直觉" >}}
-QK^T = (q W_{q_b})(c_{kv} W_{kv_b})^T
-     = q (W_{q_b} W_{kv_b}^T) c_{kv}^T
-     = q W^{abs}_{qk} c_{kv}^T
+QK^T = (q W&#95;{q&#95;b})(c&#95;{kv} W&#95;{kv&#95;b})^T
+     = q (W&#95;{q&#95;b} W&#95;{kv&#95;b}^T) c&#95;{kv}^T
+     = q W^{abs}&#95;{qk} c&#95;{kv}^T
 {{< /formula >}}
 
 吸收后，decode attention 不需要把 latent 恢复成完整 K/V。`compressed_kv` 可以直接进入 attention 计算，多个 Q head 共享同一份 KV latent。这从实现视角看就是 MQA，也是 FlashMLA 的物理基础。
