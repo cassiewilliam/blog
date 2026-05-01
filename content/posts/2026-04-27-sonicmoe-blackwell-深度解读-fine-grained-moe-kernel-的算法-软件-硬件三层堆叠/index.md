@@ -528,161 +528,69 @@ kernel 的 98%。
 
 ## Stage 8 · Router 侧优化：Top-K Kernel + Token Rounding
 
-Router 侧有两个层级，上一版混在一起讲得太粗：
+Router 侧只需要抓住一个区分：**top-K kernel 是实现优化，token rounding 是训练时的路由策略优化**。
+二者都输出 SonicMoE compute kernels 需要的 $\pi$ 与 score metadata，所以 MoE 计算部分本身不绑定
+某一种 router。
 
-- **Top-K sorting kernel**：不改变路由语义，只是把 TC top-K 这步算得更快。
-- **Token rounding routing**：改变训练时的路由结果，使每个 expert 的 token count 对齐 GEMM
-  tile size，减少 padding FLOPs。
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F6.svg" label="F6" caption="Router 侧两类优化：top-K kernel 不改 token-choice 语义，只把找 top-K 做快；token rounding 在训练时调整每个 expert 的 token count，让它更贴近 GEMM tile。" >}}
 
-论文强调 SonicMoE 的 MoE computation 与 router choice 解耦。也就是说，后面的 8 个 MoE
-compute kernels 可以接 vanilla TC top-K，也可以接 token rounding，也可以接自定义 router；
-唯一需要的是路由索引 $\pi$、路由 score $S$ 以及对应的元数据。
+| 问题 | Top-K sorting kernel | Token rounding |
+|---|---|---|
+| 改不改路由语义 | 不改，仍是 vanilla token-choice top-K | 训练时会改最后一段 routing |
+| 主要解决 | `torch.topk` / softmax 这类 router overhead | 每个 expert token 数不对齐 tile 的 padding 浪费 |
+| 关键约束 | $E\le4096, K\le16$，大 $T$ | $M_{\mathrm{tile}}$、microbatch size、平均每 expert token 数 |
+| 输出 | top-K expert id 和 score | tile-aligned sparse metadata |
 
 ### 8.0 Efficient top-K sorting kernel：先把 `torch.topk` overhead 拿掉
 
-多数 MoE 系统会直接调用 PyTorch `torch.topk` 来算每个 token 的 expert assignment。论文
-Appendix D 指出，PyTorch top-K kernel 可占 router 计算时间约 40%。在 fine-grained MoE 里，
-compute kernel 已经被大量优化后，router top-K 这类“看起来只是前处理”的步骤也会冒出来。
+论文 Appendix D 指出，PyTorch `topk` 可占 router 计算时间约 40%。SonicMoE 的处理很直接：
+针对 MoE 的大 $T$、中等 $E$、小 $K$，写一个专用 TC top-K kernel。
 
-SonicMoE 自己实现了一个 efficient TC top-K kernel：
+核心做法：
 
-- 输入是 router output，形状为 $(T,E)$。
-- 并行粒度沿 token 维 $T$ 展开，每行独立找 top-$K$。
-- 支持 $E \le 4096$、$K \le 16$，优化目标是大 token 数 $T$。
-- 使用 bitonic sort 对每一行排序，基础规模 $\le 64$ 的 case 用低延迟 sorting network。
-- compare / merge 尽量在单线程或单 warp 内完成，通过 warp shuffle 通信，避免 PyTorch
-  top-K 那类 shared-memory scan。
-- 可选把 top-K values 的 softmax 融合到同一个 kernel，减少后续 score renormalization
-  的 kernel launch 和 HBM 往返。
+- 每个 token 的一行 logits 独立处理，沿 $T$ 维并行。
+- 把 expert id pack 到 FP32 mantissa 低位，让 score 和 index 一起排序。
+- 用 sorting network / bitonic compare-swap，尽量留在 register 与 warp shuffle 内。
+- 可选融合 top-K score 的 softmax，少一次 kernel launch 和 HBM 往返。
 
 {{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F4.svg" label="F4" caption="SonicMoE top-K sorting kernel 的直觉版流程：一行 router logits 进入 register，先把 expert id pack 到 FP32 低 mantissa 位，再用 warp/thread 内 compare-swap 排序，最后输出 top-K routing metadata，可选融合 softmax。" >}}
 
-可以把论文 Figure 15 的设计理解成一个“带身份证的 score 排序”。普通 top-K 只关心分数，但
-MoE router 还必须知道这个分数来自哪个 expert。常见做法是 score 和 index 分开维护：比较
-score 时移动 score，另一路移动 index。SonicMoE 的做法更紧：把 expert column id 塞进 FP32
-mantissa 的低位，让一个 packed FP32 同时携带“可比较的 score”和“可恢复的 expert id”。
-
-最有意思的是 stable sorting 处理。Top-K 不只要 value，还要 argtopK 的 expert id。SonicMoE
-把 column index pack 到 FP32 mantissa 的低 $\log_2(E)$ bits 里，再进行排序。因为每个 expert
-column id 唯一，pack 后不存在完全相等的比较值，bitonic compare/merge 就天然稳定；同时
-argtopK 也随着 value 一起移动，不需要额外的 index array 反复读写。
-
-这件事有三个细节值得拆开：
-
-1. **为什么可以塞进 mantissa？** 对 MoE top-K 来说，排序的主要顺序来自 router score。
-   expert id 只放在低位，用来稳定地打破 tie，并让 index 跟着 value 移动。论文约束
-   $E\le4096$，所以只需要低 12 个 bit 就能表示 expert id。
-2. **为什么用 sorting network / bitonic sort？** MoE 场景是大 $T$、中等 $E$、小 $K$。
-   每个 token 的一行 logits 可以独立处理，适合把 compare-swap 留在 register / warp shuffle
-   里完成。对于 $\le64$ 的 base case，论文使用低延迟 sorting networks；更大规模再做
-   bitonic merge。
-3. **为什么比 PyTorch topk 更适合？** PyTorch top-K 是通用算子，会根据 shape 走 radix-select
-   + gather 等路径；论文指出在大 $T$、适中 $E,K$ 时，PyTorch single-block top-K 会做多次
-   shared-memory scan。SonicMoE 则把通信尽量限制在 register 与 warp 内，避免 router 前处理
-   变成新的瓶颈。
-
-这一步和 token rounding 的关系是：
-
-1. Vanilla TC top-K 要先跑，用来得到 baseline top-K tokens。
-2. Token rounding 的第一步也依赖这个 top-K 结果。
-3. 如果 top-K kernel 仍是 PyTorch `torch.topk`，那么 router 侧开销会吃掉一部分 MoE compute
-   kernel 优化收益。
-
-所以 top-K kernel 是 **不改语义的 router implementation 优化**，token rounding 是
-**改训练路由以贴合 tile 的 algorithmic routing 优化**。两者要分开看。
+一句话：它不是新的 routing algorithm，而是把 vanilla TC top-K 从通用算子改成 MoE 专用算子。
 
 ### 8.1 为什么 top-K token-choice 会浪费 tile
 
-普通 token-choice routing 是每个 token 独立选 top-$K$ expert。这样每个 expert 收到多少
-token 是随机变量。当 $E$ 很大、$\rho=K/E$ 很小，每个 expert 平均 token 数变少，很多 expert
-的 M 维不是 tile size 的倍数。
-
-如果 GEMM M tile size 是 $b=128$：
+普通 token-choice routing 下，每个 expert 收到多少 token 是随机变量。假设 GEMM 的
+$M_{\mathrm{tile}}=128$：
 
 - expert 收 128 tokens，刚好 1 个 tile。
 - expert 收 129 tokens，要跑 2 个 tile，多出来 127 个 padded rows。
 - expert 收 1 token，也要跑 1 个 tile，浪费 127 rows。
 
-Sparse MoE 越稀疏，这个 padding waste 越显著。Token rounding 的目标是：让每个 expert 的
-frequency 变成 tile size 的倍数，从源头减少 padding FLOPs。
+Sparse / fine-grained MoE 越激进，每个 expert 的平均 token 数越小，padding waste 越明显。
+**top-K kernel 只能让“找 top-K”更快，不能让 129 个 token 少跑一个 tile。**
 
-这里要注意：**top-K sorting kernel 只能让“找 top-K”更快，不能解决 tile quantization**。
-即使用最好的 top-K kernel，某个 expert 收到 129 个 token 还是会跑两个 M tile。Token rounding
-解决的是这一层浪费。
+### 8.2 Token rounding 怎么做：只动每个 expert 的尾 tile
 
-### 8.2 Token rounding 怎么做
+Token rounding 的目标是把每个 expert 的 token count round 到 tile size 的倍数。论文 Algorithm 4
+可以压成四步：
 
-论文 Algorithm 4 把 token rounding 描述为四步，核心是“先尊重 TC top-K，再只动每个 expert
-最后一个 tile”：
+1. 先跑 vanilla TC top-K，得到 baseline top-K tokens。
+2. 统计每个 expert 的频次 $f_e$。
+3. 构造 top-K-preferred score matrix $S'$，让原本的 TC top-K tokens 排在前面。
+4. 对每个 expert 只在尾部做 `round_and_sparsify`，向上 pad 或向下 drop 到
+   $M_{\mathrm{tile}}$ 的倍数。
 
-1. **Top-K token-choice sorting**：
-   对每个 token 计算 vanilla TC top-$K$，得到 `StopK` 与 `ItopK`。
-2. **统计 expert frequency**：
-   计算每个 expert 收到多少 TC tokens，记为 $f_e$；同时算出
-   $\lceil f_e\rceil_{M_{\mathrm{tile}}}$ 和
-   $\lfloor f_e\rfloor_{M_{\mathrm{tile}}}$。
-3. **构造 top-K-preferred score matrix $S'$**：
-   先把所有非 top-K entry 降一档，再把 TC top-K entry 的 score 写回去。这样做的效果是：
-   每个 expert 按 $S'$ 排序时，TC top-K tokens 总是排在非 top-K candidates 前面。
-4. **Per-expert token rounding**：
-   对每个 expert 的 tokens 按 $S'_e$ 排序，然后 `round_and_sparsify` 决定是向上 pad 还是
-   向下 drop，使最终 token count 是 $M_{\mathrm{tile}}$ 的倍数。
+默认策略是 NR-f（nearest rounding by expert frequency）。它不是 expert-choice routing：
+TR 从 token-choice top-K 出发，只修每个 expert 的最后一个 tile；$M_{\mathrm{tile}}=1$ 时就退化回
+精确 TC top-K。
 
-默认 `round_and_sparsify` 是 **NR-f**：nearest rounding by expert frequency。也就是如果
-$\lceil f_e\rceil_{M_{\mathrm{tile}}}-f_e$ 更小，就向上 pad；如果
-$f_e-\lfloor f_e\rfloor_{M_{\mathrm{tile}}}$ 更小，就向下 drop。论文主实验通常用
-$M_{\mathrm{tile}}=128$，并对 TR 使用 softmax renormalization。
+论文 ablation 给出的经验边界也很实用：
 
-这个算法有两个关键性质：
-
-- 每个 expert 相对原始 TC top-K 的最大偏差不超过一个 tile。
-- 因为 $S'$ 中 TC tokens 优先，drop 或 pad 只影响每个 expert 的最后一个 tile，而不是重排
-  整个 routing distribution。
-- 当 $M_{\mathrm{tile}}=1$ 时，TR 退化回精确 TC top-K；因此 tile size 也是一个质量/速度
-  trade-off 超参。
-- 论文 Table 6/7/8 的 ablation 显示，TR 对 rounding subroutine、microbatch size $T$、
-  tile size $M_{\mathrm{tile}}$ 相对稳健，但经验上当平均每 expert token 数
-  $\bar{T}_e/M_{\mathrm{tile}}\ge 2$ 时更稳。
-
-和 expert-choice routing 的差别也很重要。EC 是 expert 主动挑 token，可能导致每个 token
-激活 expert 数不固定，也带来 autoregressive inference 的 future-token leakage 问题；TR
-虽然第二步也按 expert 排序，但它从 TC top-K 出发，只在尾 tile 进行有限修正，目标不是负载均衡，
-而是 **tile quantization**。
-
-### 8.3 训练用 TR、推理用 TC：review 关注的核心
-
-Token rounding 最大争议是：训练时用 TR，评估/推理时切回普通 token-choice top-$K$。这会产生
-train-inference routing mismatch。OpenReview 多个 reviewer 都抓住了这一点。
-
-作者的回应和论文实验主要说明：
-
-- TR 不是 expert-choice routing。它仍从 TC top-$K$ 出发，只对每个 expert 的尾 tile 做
-  rounding。
-- 论文在 0.5B、1.4B、1.8B 等规模上比较 TR、TC top-$K$、TC token drop、EC、EC aux router、
-  fine-tuned TC router 等变体。
-- 评估时直接切回 TC top-$K$，validation perplexity 和 11 个 downstream task 平均准确率
-  与 TC 接近，有些配置还略高。
-- 训练 loss curve 与 TC 基本重合，说明 TR 不只是最后评估偶然对齐。
-- 在高 sparsity 场景，TR 的 kernel execution time 相比 vanilla TC 可额外达到约 1.16x，
-  或说训练 throughput 在 scaling expert count 时可高约 16%。
-
-我的判断：TR 应该被看作 **routing 与 hardware tile 的共同设计**，不是纯 kernel trick。
-它牺牲了“训练路由完全等于推理路由”的洁癖，换来 tile 对齐和吞吐。这个 trade-off 在预训练
-阶段可能很划算，但如果用于 RL/对齐或强分布外任务，仍应重新验证 routing consistency。
-
-### 8.4 自定义 router interface：top-K 不是唯一入口
-
-Reviewer Y7dy 问过一个很实际的问题：如果模型不用 top-K，例如 ReMoE 这类 ReLU-based routing，
-SonicMoE 是否还能用？
-
-作者回应的重点是：SonicMoE 把 **MoE routing** 和 **MoE computation** 分开。Top-K / TR /
-ReLU router 负责产生稀疏的 $\pi$、$S$；SonicMoE compute kernels 只消费这些 routing
-metadata，并正常输出 $dS$。Router input 和 router weight 的梯度可以继续交给 PyTorch autograd
-根据 $dS$ 回传。
-
-这也是为什么文章里要把 top-K kernel、token rounding、compute kernel 分开讲：top-K kernel
-只是默认 TC router 的高效实现；token rounding 是一种训练 routing policy；而 SonicMoE 的
-forward/backward MoE compute kernels 本身不绑定某一种 router。
+- 当 $\bar{T}_e/M_{\mathrm{tile}}\ge2$ 时，TR 更稳。
+- 训练时用 TR、评估/推理时切回 TC，会带来 routing mismatch；论文实验显示 perplexity 与
+  downstream accuracy 仍接近 TC，但这是部署前必须复核的风险点。
+- SonicMoE compute kernel 与 router 解耦；ReMoE-style ReLU router 这类自定义 router 只要产生
+  同样的 sparse metadata，也可以接进来。
 
 ## Optimization Audit · Appendix 里的优化点逐项查漏
 
