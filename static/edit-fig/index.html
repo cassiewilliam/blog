@@ -26,13 +26,25 @@ if (!src) {
   document.body.innerHTML = '<div class="pane"><h2>缺少 ?src 参数</h2></div>';
   throw 0;
 }
-const drawioPath = src
-  .replace(/^\/figures\//, '/drawio/')
-  .replace(/\/([^/]+)\.svg$/, '/figures/$1.drawio');
-
 document.getElementById('src').textContent = src;
 const st = document.getElementById('st');
 const setStat = (t,c) => { st.textContent = t; st.className = c || 's'; };
+
+let drawioPath = null;
+if (/^\/drawio\/.+\.drawio$/i.test(src)) {
+  drawioPath = src;
+} else if (/\.svg$/i.test(src)) {
+  drawioPath = src
+    .replace(/^\/figures\//, '/drawio/')
+    .replace(/\/([^/]+)\.svg$/i, '/figures/$1.drawio');
+} else {
+  const assetHref = src.startsWith('/') ? src : '/' + src;
+  document.body.innerHTML =
+    '<div class="pane"><h2>这张图没有 draw.io 源文件</h2>' +
+    '<p><code>' + src.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) + '</code> 是 PNG/JPG 等 raster 图，不能直接进入 draw.io 编辑器。</p>' +
+    '<p><a href="' + assetHref + '">打开原图</a></p></div>';
+  throw 0;
+}
 
 function readPAT() {
   for (const k of ['netlify-cms-user','decap-cms-user','netlify-cms.user','decap-cms.user']) {
