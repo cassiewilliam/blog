@@ -553,10 +553,31 @@ SonicMoE 自己实现了一个 efficient TC top-K kernel：
 - 可选把 top-K values 的 softmax 融合到同一个 kernel，减少后续 score renormalization
   的 kernel launch 和 HBM 往返。
 
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F4.svg" label="F4" caption="SonicMoE top-K sorting kernel 的直觉版流程：一行 router logits 进入 register，先把 expert id pack 到 FP32 低 mantissa 位，再用 warp/thread 内 compare-swap 排序，最后输出 top-K routing metadata，可选融合 softmax。" >}}
+
+可以把论文 Figure 15 的设计理解成一个“带身份证的 score 排序”。普通 top-K 只关心分数，但
+MoE router 还必须知道这个分数来自哪个 expert。常见做法是 score 和 index 分开维护：比较
+score 时移动 score，另一路移动 index。SonicMoE 的做法更紧：把 expert column id 塞进 FP32
+mantissa 的低位，让一个 packed FP32 同时携带“可比较的 score”和“可恢复的 expert id”。
+
 最有意思的是 stable sorting 处理。Top-K 不只要 value，还要 argtopK 的 expert id。SonicMoE
 把 column index pack 到 FP32 mantissa 的低 $\log_2(E)$ bits 里，再进行排序。因为每个 expert
 column id 唯一，pack 后不存在完全相等的比较值，bitonic compare/merge 就天然稳定；同时
 argtopK 也随着 value 一起移动，不需要额外的 index array 反复读写。
+
+这件事有三个细节值得拆开：
+
+1. **为什么可以塞进 mantissa？** 对 MoE top-K 来说，排序的主要顺序来自 router score。
+   expert id 只放在低位，用来稳定地打破 tie，并让 index 跟着 value 移动。论文约束
+   $E\le4096$，所以只需要低 12 个 bit 就能表示 expert id。
+2. **为什么用 sorting network / bitonic sort？** MoE 场景是大 $T$、中等 $E$、小 $K$。
+   每个 token 的一行 logits 可以独立处理，适合把 compare-swap 留在 register / warp shuffle
+   里完成。对于 $\le64$ 的 base case，论文使用低延迟 sorting networks；更大规模再做
+   bitonic merge。
+3. **为什么比 PyTorch topk 更适合？** PyTorch top-K 是通用算子，会根据 shape 走 radix-select
+   + gather 等路径；论文指出在大 $T$、适中 $E,K$ 时，PyTorch single-block top-K 会做多次
+   shared-memory scan。SonicMoE 则把通信尽量限制在 register 与 warp 内，避免 router 前处理
+   变成新的瓶颈。
 
 这一步和 token rounding 的关系是：
 
@@ -783,7 +804,9 @@ SonicMoE 的完整逻辑链是：
 6. **Blackwell 映射**：TMA/cp.async 处理 gather，UMMA/TMEM double buffer 支撑重 epilogue，
    2CTA MMA 提升 B tile 复用，CLC 降低 dynamic persistent scheduling 开销，async store /
    TMA scatter4 重新评估 scatter vs gather-and-sum。
-7. **Token rounding**：把每个 expert 的 token count 对齐 tile size，解决 sparse MoE 的
+7. **Router 侧优化**：用专门的 top-K sorting kernel 降低 `torch.topk` 这类通用算子的 router
+   overhead，并可融合 top-K softmax。
+8. **Token rounding**：把每个 expert 的 token count 对齐 tile size，解决 sparse MoE 的
    padding FLOPs；它是 routing-hardware co-design，也是 review 最关注的语义风险。
 
 如果只看一句话：**SonicMoE 把 MoE training kernel 的优化单位从“单个 GEMM”提升到了“routing
