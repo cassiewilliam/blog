@@ -4,20 +4,22 @@
        is byte-for-byte identical to what the user sees in the
        diagrams.net editor (WYSIWYG).  Edit pill loads the same .drawio.
 
-       Falls back to inline SVG if the .drawio file isn't found.        */ -}}
+       Falls back to inline SVG for SVG files and a normal <img> for
+       raster assets.                                                   */ -}}
 {{- $src    := .Get "src" -}}
 {{- $cap    := .Get "caption" -}}
 {{- $label  := .Get "label" -}}
-{{- $svgPath := printf "static%s" $src -}}
-{{- $assetURL := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $src) -}}
+{{- $staticPath := printf "static%s" $src -}}
+{{- $assetURL := absURL (strings.TrimPrefix "/" $src) -}}
+{{- $isSVG := strings.HasSuffix (lower $src) ".svg" -}}
 
 {{- /* Derive .drawio path: /figures/<slug>/F<N>.svg → /drawio/<slug>/figures/F<N>.drawio
        Special-case the V4 path which uses '/figures/v4/F<N>.svg' (without
        the long slug). */ -}}
 {{- $drawioPath := replaceRE "^/figures/(.+)/([^/]+)\\.svg$" "/drawio/$1/figures/$2.drawio" $src -}}
 {{- $drawioFile := printf "static%s" $drawioPath -}}
-{{- $hasDrawio := fileExists $drawioFile -}}
-{{- $url := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $drawioPath) -}}
+{{- $hasDrawio := and $isSVG (fileExists $drawioFile) -}}
+{{- $url := absURL (strings.TrimPrefix "/" $drawioPath) -}}
 
 {{- $editURL := "" -}}
 {{- with $src -}}{{- $editURL = printf "http://150.158.53.42/edit-fig/?src=%s" . -}}{{- end -}}
@@ -30,11 +32,14 @@
          data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","toolbar-position":"bottom","edit":"_blank","url":"{{ $url | safeJS }}"}'></div>
   </div>
   {{- else }}
-  {{- /* No .drawio — fall back to inline SVG. */ -}}
-  {{- $svg := "" -}}
-  {{- if (fileExists $svgPath) -}}{{- $svg = readFile $svgPath -}}{{- end -}}
-  <div class="cc-fig-svg" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;line-height:0;overflow:hidden">
-    {{ $svg | safeHTML }}
+  <div class="cc-fig-img" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;line-height:0;overflow:hidden;text-align:center">
+    {{- if $isSVG }}
+      {{- $svg := "" -}}
+      {{- if (fileExists $staticPath) -}}{{- $svg = readFile $staticPath -}}{{- end -}}
+      <div class="cc-fig-svg">{{ $svg | safeHTML }}</div>
+    {{- else }}
+      <img src="{{ $assetURL | safeURL }}" alt="{{ $cap | default $label }}" loading="lazy" style="display:inline-block;max-width:100%;height:auto;background:#fff">
+    {{- end }}
   </div>
   {{- end }}
 
