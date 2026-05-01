@@ -58,6 +58,8 @@ Blackwell 迁移细节。
 | Arbitrary router interface | Section 3 / rebuttal | MoE computation kernel 与 routing 逻辑解耦；TC top-K、TR、ReMoE-style ReLU router 都可接同一套 MoE compute kernel |
 | Expert aggregation 策略 | Appendix E / Tri Dao blog | 不盲目 scatter fusion；在 Hopper/Blackwell 上比较 TMA scatter、async store、gather-and-sum 后选择更稳的路径 |
 
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F5.svg" label="F5" caption="论文优化点地图：SonicMoE 的优化横跨 router、load/prologue、GEMM mainloop、epilogue、aggregation 五个位置；不能只把它理解成一个 Grouped GEMM kernel。" >}}
+
 OpenReview 页面还给出一组端到端训练数字：SonicMoE 在 64 张 H100 上训练 7B MoE 可达到
 约 213B tokens/day，接近 ScatterMoE 在 96 张 H100 上的 225B tokens/day。arXiv v2
 又补充 Blackwell：在 OLMoE-sized 7B MoE 上，相对高度优化的 DeepGEMM baseline，forward
@@ -681,6 +683,179 @@ metadata，并正常输出 $dS$。Router input 和 router weight 的梯度可以
 这也是为什么文章里要把 top-K kernel、token rounding、compute kernel 分开讲：top-K kernel
 只是默认 TC router 的高效实现；token rounding 是一种训练 routing policy；而 SonicMoE 的
 forward/backward MoE compute kernels 本身不绑定某一种 router。
+
+## Optimization Audit · Appendix 里的优化点逐项查漏
+
+这一节专门做论文优化点审计。它和前面 Stage 的关系是：Stage 1-8 讲主线，这里把 appendix、
+ablation、baseline comparison 中容易漏掉的工程细节按“优化点 → 解决什么 → 为什么有效”收束。
+
+### A. Base Grouped GEMM 也做了优化，不只是 fusion
+
+SonicMoE 底层有高性能 varlen-M / varlen-K Grouped GEMM。论文 Appendix F.1 先把“没有任何
+MoE fusion 的基础 GEMM”单独拿出来比 DeepGEMM 与 cuBLAS dense BMM 上界，这很重要：否则读者
+会误以为全部收益都来自消掉中间张量。
+
+关键点：
+
+- **varlen-M** 用在 forward up/down-proj 与 backward activation gradient。每个 expert 的
+  token 数是 M 维变长。
+- **varlen-K** 用在 $dW_1$ / $dW_2$ weight gradient。沿 token 维归约，K 维变长。
+- H100 上，SonicMoE contiguous-input up-proj / down-proj 平均比 DeepGEMM 高约 2.7% / 10.0%。
+- B300 上，SonicMoE up-proj / down-proj 平均比 DeepGEMM 高约 8.1% / 12.7%，比 Triton
+  official GEMM example 高约 13.3% / 15.6%。
+- 对小 intermediate size 的 down-proj，SonicMoE 使用 Ping-Pong scheduling，DeepGEMM 使用
+  cooperative scheduling；fine-grained 场景下差距更大。
+
+这说明 SonicMoE 的基础 GEMM 不是“随便找个库接上”。它已经按 MoE 的 ragged shape、
+小 expert、heavy epilogue 做了 scheduler 与 tile shape 选择。
+
+### B. Gather fusion 分 M 维和 K 维，两者都要看
+
+很多文章只说“gather fusion”，但论文 Appendix F.1 明确拆成两类：
+
+| Gather 位置 | 对应 kernel | 为什么难 |
+|---|---|---|
+| M 维 gather | forward up-proj、backward dH | 输入 rows 来自原始 $X$ 或 $dO$ 的路由位置 |
+| K 维 gather | $dW_1$、$dW_2$ weight gradient | 归约维不是连续 packed tokens，需要边 gather 边累加 |
+
+ScatterMoE / MoMoE 通常有 varlen-M gather fusion，但 varlen-K weight gradient 仍需要 separate
+gather kernel。SonicMoE 两边都做。论文报告：
+
+- H100 上，SonicMoE M-dim gather fusion 相比 contiguous path 平均 TFLOPS 差约 6.3%，但仍
+  高于 ScatterMoE、MoMoE、DeepGEMM 的 gather 路径。
+- B300 上，M-dim gather fusion 平均差约 3.4%；K-dim gather fusion 几乎无吞吐损失，平均
+  差约 -0.1%。
+- 随 expert granularity 增大，separate gather kernel 的差距会继续放大，因为 $TKd$ 级别
+  IO 变得更贵。
+
+所以 gather fusion 的价值不是“少一行代码”，而是把路由索引消费放进 GMEM-to-SMEM load，
+避免先 materialize packed tensor，再把它从 HBM 读回来。
+
+### C. dS 的计算路径有三条硬收益
+
+Appendix C.1 把 $dS$ 的选择讲得比主文更清楚。标准路径：
+
+$$
+dS_{t,e}=\langle dO_t,Y_{e,t}\rangle.
+$$
+
+SonicMoE 路径：
+
+$$
+dS_{t,e}=\langle dA'_{e,t},A_{e,t}\rangle,\qquad
+dA'_{e,t}=dO_tW_{2,e}^{\mathsf T}.
+$$
+
+这不是只为了“省一个缓存”，而是有三条收益：
+
+1. **额外 HBM traffic：0 vs. $2TKd$ bytes。** $dA'$ 和 $A$ 已经在 $dH$ kernel 内产生或重算；
+   标准路径要额外读 $Y$。
+2. **额外 cached activation：0 vs. $2TKd$ bytes。** ScatterMoE / MoMoE / MegaBlocks 为了
+   $dS$ 路径需要缓存 $Y$，activation memory 随 granularity 增长。
+3. **reduction 维度：$n$ vs. $d$。** $dA'$ 与 $A$ 的内积沿 expert intermediate size $n$ 归约，
+   而 $\langle dO,Y\rangle$ 沿 hidden size $d$ 归约；fine-grained MoE 中 $n<d$，至少少
+   $\log_2(d/n)$ 轮 parallel reduction。
+
+这也是为什么 $dH$ kernel 看似复杂，却是整篇论文最关键的 kernel：它把 $dA'$、$A$、$dH$、
+$dS$、$A_S$ 放在 accumulator / register 还热的时候一起处理。
+
+### D. transient Y 为什么保留：不用 atomic scatter 是有原因的
+
+论文脚注提到一个容易忽略的点：SonicMoE forward down-proj 仍会 materialize 一个临时 $Y$，
+但这个 $Y$ 可以 layer-by-layer recycle，不会成为每层长期缓存的 activation。只要 MoE 层数
+通常大于 $K$，这个 transient memory 会被长期 activation cache 淹没。
+
+为什么不彻底去掉 $Y$，直接在 down-proj epilogue 中 atomic add 到 $O$？
+
+- 对 BF16，global atomic add 会带来数值精度和 determinism 问题。
+- scatter 到全局 token 位置会破坏和 all2all / all-gather communication 的兼容性。
+- Hopper 上没有合适的 async scatter store，`st.global` 会阻塞下一轮 Tensor Core MMA。
+- 即使 Blackwell 有 `st.async.release.global` / TMA scatter4，重复 index fetch 与 scatter
+  pattern 仍让 gather-and-sum 更稳。
+
+所以 SonicMoE 的选择是：**Y 可以短暂落地，但不作为 backward activation cache；aggregation
+仍由独立 memory-bound gather-and-sum kernel 完成。** 这是一个工程上很保守、也很聪明的折中。
+
+### E. Expert aggregation 是单独优化过的 memory-bound kernel
+
+Appendix F.2/F.3 专门比较 aggregation。SonicMoE 没有把它当成 PyTorch `torch.sum` 或
+`torch.bmm` 的小尾巴：
+
+- H100 上，SonicMoE gather-and-sum bandwidth 平均约为 ScatterMoE 的 2.92x、MoMoE 的 1.05x，
+  只比 optimized contiguous summation upper bound 慢约 0.98x。
+- B300 上，SonicMoE aggregation 平均约为 ScatterMoE 的 6.72x、MoMoE 的 3.32x，同样接近
+  contiguous upper bound；还比 Gluon TMA gather-and-sum 平均快约 1.05x。
+- Figure 21 比较了两种 workflow：`GEMM + gather-and-sum` 与 `GEMM with scatter + sum`。
+  H100 上前者平均高约 20%，这就是为什么 SonicMoE 不选择 scatter fusion。
+
+这补上了一个判断标准：如果一个优化让 GEMM 本身更复杂，却只把压力转移到一个慢 aggregation
+kernel，它不是好优化。SonicMoE 的 aggregation kernel 本身也要接近 HBM 带宽上界。
+
+### F. TMA store vs. st.global：为什么“少一个 kernel”不一定快
+
+Appendix E 的 Figure 16 解释了 Hopper 上一个很实际的坑。Scatter fusion 看起来能少一个
+aggregation kernel，但它需要在 GEMM epilogue 里把结果 scatter 到 HBM。Hopper 上如果不用
+TMA 1D，scatter fusion 只能走同步 `st.global`，会阻塞下一轮 Tensor Core MMA。
+
+SonicMoE 的 down-proj / backward up-proj activation gradient 选择 TMA store，把 store 与
+MMA overlap。论文 Figure 16 说明，TMA store 路径相比需要同步 `st.global` 的 scatter fusion，
+在 Figure 21 的 transparent bars 中平均约快 20.1%。
+
+这条优化点的启发是：**kernel fusion 不是越多越好。** 如果 fusion 让 epilogue 变成同步
+scatter store，可能反而拖慢 mainloop。SonicMoE 把“该 fuse 的 fuse，不该 fuse 的留成独立
+bandwidth kernel”分得很清楚。
+
+### G. Baseline comparison 不是表面速度排名，而是设计差异
+
+Appendix B 的 baseline 对比给了很多定位信息，值得拆出来：
+
+- **ScatterMoE**：有 varlen-M gather fusion，但没有 varlen-K gather fusion；不 overlap
+  MMA 与 memory IO；$dS=\langle dO,Y\rangle$ 需要缓存 $Y$。
+- **MoMoE**：同样缺 varlen-K gather fusion；$dS$ 虽 fused 到 up-proj activation gradient，
+  但仍走 $\langle dO,Y\rangle$；scatter 操作慢于 SonicMoE。
+- **MegaBlocks ParallelDroplessMLP**：先 gather/pad，再 block-sparse GEMM，再 scatter/reduce；
+  gather+scatter 总 IO 约 $8TKd$ bytes，fine-grained MoE 下会很贵。
+- **Megatron GroupedMLP**：使用 CUTLASS Grouped GEMM，但假设 contiguous packed inputs；
+  TEGroupedMLP 用 4 CUDA streams 为 expert 列表启动 GEMM，容易产生 stream bubbles。
+- **DeepGEMM**：强在 contiguous Grouped GEMM，尤其分布式 expert parallelism；但 BF16 Grouped
+  GEMM 不负责 gather/activation/aggregation fusion。SM90 BF16 kernel 还假设每 expert token
+  数是 $M_{\mathrm{tile}}$ 的倍数；Blackwell 上也没有 SonicMoE 的 CLC persistent scheduler
+  和常用 2CTA MMA tile shape。
+
+这解释了为什么论文构造 `DeepGEMM-pt` 与 `DeepGEMM++` 两个 baseline：前者用标准 PyTorch
+周边 kernel，后者尽量给 DeepGEMM 配上高优化 gather/aggregation 和类似 SonicMoE 的 backward
+路径，但仍不改 DeepGEMM 源码，因此不能跨 GEMM 边界做同等 fusion。
+
+### H. Token rounding 的 ablation：不是只有一个 NR-f
+
+论文主文写的是 nearest rounding by expert frequency（NR-f），但 Appendix G 还讨论了三个影响项：
+
+- `round_and_sparsify` 子程序：不同 rounding 策略都只在“向上 pad / 向下 drop”二选一，但
+  NR-f 作为默认已经足够稳。
+- microbatch size $T$：TR 在 microbatch level 生效，$T$ 太小会让每 expert token count 更
+  抖动。
+- tile size $M_{\mathrm{tile}}$：越大越贴合硬件吞吐，但 train-inference mismatch 风险也更大；
+  $M_{\mathrm{tile}}=1$ 时退化为精确 TC top-K。
+
+论文经验结论是：当 $\bar{T}_e/M_{\mathrm{tile}}\ge2$ 时，TR 的质量更稳；即使
+$\bar{T}_e/M_{\mathrm{tile}}=1$，也通常优于 EC 后再 fine-tune TC router 的方案。这个条件很实用：
+它告诉你 TR 不是“永远无脑开”，而是要看 microbatch、expert count、tile size 的比例。
+
+### I. Host dispatch / autotuning 也是优化的一部分
+
+论文 Algorithm 2/3/5 描述的是 8 个 kernel，但真实实现还有一层 host dispatch：根据具体 shape
+选择 GEMM config、load/store 策略、gather 方式、tile scheduler。Tri Dao 博客也提到
+cp.async vs. TMA gather4 是 runtime autotuning 选项。
+
+这类优化不太“论文公式化”，但对工程非常关键：
+
+- 不同 MoE 配置的 $T,d,n,E,K$ 差异很大。
+- H100 与 B300 的最佳 tile shape、store/load 原语不同。
+- varlen-M、varlen-K、contiguous input、gather input 需要不同 kernel config。
+- 2CTA MMA、CLC、TMA gather4 不是每个 shape 都固定最优。
+
+所以 SonicMoE 的真实系统形态不是一个 kernel，而是一组 kernel template + epilogue mixin +
+host-side config selection。
 
 ## Stage 9 · Benchmark 与 Ablation：哪些数字该放在一起看
 
