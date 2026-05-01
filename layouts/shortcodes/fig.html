@@ -1,11 +1,8 @@
 {{- /* {{< fig src="/figures/<slug>/F1.svg" label="F1" caption="…" >}}
 
-       Renders the .drawio companion via the mxgraph viewer so page view
-       is byte-for-byte identical to what the user sees in the
-       diagrams.net editor (WYSIWYG).  Edit pill loads the same .drawio.
-
-       Falls back to inline SVG for SVG files and a normal <img> for
-       raster assets.                                                   */ -}}
+       Always renders the committed visual asset for page display.
+       If a .drawio companion exists, the edit pill still loads it, but
+       the public page does not depend on the async mxgraph viewer.      */ -}}
 {{- $src    := .Get "src" -}}
 {{- $cap    := .Get "caption" -}}
 {{- $label  := .Get "label" -}}
@@ -19,19 +16,11 @@
 {{- $drawioPath := replaceRE "^/figures/(.+)/([^/]+)\\.svg$" "/drawio/$1/figures/$2.drawio" $src -}}
 {{- $drawioFile := printf "static%s" $drawioPath -}}
 {{- $hasDrawio := and $isSVG (fileExists $drawioFile) -}}
-{{- $url := absURL (strings.TrimPrefix "/" $drawioPath) -}}
 
 {{- $editURL := "" -}}
 {{- if $hasDrawio -}}{{- $editURL = printf "http://150.158.53.42/edit-fig/?src=%s" $src -}}{{- end -}}
 
 <figure class="drawio-fig cc-fig" style="margin:18px 0;position:relative">
-  {{- if $hasDrawio }}
-  <div class="cc-fig-mx" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;overflow:hidden;min-height:340px">
-    <div class="mxgraph"
-         style="max-width:100%;"
-         data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers tags lightbox","toolbar-position":"bottom","edit":"_blank","url":"{{ $url | safeJS }}"}'></div>
-  </div>
-  {{- else }}
   <div class="cc-fig-img" style="border:1px solid #d0d7de;border-radius:6px;background:#fff;line-height:0;overflow:hidden;text-align:center">
     {{- if $isSVG }}
       {{- $svg := "" -}}
@@ -41,7 +30,6 @@
       <img src="{{ $assetURL | safeURL }}" alt="{{ $cap | default $label }}" loading="lazy" style="display:inline-block;max-width:100%;height:auto;background:#fff">
     {{- end }}
   </div>
-  {{- end }}
 
   <div class="drawio-chrome" style="text-align:right;font-size:12px;margin-top:6px;opacity:0;transition:opacity .2s ease">
     {{- with $editURL }}
