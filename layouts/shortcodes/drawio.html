@@ -5,7 +5,7 @@
 {{- $src    := .Get "src" -}}
 {{- $cap    := .Get "caption" -}}
 {{- $h      := .Get "height" | default "600" -}}
-{{- $url    := printf "%s%s" .Page.Site.BaseURL $src -}}
+{{- $url    := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $src) -}}
 
 {{- /* GitHub-direct edit URL.
        Convention: $src starts with "/drawio/...", and the corresponding file

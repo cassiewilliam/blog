@@ -9,6 +9,7 @@
 {{- $cap    := .Get "caption" -}}
 {{- $label  := .Get "label" -}}
 {{- $svgPath := printf "static%s" $src -}}
+{{- $assetURL := printf "%s%s" .Page.Site.BaseURL (strings.TrimPrefix "/" $src) -}}
 
 {{- /* Derive .drawio path: /figures/<slug>/F<N>.svg → /drawio/<slug>/figures/F<N>.drawio
        Special-case the V4 path which uses '/figures/v4/F<N>.svg' (without
@@ -45,7 +46,7 @@
        ✏️ Edit (drawio)
     </a>
     {{- end }}
-    <a href="{{ $src | safeURL }}" target="_blank" rel="noopener"
+    <a href="{{ $assetURL | safeURL }}" target="_blank" rel="noopener"
        style="color:#57606a;text-decoration:none;margin-left:6px;font-family:ui-monospace,Menlo,monospace">{{ $src }}</a>
   </div>
 
