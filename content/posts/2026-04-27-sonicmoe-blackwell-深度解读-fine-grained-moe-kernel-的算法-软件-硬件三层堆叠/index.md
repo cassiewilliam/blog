@@ -1,10 +1,10 @@
 ---
 title: "SonicMoE × Blackwell 深度解读：Fine-Grained MoE Kernel 的算法、软件与硬件三层堆叠"
 date: 2026-04-27T19:18:52+08:00
-lastmod: 2026-05-02T15:30:00+08:00
+lastmod: 2026-05-02T17:20:00+08:00
 draft: false
-description: "从 fine-grained MoE 的 activation/IO 痛点出发，重构 SonicMoE 如何通过反向计算图换序、QuACK epilogue 抽象和 Blackwell 硬件原语，把 MoE 训练 kernel 推到新的效率边界。"
-tags: ["sonicmoe", "moe", "blackwell", "hopper", "cuda", "gpu-kernel", "quack", "deep-dive"]
+description: "系统重构 SonicMoE 论文与 Tri Dao Blackwell 博客：从 fine-grained MoE 趋势、activation/IO 瓶颈、反向计算图换序、QuACK epilogue 抽象、TMA/UMMA/TMEM/2CTA/CLC 硬件特性，到 tile-aware token rounding 与 ICLR review 的关键争议。"
+tags: ["sonicmoe", "moe", "blackwell", "hopper", "cuda", "gpu-kernel", "quack", "token-rounding", "deep-dive"]
 categories: ["CUDA Hopper & Blackwell", "LLM 训练系统"]
 math: true
 drawio: true
@@ -13,85 +13,158 @@ TocOpen: true
 UseHugoToc: true
 ---
 
-> **一句话读法：**SonicMoE 不是单纯把 Grouped GEMM 写得更快，而是先在算法层消灭
-> `O(TKd)` 级别的缓存与 HBM 往返，再用 QuACK 把这些 fusion 统一塞进 GEMM
-> epilogue，最后借 Blackwell 的 TMEM、2CTA MMA、TMA gather 和 CLC 调度把剩余 IO
-> 尽量藏到 Tensor Core 流水线背后。
+> **一句话读法：**SonicMoE 不是一个单点 GEMM kernel，而是一套面向
+> fine-grained / sparse MoE 的系统共设计：算法层消灭 `O(TKd)` activation 与 HBM
+> 往返，kernel 层把 gather、SwiGLU、dSwiGLU、$dS$ reduction 融进 GEMM，软件层用
+> QuACK 让这些 fusion 可跨 Hopper / Blackwell 复用，硬件层用 TMA、UMMA、TMEM、
+> 2CTA MMA、CLC、async store 把剩余 IO 尽量藏到 MMA pipeline 后面；论文里还单独提出
+> tile-aware token rounding 来解决 sparse MoE 的 tile padding 浪费。
 
-这篇是对旧稿的重构版：不再把英文博客、评审意见、作者回应原文整段堆在一起，而是按照
-**问题 → 算法 → 软件抽象 → 硬件映射 → 性能证据 → 争议边界**的顺序重新搭一遍。
+这篇是对旧版的再次扩展。上一版为了去掉重复 review 原文和混排英文，把内容收得太狠；
+这一版重新按“论文所有重要贡献 + Tri Dao 博客主线 + review 价值问题”展开。
 
-主要参考材料：
+主要资料：
 
-- Tri Dao 团队博客：[SonicMoE: A Hardware-Efficient and Software-Extensible Blueprint for Fine-Grained MoEs](https://tridao.me/blog/2026/sonicmoe-blackwell/)
-- 论文页：[OpenReview · SonicMoE: Accelerating MoE with IO and Tile-aware Optimizations](https://openreview.net/forum?id=KzTJ1raEgB)
-- 论文版本：[arXiv:2512.14080](https://arxiv.org/abs/2512.14080)
-- 代码仓库：[Dao-AILab/sonic-moe](https://github.com/Dao-AILab/sonic-moe) 与 [Dao-AILab/quack](https://github.com/Dao-AILab/quack)
+- Tri Dao 团队博客：
+  [SonicMoE: A Hardware-Efficient and Software-Extensible Blueprint for Fine-Grained MoEs](https://tridao.me/blog/2026/sonicmoe-blackwell/)
+- 论文页：
+  [OpenReview · SonicMoE: Accelerating MoE with IO and Tile-aware Optimizations](https://openreview.net/forum?id=KzTJ1raEgB)
+- 论文版本：
+  [arXiv:2512.14080 v2](https://arxiv.org/abs/2512.14080)
+- 代码仓库：
+  [Dao-AILab/sonic-moe](https://github.com/Dao-AILab/sonic-moe) 与
+  [Dao-AILab/quack](https://github.com/Dao-AILab/quack)
 
-## Prologue · 先把 MoE 训练这件事放到同一张图里
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/blogpost_teasor.png" label="T0" caption="官方 teaser：SonicMoE 的核心承诺是 activation memory 不随 expert granularity 线性增长，并在细粒度 MoE 上获得相对 ScatterMoE / MoMoE 的明显加速。图源：Dao-AILab/sonic-moe。" >}}
 
-MoE FFN 层的训练路径可以写成六步：
+## Stage 0 · 先把 SonicMoE 的贡献拆成三条线
 
-1. Router 对每个 token 选择 top-$K$ 个 expert，得到路由索引 $\pi$ 与权重 $S$。
-2. 按 expert 重排或 gather 输入，形成逻辑上的 $X_g \in \mathbb{R}^{TK \times d}$。
-3. 对每个 expert 做 up-proj：$H_e = X_{g,e} W_{1,e}$。
-4. 计算 SwiGLU：$A_e = \mathrm{SwiGLU}(H_e)$。
-5. 做 down-proj：$Y_e = A_e W_{2,e}$。
-6. scatter 回 token 维度，并按 router score 加权求和：
+论文摘要里其实有三条并列贡献，Tri Dao 的 Blackwell 博客重点展开前两条，并补上
+Blackwell 迁移细节。
 
-$$
-O_t = \sum_{k=1}^{K} S_{t,k}\,Y_{\pi(t,k),t}.
-$$
+| 贡献线 | 解决的问题 | 关键方法 | 主要收益 |
+|---|---|---|---|
+| Activation / IO-aware MoE 算法 | fine-grained MoE 下 $O(TKd)$ activation 与 HBM 往返爆炸 | 不缓存 $X_g,Y,dY,\tilde{Y}$；把 $dS$ 改写为 $\langle dA', A\rangle$ | 7B fine-grained MoE 上 activation memory 相比 ScatterMoE 降低约 45% |
+| IO-overlap kernel 与 QuACK | gather / epilogue / multi-output store 让 GEMM 很难维持高吞吐 | gather fusion、SwiGLU/dSwiGLU epilogue fusion、TMEM double buffer、persistent tile scheduler | Hopper 上相对 ScatterMoE BF16 MoE kernel 约 1.86x compute throughput |
+| Tile-aware token rounding | sparse MoE 的 per-expert token 数小，Grouped GEMM tile padding 浪费 FLOPs | 把每个 expert 的 token count round 到 GEMM tile size 的倍数 | 高 sparsity 下 kernel execution time 额外约 1.16x，加速同时保持相近 downstream performance |
 
-这里的符号约定如下。
+OpenReview 页面还给出一组端到端训练数字：SonicMoE 在 64 张 H100 上训练 7B MoE 可达到
+约 213B tokens/day，接近 ScatterMoE 在 96 张 H100 上的 225B tokens/day。arXiv v2
+又补充 Blackwell：在 OLMoE-sized 7B MoE 上，相对高度优化的 DeepGEMM baseline，forward
+/ backward 分别有约 25% / 15% 相对加速；OpenReview 摘要中相同口径写作 28.7% / 22.1%。
+Tri Dao 博客则看 6 个真实 MoE 配置的 B300 平均值：相对 DeepGEMM-built baseline，
+forward / backward TFLOPS 高约 54% / 35%。
 
-| 符号 | 含义 | 典型形状 |
-|---|---|---|
-| $T$ | microbatch token 数 | 16K / 32K |
-| $d$ | hidden size / embedding dim | 2048 / 4096 |
-| $E$ | expert 总数 | 64 / 128 / 256 |
-| $K$ | 每个 token 激活的 expert 数 | 2 / 4 / 8 / 10 |
-| $n$ | 单个 expert 的 intermediate size | 1024 / 1536 |
-| $G=d/n$ | granularity，越大表示 expert 越细 | Qwen3/DeepSeek 类模型更高 |
-| $\rho=K/E$ | sparsity ratio，越小越稀疏 | 0.02 到 0.25 |
+这几个数字看似不一致，其实口径不同：
 
-Grouped GEMM 是 MoE kernel 的自然形式。不同 expert 分到的 token 数不同，所以 up-proj、
-down-proj、反向 activation gradient 常是 **varlen-M Grouped GEMM**；而 weight gradient
-沿 token 维归约，常是 **varlen-K Grouped GEMM**。
+- 论文主实验：H100 / Hopper，强调算法与 kernel 对 ScatterMoE、MoMoE 的训练收益。
+- arXiv v2：补 Blackwell OLMoE-sized 7B 的 DeepGEMM baseline。
+- Tri Dao 博客：B300 上 6 个真实开源 MoE 配置的平均 TFLOPS，强调 QuACK + Blackwell。
 
-## Layer 1 · Fine-Grained MoE 把瓶颈从 FLOPs 推向 Activation 与 IO
+## Stage 1 · 趋势：MoE 正在变得更细、更稀疏
 
-Fine-grained MoE 的模型动机很清楚：更多、更小的 expert 让模型在同等激活计算下获得更强的
-组合表达能力；更低的 $\rho=K/E$ 则让总参数继续变大而计算不等比例增长。问题在于，kernel
-看到的不是“模型更聪明”，而是一批更小、更稀疏、更不规则的矩阵乘。
+SonicMoE 的出发点不是“再写一个更快 kernel”，而是模型趋势变了。近两年开源 MoE 的方向是：
+expert 越来越多，每个 expert 越来越小，每个 token 激活的 expert 占比越来越低。
 
-### 1.1 Activation memory 为什么会涨
-
-标准 MoE 实现为了反向传播，通常会缓存这些中间量：
-
-- $X_g$：按 expert gather 后的输入，大小约为 $TKd$。
-- $H$：up-proj pre-activation，大小约为 $TK(2n)$。
-- $A$：SwiGLU 后的 activation，大小约为 $TKn$。
-- $Y$：down-proj 输出，大小约为 $TKd$。
-- scattered $Y$：scatter 后、aggregation 前的中间输出，大小也接近 $TKd$。
-
-以 $T=32768,d=4096,K=8$ 的 BF16 张量为例，一个 $TKd$ 张量就是：
+定义两个量：
 
 $$
-32768 \times 8 \times 4096 \times 2\ \mathrm{bytes}
+G = \frac{d}{n},\qquad \rho = \frac{K}{E}.
+$$
+
+其中 $G$ 是 expert granularity，$d$ 是模型 hidden size，$n$ 是单个 expert intermediate
+size；$\rho$ 是 activation ratio，$K$ 是每个 token 激活的 expert 数，$E$ 是 expert 总数。
+$G$ 越大表示 expert 越细，$\rho$ 越小表示 MoE 越稀疏。
+
+论文表 1 总结了趋势，这里按系统视角重排：
+
+| 模型 | 时间 | Expert activation ratio | Granularity |
+|---|---:|---:|---:|
+| Mixtral 8x22B | 2023-11 | 25.0% = 2/8 | 0.38 |
+| DBRX | 2024-03 | 25.0% = 4/16 | 0.50 |
+| Phi-3.5-MoE | 2024-09 | 12.5% = 2/16 | 0.50 |
+| OLMoE | 2024-09 | 12.5% = 8/64 | 0.50 |
+| DeepSeek-V3 | 2024-12 | 3.13% = 8/256 | 3.50 |
+| Qwen3 MoE | 2025-04 | 6.25% = 8/128 | 3.50 |
+| Kimi K2 | 2025-07 | 2.08% = 8/384 | 3.50 |
+| gpt-oss-120b | 2025-08 | 3.13% = 4/128 | 2.00 |
+| Qwen3-Next-80B-A3B | 2025-09 | 1.95% = 10/512 | 4.00 |
+| DeepSeek-V3.2-Exp | 2025-10 | 3.13% = 8/256 | 3.50 |
+
+从 Mixtral 到 Kimi K2，Tri Dao 博客把这个变化概括为：granularity 提升约 9 倍，activation
+ratio 下降约 12 倍。对模型来说，这是更好的质量 / FLOP；对 kernel 来说，这是更糟的
+shape、更低的算术强度、更大的路由 IO。
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/finegrained-MoE.png" label="T1" caption="Fine-grained MoE 结构：同样激活计算下，更多更小 expert 提供更细的组合空间，但每个 expert 的矩阵问题也更碎。图源：Dao-AILab/sonic-moe。" >}}
+
+## Stage 2 · 标准 MoE 训练为什么会被 Activation 与 IO 卡住
+
+一个 MoE FFN 层的 forward 可以写成：
+
+1. Router 给每个 token 选 top-$K$ expert，得到路由索引 $\pi$ 与 score $S$。
+2. 按 expert gather 输入，形成逻辑上的 $X_g \in \mathbb{R}^{TK\times d}$。
+3. Up-proj：$H_e=X_{g,e}W_{1,e}$。
+4. SwiGLU：$A_e=\mathrm{SwiGLU}(H_e)$。
+5. Down-proj：$Y_e=A_eW_{2,e}$。
+6. Scatter + weighted sum：
+
+$$
+O_t = \sum_{k=1}^{K} S_{t,k}Y_{\pi(t,k),t}.
+$$
+
+Grouped GEMM 是实现 MoE 的自然方式。Forward 和 backward activation gradient 通常是
+**varlen-M Grouped GEMM**：每个 expert 的 token 数不同，M 不同；weight gradient 是
+**varlen-K Grouped GEMM**：沿 token 维归约，K 维变长。
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/input-formats.png" label="T2" caption="MoE Grouped GEMM 的输入可以是按 expert 预先打包的连续张量，也可以是通过 routing index 从原始 X 或 dO 现场 gather。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/grouped-gemm.png" label="T3" caption="Grouped GEMM：一批形状不完全相同的 GEMM 被放进同一个 kernel 调度。MoE 的不规则性主要体现在每个 expert 的 token 数不同。图源：Dao-AILab/sonic-moe。" >}}
+
+Tri Dao 博客中还用一组标准 workflow 图把 PyTorch-style MoE 拆成明确 kernel 边界。它们值得保留，
+因为后面 SonicMoE 的每个优化点都是在消掉这些黄色边界之间的 HBM 往返。
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/standard-illustration.png" label="T3A" caption="标准 MoE forward 的可视化和参考代码：gather、up-proj、SwiGLU、down-proj、scatter、aggregation 形成 6 个独立 kernel 边界。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/standard-workflow-forward.png" label="T3B" caption="标准 MoE forward workflow：蓝色变量在 HBM 上跨 kernel 传递，红色标记表示需要为 backward 缓存的 activation。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/standard-workflow-backward-activation.png" label="T3C" caption="标准 MoE backward activation-gradient workflow：如果沿教科书链式法则走，会读写 Y、dY、H 等多类中间量。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/standard-workflow-backward-weight.png" label="T3D" caption="标准 MoE backward weight-gradient workflow：dW1 / dW2 是 varlen-K Grouped GEMM，但输入常被先 gather 或依赖 cached activation。图源：Dao-AILab/sonic-moe。" >}}
+
+### 2.1 Activation memory 问题
+
+标准实现会在 forward 的 kernel 边界处把中间结果落到 HBM，并缓存给 backward：
+
+- $X_g$：gather 后输入，大小约 $TKd$。
+- $H$：up-proj pre-activation，大小约 $TK(2n)$。
+- $A$：SwiGLU 后 activation，大小约 $TKn$。
+- $Y$：down-proj 输出，大小约 $TKd$。
+- scattered $Y$：scatter 后 aggregation 前的输出，大小也接近 $TKd$。
+
+如果固定总训练 FLOPs，MoE forward + backward 的 FLOPs 近似为：
+
+$$
+(6+12)TnKd.
+$$
+
+在 $T,d$ 固定时，保持 FLOPs 不变意味着 $nK$ 近似不变。提高 granularity 相当于减小 $n$、
+增大 $K$。因此任何 $O(TKd)$ activation 都会随 granularity 线性增长。
+
+以 $T=32768,d=4096,K=8$ 的 BF16 张量为例：
+
+$$
+TKd \times 2\ \mathrm{bytes}
+=32768\times 8\times 4096\times 2
 \approx 2.0\ \mathrm{GiB}.
 $$
 
-也就是说，单层里多缓存几个 $TKd$ 级别的张量，就很容易从“还能放下”变成“batch size
-被 activation 卡死”。MoMoE 这类方案可以通过 recomputation 换内存，但代价是额外 GEMM；
-SonicMoE 的目标更激进：不通过 GEMM recomputation，而是让反向路径本身不需要这些大张量。
+单层多缓存几个 $TKd$ 张量，训练 batch size 就会直接被 activation memory 限住。
 
-{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F1.svg" label="F1" caption="Standard MoE 的关键问题：反向链式法则会牵出 X_g、A、Y、scattered Y 等多个大张量缓存与 HBM 往返。" >}}
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/act-mem-io-vs-granularity.png" label="T4" caption="随着 expert granularity 提升，现有 training kernel 的 activation memory 与 forward IO cost 都会变差。SonicMoE 要打掉的是这个随 G 增长的 O(TKd) 项。图源：Dao-AILab/sonic-moe。" >}}
 
-### 1.2 IO 为什么会比 Tensor Core 峰值更重要
+### 2.2 IO cost 问题
 
-MoE expert 变细以后，单个 expert GEMM 的矩阵规模变小；MoE 变稀疏以后，每个 expert
-平均拿到的 token 也变少。官方博客给出的前向算术强度下界可写成：
+Fine-grained / sparse MoE 的算术强度下界可写成：
 
 $$
 \mathrm{AI}
@@ -99,42 +172,70 @@ $$
 = O\!\left(\min\!\left(\frac{d}{G},T\rho\right)\right).
 $$
 
-这条式子的含义比形式更重要：
+这条式子的工程含义很直接：
 
-- $G$ 越大，expert 越小，$\frac{d}{G}$ 越小，GEMM 更容易 memory-bound。
-- $\rho$ 越小，每个 expert 分到的 token 越少，$T\rho$ 越小，也更容易 memory-bound。
-- 进入 memory-bound 区间后，少一次 HBM load/store 往往比多榨一点 Tensor Core 峰值更值钱。
+- $G$ 越大，expert 越小，单个 GEMM 更容易 memory-bound。
+- $\rho$ 越小，每个 expert 平均收到的 token 更少，tile 更碎，也更容易 memory-bound。
+- Qwen3-Next-80B-A3B-Instruct 在 microbatch 16K 时，Tri Dao 博客给出的 AI 约 210；
+  iso-param dense SwiGLU MLP 约 2570，差了约 12 倍。
 
-所以 SonicMoE 的核心问题不是“怎么把一个标准 GEMM 写满”，而是“怎么不要生成那些会被 HBM
-反复读写的大中间量”。
+所以 SonicMoE 优化的对象不是“普通大矩阵乘不够快”，而是“MoE workflow 里太多大中间量
+被写回 HBM，又被下一步读回来”。
 
-## Layer 2 · 算法层：把反向链式法则换一个收缩顺序
+### 2.3 Tile quantization 问题
 
-SonicMoE 的算法层可以压缩成一句话：**只缓存 $X$、$H$、$\pi$、$S$，不缓存或物化任何
-$O(TKd)$ 的中间变量。**
+这是上一版缺掉的核心：sparse MoE 还会因为 tile padding 浪费 FLOPs。
 
-这句话背后有两个动作：
+Grouped GEMM 底层按 tile 计算。假设 M 维 tile size 是 128，某个 expert 实际收到 129 个
+token，也要跑 2 个 tile；如果收到 1 个 token，也要跑 1 个 tile。越稀疏，per-expert
+token count 越小，padding 浪费越重。
 
-1. Gather 不提前落地。$X_g$、gathered $dO$ 都在 kernel runtime 里按路由索引现场读取。
-2. $Y$ 与 $dY$ 不再成为反向所需的显式张量，而是通过收缩换序从 $dO$、$W_2$、$A$ 直接得到。
+这不是 activation memory 问题，也不是 $dS$ 换序能解决的问题；它属于 routing 和 GEMM tile
+对齐之间的接口问题。论文的 token rounding 正是为它设计的。
 
-{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F2.svg" label="F2" caption="SonicMoE 的 forward/backward 分解：前向 3 个 kernel，反向把 dH、A'、dS 放进同一个 fused down-proj activation-gradient kernel。" >}}
+## Stage 3 · SonicMoE 算法：只缓存 X、H、路由元数据
 
-### 2.1 消灭 $Y$：$dS$ 的那一步是关键
+SonicMoE 的算法目标是：
 
-标准反向里，router score 的梯度通常写成：
+> 不缓存或物化任何 $O(TKd)$ 的中间变量，同时不引入额外 GEMM recomputation。
+
+最终 forward 只有 3 个 kernel：
+
+1. Up-proj kernel：gather $X$ + varlen-M Grouped GEMM + SwiGLU。
+2. Down-proj kernel：varlen-M Grouped GEMM。
+3. Expert aggregation kernel：每个 token gather 自己的 expert 输出并加权求和。
+
+Backward 有 5 个 kernel：
+
+1. Down-proj activation gradient kernel：gather $dO$ + Grouped GEMM + dSwiGLU + $dS$ reduction。
+2. Down-proj weight gradient kernel：gather $dO$ + varlen-K Grouped GEMM。
+3. Up-proj activation gradient kernel：varlen-M Grouped GEMM。
+4. Up-proj weight gradient kernel：gather $X$ + varlen-K Grouped GEMM。
+5. Backward expert aggregation kernel：把 routed expert 的梯度聚回 token。
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F1.svg" label="F1" caption="Standard MoE 的关键问题：反向链式法则会牵出 X_g、A、Y、scattered Y 等多个大张量缓存与 HBM 往返。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F2.svg" label="F2" caption="SonicMoE 的 workflow：forward 3 kernel，backward 5 kernel；dH kernel 同时产生 dH、dS 与给 dW2 使用的加权 activation。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/forward-workflow.png" label="T5" caption="官方 forward workflow 对比：SonicMoE 不缓存 gathered X，不单独 scatter Y，而是把 gather、SwiGLU、aggregation 放到更靠近 GEMM 的位置。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/moe-activation-memory-qwen.png" label="T6" caption="Qwen3-235B MoE 单层 activation memory 拆解：SonicMoE 只缓存 X、H 与很小的 routing metadata，不需要缓存 Y / scattered Y / gathered X。图源：Dao-AILab/sonic-moe。" >}}
+
+### 3.1 $dS$ contraction reorder：从 $\langle dO,Y\rangle$ 到 $\langle dA',A\rangle$
+
+标准 backward 里 router score 的梯度是：
 
 $$
-dS_{t,e}=\langle dO_t,\ Y_{e,t}\rangle.
+dS_{t,e} = \langle dO_t,\ Y_{e,t}\rangle.
 $$
 
-这看起来必须缓存 $Y$。但 $Y_{e,t}=A_{e,t}W_{2,e}$，所以可以换成：
+如果按这条路径做，必须缓存 $Y$。但 $Y_{e,t}=A_{e,t}W_{2,e}$，于是可以改写：
 
 $$
 \begin{aligned}
 dS_{t,e}
-&= \langle dO_t,\ A_{e,t}W_{2,e}\rangle \\
-&= \langle dO_t W_{2,e}^{\mathsf T},\ A_{e,t}\rangle \\
+&= \langle dO_t,\ A_{e,t}W_{2,e}\rangle\\
+&= \langle dO_tW_{2,e}^{\mathsf T},\ A_{e,t}\rangle\\
 &= \langle dA'_{e,t},\ A_{e,t}\rangle.
 \end{aligned}
 $$
@@ -142,237 +243,462 @@ $$
 其中：
 
 $$
-dA'_{e,t}=dO_t W_{2,e}^{\mathsf T}.
+dA'_{e,t}=dO_tW_{2,e}^{\mathsf T}.
 $$
 
-这样，$dS$ 不再需要 $Y$，只需要 down-proj activation-gradient GEMM 的 accumulator
-片段 $dA'$，以及由缓存的 $H$ 现场重算出来的 $A=\mathrm{SwiGLU}(H)$。这不是近似，也不是
-训练语义变化，只是把矩阵乘和内积的收缩顺序换了一下。
+这一步没有改变数学语义，只是换了收缩顺序。更重要的是，它把 $dS$ 的计算放进了 down-proj
+activation gradient GEMM 的 epilogue：GEMM accumulator 里刚好有 $dA'$，缓存的 $H$ 又能
+现场重算 $A=\mathrm{SwiGLU}(H)$。
 
-### 2.2 消灭 $dY$：router score 的权重进 epilogue
+论文 Appendix C 还指出，相比直接用 $dO$ 和 $Y$ 算 $dS$，这条路径有三重收益：
 
-前向里 $S$ 是加权聚合的系数，因此反向传到 $A$ 的梯度应是：
+- 额外 HBM traffic 更少，因为 $dA'$ 与 $A$ 已在 $dH$ kernel 中产生或重算。
+- 不需要为 $dS$ 额外缓存 $Y$。
+- reduction 维度从 $d$ 变成 $n$，而 fine-grained MoE 中 $n$ 通常小于 $d$。
 
-$$
-dA_{e,t}=S_{t,e}\,dA'_{e,t}.
-$$
+### 3.2 $dY$ 与 gathered $dO$：不要写出来
 
-SonicMoE 不把 $dY=S\odot dO$ 先写出来，而是在 fused $dH$ kernel 里完成三件事：
-
-- 用 $dO$ 与 $W_2^{\mathsf T}$ 的 Grouped GEMM 产生 $dA'$。
-- 从缓存的 $H$ 现场重算 $A=\mathrm{SwiGLU}(H)$，并计算 $dH$。
-- 在 epilogue 中顺手做 $dS=\langle dA',A\rangle$，同时产出图中标作 $A'$ 的
-  $A_S=S\odot A$ 供 $dW_2$ 使用。
-
-这里的 $A'$ 只是图里的命名约定：它表示已经乘过 router score 的 activation，不等于上面
-公式里的 $dA'$。为了避免混淆，可以把它记成 $A_S=S\odot A$：
+标准链式法则可能先 materialize：
 
 $$
-dW_{2,e}=\sum_t A_{S,e,t}^{\mathsf T}dO_t.
+dY_{e,t}=S_{t,e}\,dO_t.
 $$
 
-至此，$Y$、$dY$、scattered $Y$、gathered $dO$ 都不需要落到 HBM。SonicMoE 的“省内存”
-和“省 IO”来自同一件事：反向图不再依赖那些大中间变量。
+SonicMoE 不写 $dY$。在 fused $dH$ kernel 里，先算 $dA'=dO W_2^{\mathsf T}$，再把 router
+score 乘进 dSwiGLU 路径：
 
-### 2.3 这一步为什么不是普通框架顺手能做的
+$$
+dH_{e,t} = \left(S_{t,e}\,dA'_{e,t}\right)\odot J_{\mathrm{SwiGLU}}(H_{e,t}).
+$$
 
-从数学上看，$dS$ 换序很简单；工程上难的是把它放进一个高吞吐 kernel。这个 kernel 的
-epilogue 需要同时做：
+同时，$dW_2$ 需要的是加权 activation：
 
-- 读取或重算 $H$，执行 SwiGLU / dSwiGLU。
-- 对 accumulator sub-tile 做逐元素 scale。
-- 做行内归约得到 $dS$。
-- 产生 $dH$ 与 $A_S$ 两路输出。
-- 让这些输出 store 不拖住下一轮 MMA。
+$$
+dW_{2,e} = \sum_t (S_{t,e}A_{e,t})^{\mathsf T}dO_t.
+$$
 
-如果软件抽象只暴露“GEMM 输入/输出”，这些动作就会被拆回多个 kernel，HBM 往返又回来了。
-SonicMoE 需要的是一个能把“GEMM mainloop + 自定义 epilogue + 多路输出”当成同一个编程对象的
-抽象，这正是 QuACK 在中间层承担的角色。
+所以 $dH$ kernel 还会产出图中标作 $A'$ 的加权 activation，可记作 $A_S=S\odot A$，
+供后续 $dW_2$ kernel 使用。这个临时张量可以在 layer 间复用；论文强调它不是跨所有层都
+长期堆积的 activation cache。
 
-## Layer 3 · 软件层：QuACK 把 kernel 写成可迁移的 GEMM + Epilogue
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/backward-activation-workflow.png" label="T7" caption="Backward activation gradient workflow：SonicMoE 在 dH kernel 内完成 dA'、dSwiGLU、dS 和 A_S 输出，避免 Y / dY HBM 往返。图源：Dao-AILab/sonic-moe。" >}}
 
-SonicMoE 的 Blackwell 版本不是把 Hopper 代码复制一份重写，而是把 Grouped GEMM kernel
-拆成两层：
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/backward-weight-workflow.png" label="T8" caption="Backward weight gradient workflow：dW1 / dW2 仍是 varlen-K Grouped GEMM，但 X 与 dO 在 kernel runtime 现场 gather。图源：Dao-AILab/sonic-moe。" >}}
 
-- **架构相关 base**：负责 warp/CTA 布局、producer-consumer pipeline、accumulator 在
-  register 或 TMEM 中的移动、TMA/cp.async 等硬件原语。
-- **算法相关 mixin**：负责 epilogue 里的 SwiGLU、dSwiGLU、scale、reduce、多输出 store 等逻辑。
+### 3.3 算法层省掉了哪些 IO
 
-官方博客里强调，QuACK 的 base GEMM 会在每个输出 sub-tile 上做固定骨架：
+SonicMoE 避免这些大张量落地：
 
-1. 把 accumulator fragment 取到 register tensor。
-2. 调用 `epi_visit_subtile` 执行自定义 epilogue。
-3. 把结果写到 shared memory / global memory。
+| 张量 | 标准路径 | SonicMoE |
+|---|---|---|
+| $X_g$ | forward gather 后缓存，给 up-proj / dW1 用 | 每个 GEMM 需要时现场 gather |
+| $Y$ | down-proj 输出缓存，给 $dS$ 用 | 不缓存，$dS$ 改成 $\langle dA',A\rangle$ |
+| scattered $Y$ | scatter 后再 aggregation | down-proj 输出保持 expert-packed，aggregation kernel 直接 gather-and-sum |
+| $dY$ | backward 先按 $S$ 加权 $dO$ | 在 $dH$ epilogue 内隐式使用 |
+| gathered $dO$ | 先 gather 成连续大张量 | dH / dW2 kernel 内现场 gather |
 
-`epi_visit_subtile` 就是 SonicMoE 的注入点。up-proj forward 可以在这里做 SwiGLU；
-down-proj activation-gradient 可以在这里做 dSwiGLU、$dS$ 行归约、$A_S$ 输出；weight
-gradient 可以在这里处理变长 K 维和 scale。
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/moe-io-costs-qwen-fwd.png" label="T9" caption="Forward IO cost 对比：SonicMoE 的 workflow 直接减少多个 massive tensor 的读写。图源：Dao-AILab/sonic-moe。" >}}
 
-{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F3.svg" label="F3" caption="SonicMoE 的三层堆叠：算法层消灭大中间量，QuACK 让 fusion 可表达，Blackwell 原语负责把剩余 IO 藏进流水线。" >}}
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/moe-io-costs-qwen-bwd.png" label="T10" caption="Backward IO cost 对比：主要收益来自不物化 Y / dY / gathered dO，并把 dS 与 dSwiGLU 合并进 dH kernel。图源：Dao-AILab/sonic-moe。" >}}
 
-这个分层的价值有三点。
+## Stage 4 · Kernel 层第一步：Gather fusion 不是为了少算，是为了少碰 HBM
 
-第一，算法不会被某一代 GPU 的细节绑死。`GemmDGatedMixin` 这类 epilogue 逻辑可以同时接
-Hopper base 和 Blackwell base；真正变化的是 accumulator、warp role、TMA copy atom
-这些底层实现。
+Gather fusion 是 SonicMoE 的基础优化。它的直觉是：不要先把 token 复制成 $TKd$ 的
+contiguous buffer，再让 GEMM 读这个更大的 buffer；GEMM 需要哪些 token 行，就按 routing
+index 从原始 $X$ 或 $dO$ 读取。
 
-第二，硬件新特性可以局部接入。比如 Blackwell 的 TMA gather4 主要改 copy atom 和 SMEM
-layout；SM120 支持主要加一个新的 base GEMM 类；上层 MoE epilogue 不需要跟着重写。
+这在“算法 IO”上未必减少元素数，但在“硬件 IO”上很重要。预 gather 后的 tensor 是
+$T\times K\times d$，相同 token 的多个副本散在更大的地址空间里，随着 $K$ 增大更容易超过
+L2 容量。Gather fusion 的源 tensor 是紧凑的 $T\times d$，复用更可能留在 L2。
 
-第三，研究迭代速度更快。MoE kernel 最危险的地方不是公式，而是“公式刚想清楚，代码却被
-几千行模板和架构分支锁住”。QuACK 把可复用主循环和可插拔 epilogue 分离，相当于给后续
-算法留了入口。
+Tri Dao 博客的 NCU 例子给了很具体的数字：在一个 B300 varlen-M up-proj forward 中，
+两条路径 L2->SMEM traffic 接近，但 gather fusion 的 HBM load 是 2.20 GB，而预 gather
+contiguous 路径是 2.68 GB；L2 hit rate 分别约 74.9% 与 66.3%。
 
-## Layer 4 · 硬件层：Blackwell 解决的是“重 epilogue 如何不拖慢 MMA”
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/gather-fusion-L2.png" label="T11" caption="Gather fusion 的关键不是算法元素数更少，而是从更紧凑的源 tensor 读，L2 working set 小得多。图源：Dao-AILab/sonic-moe。" >}}
 
-Fine-grained MoE 不是纯算力问题。SonicMoE 在算法层已经减少 HBM 往返，但剩下的 gather、
-SwiGLU/dSwiGLU、行归约、多路 store 仍然很重。Blackwell 的意义是：它让这些 epilogue
-工作更容易和 MMA 并行。
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/gather-l2-analysis.png" label="T12" caption="B300 上 gather fusion vs. pre-gather contiguous load：随着 granularity 增大，contiguous path 的 HBM load 更快上升，L2 hit rate 更快下降。图源：Dao-AILab/sonic-moe。" >}}
 
-### 4.1 Hopper 的 Ping-Pong 与 Blackwell 的 TMEM
+### 4.1 TMA 与 cp.async 在这篇文章中的作用
 
-Hopper 上的 WGMMA 由一个 warpgroup 发起和管理，accumulator 分散在 128 个线程的 register
-里。要做重 epilogue，常见做法是两个 consumer warpgroups 轮流 ping-pong：一个做 MMA，
-另一个处理 epilogue，然后交换角色。
+这里容易误读：TMA 不是 SonicMoE 唯一的“法宝”，它是 Blackwell/Hopper IO overlap 的一类
+硬件工具。SonicMoE 在 Blackwell 上对 gather load 会在 autotuning 阶段选择：
 
-Blackwell 的 UMMA / `tcgen05.mma` 把 accumulator 写入专门的 Tensor Memory（TMEM）。
-TMEM 每个 SM 约 256 KB，可被分成两个 accumulator stage：MMA warp 往一个 stage 写，
-epilogue warps 从另一个 stage 通过 `tcgen05.ld` 读出并执行后处理。这样 accumulator
-不再长期占据大堆 register，也更适合把 dSwiGLU、reduce、store 与下一轮 MMA 重叠。
+- `cp.async` gather：更轻量，适合一些 1D gather 场景。
+- TMA gather4：`cp.async.bulk.tensor.2d.shared::cta.global.tile::gather4`，一次 gather 4 行。
 
-### 4.2 2CTA MMA：让 B tile 的复用更像硬件能力
+Tri Dao 博客 appendix 的结论是：`cp.async` 与 TMA gather4 大多数场景差距小于 2%，所以
+SonicMoE 把二者都纳入 kernel runtime 的 autotunable config，而不是教条地“Blackwell 必须
+全用 TMA”。
 
-Blackwell 的 `cta_group::2` 让同一 cluster 内两个 CTA 协作执行一个 MMA。直观理解：
-M 方向 tile 翻倍，但 B tile 可以通过 TMA multicast 在两个 CTA 之间共享。
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/cpasync-tma-gather-comparison.png" label="T13" caption="cp.async vs. TMA gather4：大多数配置下差距很小，因此作为 autotuning 选项，而不是固定选择。图源：Dao-AILab/sonic-moe。" >}}
 
-对 MoE 的 varlen-M Grouped GEMM，这很关键。expert 分到的 token 数不规则，tile 颗粒太小
-会让 B 侧权重读取占比变大；2CTA MMA 通过共享 B tile，提高了单位输出元素上的数据复用。
+### 4.2 2CTA MMA + cp.async gather 的同步问题
 
-### 4.3 CLC：动态 persistent scheduler 不再依赖 GMEM atomic
+2CTA MMA 让同一个 MMA 由同 cluster 的两个 CTA 协作完成。问题是，`cp.async` completion
+默认只在本 CTA 内 signaling；但 leader CTA 发起 2CTA MMA 前，需要两个 CTA 的数据都 ready。
 
-MoE 的每个 expert token 数不一样，静态把 tile 分给 CTA 很容易负载不均。动态 persistent
-scheduler 可以改善这个问题，但 Hopper 上若靠 GMEM 计数器和 atomic，调度开销本身又会冒出来。
+SonicMoE 的解法是 relay warp：
 
-Blackwell 的 Cluster Launch Control（CLC）提供硬件工作队列查询。running cluster 可以用
-`clusterlaunchcontrol.try_cancel` 向硬件取下一个 tile 坐标；没有 work 时返回 decline。
-这让动态 tile 分配的同步开销显著下降，也更适合 MoE 这种 ragged workload。
+- CTA0 作为 leader，负责最终等待 cluster-scope barrier 并发起 2CTA MMA。
+- CTA1 的 producer warps 发出 `cp.async` gather。
+- CTA1 里留一个 relay warp，等待本 CTA 的 `cp.async` completion，再把 ready 信号转发到
+  CTA0 的 barrier。
 
-## Layer 5 · Kernel 层：真正落地靠三类 fusion
+这就是 TMA/Blackwell 特性在文章中的一个具体作用：不是抽象说“IO overlap”，而是在 2CTA
+协作时把 gather completion 这个小同步点处理掉。
 
-把 SonicMoE 拆开看，核心 fusion 不是一个，而是三类。
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/relay-2CTA.png" label="T14" caption="2CTA MMA + cp.async gather 的 relay 机制：非 leader CTA 用 relay warp 把本 CTA 的 gather completion 转成 cluster-scope barrier signal。图源：Dao-AILab/sonic-moe。" >}}
 
-### 5.1 Gather fusion：不要先把 token 复制成连续大张量
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/gather_grouped_gemm_benchmark-B300.png" label="T14B" caption="B300 gather fusion benchmark：SonicMoE 在 M 维 gather 与 K 维 gather 场景都接近 contiguous input，并领先 separate-gather 路径。图源：Dao-AILab/sonic-moe。" >}}
 
-传统做法会先跑 gather kernel，把 $X$ 复制成 $X_g$，再让 Grouped GEMM 从连续地址读取。
-算法 IO 看起来直观，但硬件上会把同一个 token 的多个副本铺到更大的地址空间里，容易撑爆
-L2 工作集。
+## Stage 5 · Kernel 层第二步：Epilogue fusion 把重活放到 accumulator 还热的时候做
 
-SonicMoE 把 gather 融入 GMEM-to-SMEM load：GEMM 需要哪几行，就按 routing index 从原始
-$X$ 或 $dO$ 读取。即使算法层读的元素数相近，硬件层也更容易吃到 L2 locality，避免把
-预 gather 后的巨大 buffer 反复从 HBM 拉回来。
+SonicMoE 的 fusion 不止 gather。更关键的是 epilogue fusion：
 
-Blackwell 上还可以在 autotuning 中选择 `cp.async` 或 TMA gather4。若与 2CTA MMA 结合，
-还要处理 CTA 间 completion signal：非 leader CTA 需要把自己的 gather 完成信号转发给
-leader CTA 的 cluster-scope barrier，保证 MMA 发起前两边数据都 ready。
+- Up-proj forward：GEMM accumulator 产生 $H$ 后，直接在 epilogue 做 SwiGLU。
+- Down-proj activation gradient：GEMM accumulator 产生 $dA'$ 后，直接在 epilogue 做
+  dSwiGLU、$dS$ reduction、多路输出。
+- Weight gradient：在 varlen-K Grouped GEMM 中融合 gather 与必要 scale。
 
-### 5.2 SwiGLU / dSwiGLU fusion：activation 不单独落地
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/dH-kernel-comparison.png" label="T15" caption="dH kernel 的语义等价于标准 PyTorch 多个 kernel 的组合，但 SonicMoE 把它们压到一个 fused Grouped GEMM + epilogue 中。图源：Dao-AILab/sonic-moe。" >}}
 
-SwiGLU 是逐元素操作，但如果它被拆成独立 kernel，就会把 up-proj 输出从 HBM 读出、再把
-activation 写回 HBM。SonicMoE 在 up-proj epilogue 中直接做 SwiGLU；反向则在 $dH$ kernel
-里用缓存的 $H$ 现场做 dSwiGLU。
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/backward-dH-overlap.png" label="T16" caption="dH kernel 的核心：减少 IO 后，剩余 epilogue IO 通过硬件异步机制与 MMA overlap。图源：Dao-AILab/sonic-moe。" >}}
 
-这也是为什么 SonicMoE 选择缓存 $H$ 而不是缓存 $A$：$H$ 足以重算 SwiGLU 与 dSwiGLU，
-而 $A$ 不必在前向后长期占用 activation memory。
+### 5.1 dH kernel 为什么最能体现三层协同
 
-### 5.3 $dH$ kernel：最重的 epilogue，也是最能体现三层协同的地方
+$dH$ kernel 一次做五件事：
 
-$dH$ kernel 同时承担：
+1. Grouped GEMM：$dA'=dO W_2^{\mathsf T}$。
+2. 从缓存的 $H$ 重算 $A=\mathrm{SwiGLU}(H)$。
+3. 计算 $dS=\langle dA', A\rangle$。
+4. 计算 $dH=(S\odot dA')\odot J_{\mathrm{SwiGLU}}(H)$。
+5. 输出 $A_S=S\odot A$ 给 $dW_2$。
 
-- Grouped GEMM：$dA'=dO W_2^{\mathsf T}$。
-- 重算 $A=\mathrm{SwiGLU}(H)$。
-- 计算 $dS=\langle dA',A\rangle$。
-- 计算 $dH=(S\odot dA')\odot J_{\mathrm{SwiGLU}}(H)$。
-- 输出 $A_S=S\odot A$，作为 $dW_2$ 的输入。
+这不是普通框架里几个 pointwise op 的顺手 fusion。它要求：
 
-官方博客的 NCU 分析显示，在 Qwen3-235B-A22B-Thinking-2507 形状上，$dH$ 重 epilogue
-让 HBM traffic 从 6.33 GB 增到 7.86 GB，但 Tensor Core / Tensor Memory utilization
-从 98% 降到 88%，TFLOPS 从 1213 降到 1078。换句话说，IO 确实增加了，但没有按比例变成
-runtime，因为相当一部分被 MMA 重叠吸收。
+- accumulator sub-tile 能被 epilogue 拿到；
+- epilogue 能同时做 elementwise、row reduction、多路 store；
+- 重 epilogue 不把下一轮 MMA 阻塞住；
+- $H$ 的额外 load 与 dSwiGLU 计算能和 MMA pipeline 重叠。
 
-## Layer 6 · 性能结果应该这样读
+Tri Dao 博客的 NCU 数据说明了这个设计的效果：在 Qwen3-235B-A22B-Thinking-2507 形状
+$(T,d,n,E,K)=(32768,4096,1536,128,8)$ 上，$dH$ heavy epilogue 让 HBM traffic 从 6.33 GB
+增到 7.86 GB，增加约 24%；但 Tensor Core / Tensor Memory utilization 只从 98% 降到
+88%，TFLOPS 从 1213 降到 1078，下降约 11%。IO 增长没有等比例变成 runtime。
 
-SonicMoE 的性能数字分 Hopper 论文版和 Blackwell 博客版两条线看。
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/dH-kernel.png" label="T17" caption="SonicMoE dH kernel：多个 epilogue ops 被放进同一个 Grouped GEMM pipeline。图源：Dao-AILab/sonic-moe。" >}}
 
-### 6.1 Hopper：训练吞吐和 activation memory
+## Stage 6 · QuACK：为什么软件抽象是 Blackwell 迁移的前提
 
-OpenReview 摘要给出的核心结论是：
+如果没有 QuACK，SonicMoE 很容易变成一堆架构特化 kernel：Hopper 一份，Blackwell 一份，
+SM120 再来一份。Tri Dao 博客的重点是：他们把 Grouped GEMM kernel 抽成统一结构。
 
-- 对 fine-grained 7B MoE，SonicMoE 相比 ScatterMoE BF16 MoE kernel，activation memory
-  降低约 45%，compute throughput 提升约 1.86 倍。
-- 在 lm-engine + FSDP-2 的 7B MoE 训练里，64 张 H100 上 SonicMoE 达到约 213B tokens/day，
-  与 ScatterMoE 在 96 张 H100 上的约 225B tokens/day 接近。
-- 高 sparsity 场景下，tile-aware token rounding 还能给 kernel execution time 带来额外
-  约 1.16 倍提升，并保持相近 downstream performance。
+一个 QuACK GEMM 可以看成：
 
-这里要注意：token rounding 是另一个重要贡献，但它主要解决 Grouped GEMM padding 浪费，
-不是本文主线的 Blackwell kernel fusion。因此本文只把它放在性能边界里，不展开成单独章节。
+1. **Prologue**：producer warp 把 A/B tile 从 GMEM 搬到 SMEM。
+2. **Mainloop**：MMA warp / consumer warp 反复执行 tiled MMA。
+3. **Epilogue**：对 accumulator sub-tile 做后处理，再写回 HBM。
 
-### 6.2 Blackwell：相对 DeepGEMM baseline 的收益
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/gemm.png" label="T18" caption="Tiled GEMM 的基本图像：每个输出 tile 由多个 K tile 累加而来。图源：Dao-AILab/sonic-moe。" >}}
 
-Tri Dao 博客的 B300 结果显示，SonicMoE 在 6 个真实开源 MoE 配置上都领先。按博客统计，
-相对 DeepGEMM-built baseline，平均 forward / backward TFLOPS 分别高约 54% / 35%；
-相对 Triton official example，forward 平均高约 21%。
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/gemm-in-3-phase.png" label="T19" caption="GEMM kernel 的三阶段循环：prologue load、mainloop MMA、epilogue store / fusion。QuACK 把 SonicMoE 的定制逻辑集中放在 epilogue hook。图源：Dao-AILab/sonic-moe。" >}}
 
-这组结果的解读重点不是“DeepGEMM 慢”。DeepGEMM 是强 Grouped GEMM baseline，但若作为
-drop-in GEMM 库，gather、activation、aggregation 很多仍要靠额外 kernel 或 torch.compile
-衔接。SonicMoE 的优势恰恰来自跨 GEMM 边界的 fusion：gather 融进 load，activation 融进
-epilogue，aggregation 直接消费 ephemeral $Y$。
+QuACK 的关键接口是 `epi_visit_subtile`。每个输出 sub-tile 会经过：
 
-### 6.3 不应过度外推的地方
+- 从 accumulator 取出一个 fragment；
+- 调用 `epi_visit_subtile` 执行算法侧逻辑；
+- store 到 SMEM / GMEM。
 
-这篇工作的边界同样值得写清楚：
+SonicMoE 的 heavy kernel 也只是一个 epilogue mixin。博客中给出的工程量很说明问题：
 
-- 当前重点是单 GPU / EP degree = 1 的 MoE layer kernel。专家并行下 network IO 比 HBM
-  更慢，算法思想可迁移，但系统瓶颈会重新分配。
-- Blackwell 收益依赖 UMMA、TMEM、2CTA MMA、CLC 等新特性；A100/V100/TPU 上不能直接照搬。
-- Token rounding 用在训练路由上，和 inference 常见 token-choice 路由存在语义差异；论文用
-  perplexity / downstream 指标说明影响可控，但生产系统仍需要按模型和任务复验。
-- BF16 数值稳定性来自 FP32 register accumulation / activation / reduction 与最后 BF16
-  store 的组合；这类 fused backward kernel 不能只看公式等价，还要做端到端误差测试。
+- $dH$ kernel 的 `GemmDGatedMixin` 约 88 行。
+- Up-proj forward epilogue mixin 约 21 行。
+- SonicMoE 在 QuACK Grouped GEMM 上层约 200 行代码即可跨 Hopper / Blackwell 工作。
+- Blackwell TMA gather4 支持主要改 copy atoms 和 SMEM layout，约 100 行。
+- SM120 / Blackwell GeForce 支持主要加 base GEMM 类，约 500 行。
+- 之前把三阶段 GEMM 和所有 fusion 写在一起的 Hopper kernel 超过 3000 行。
 
-## Review Notes · 评审意见压缩成工程风险
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/quack-sonicmoe-code.png" label="T20" caption="QuACK 代码结构：架构相关 base GEMM 与算法相关 epilogue mixin 分离，SonicMoE kernel 主要 override epi_visit_subtile。图源：Dao-AILab/sonic-moe。" >}}
 
-旧稿把 ICLR review 和作者回应大段原文贴了两遍，信息密度很低。这里压缩成四个工程问题。
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F3.svg" label="F3" caption="三层堆叠关系：算法层消灭大中间量，QuACK 让 fusion 可表达，Blackwell 原语负责把剩余 IO 藏进流水线。" >}}
 
-| 风险 | 评审担心什么 | 作者回应的要点 | 我的解读 |
-|---|---|---|---|
-| 训练/推理路由不一致 | token rounding 是训练侧优化，推理常用 token-choice | 补充小模型实验，报告 perplexity/downstream 接近 | 可作为训练 kernel 技术成立，但上线前仍要针对生成质量验证 |
-| 可迁移性 | Hopper/Blackwell 特性太重，A100/TPU 怎么办 | QuACK 抽象降低 SM90/SM100/SM120 迁移成本 | 算法思想通用，性能结论主要属于 NVIDIA 新架构 |
-| baseline 公平性 | “SOTA BF16 MoE kernel”说法不够具体 | 明确 ScatterMoE、MoMoE、DeepGEMM、Triton baseline 设置 | 读 benchmark 时要区分“GEMM 库能力”和“完整 MoE workflow fusion” |
-| 数值稳定性 | fused BF16 backward 是否引入额外误差 | router score 保 FP32，on-register ops 用 FP32，最终 store 才 BF16 | fusion 不是免费午餐，数值测试应成为 kernel API 的一部分 |
+## Stage 7 · Blackwell 硬件特性：每个原语在 SonicMoE 里做什么
 
-## Takeaways · 这篇文章真正想留下的东西
+这一节补上你指出的缺口：TMA 和 Blackwell 硬件特性在这篇文章中的作用。
 
-1. **算法层最重要。** 如果反向图还依赖 $Y$、$dY$、$X_g$ 这些大中间量，再强的硬件也只能在
-   HBM 往返上打补丁。
-2. **软件抽象决定算法能不能落地。** QuACK 的价值不是少写几行代码，而是让“GEMM + 任意
-   epilogue + 多输出 + 架构 base”成为一个稳定组合。
-3. **Blackwell 的优势在重叠，不只是峰值。** TMEM、2CTA MMA、TMA gather、CLC 的共同作用，
-   是让 ragged MoE 的 gather 和重 epilogue 不把 MMA pipeline 拖空。
-4. **Benchmark 要按 workflow 读。** SonicMoE 赢的不只是某个 GEMM kernel，而是整个 MoE
-   forward/backward workflow 中少 materialize、少 launch、少 HBM round-trip。
-5. **下一步会落到 expert parallelism。** 单 GPU 上 HBM 已经是瓶颈；跨 GPU 后网络带宽更紧，
-   IO-aware 的计算图重排会更有价值，也更难做。
+### 7.1 Hopper Ping-Pong：先理解旧路径
+
+Hopper 上 WGMMA 由 warpgroup 发起，accumulator 分布在 128 个线程的 register 中。
+如果 epilogue 很重，常见做法是两个 consumer warpgroups 轮流 ping-pong：
+
+- 一个 warpgroup 做 MMA；
+- 另一个 warpgroup 做 epilogue；
+- 两者通过 signal 交换角色。
+
+这能让 heavy epilogue 和 Tensor Core 计算部分重叠，但 register pressure、warpgroup 占用和
+同步复杂度都很高。
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/pingpong-hopper.png" label="T21" caption="Hopper Ping-Pong：两个 consumer warpgroups 在 MMA 与 epilogue 之间轮换，缓解 heavy epilogue 对 Tensor Core 的阻塞。图源：Dao-AILab/sonic-moe。" >}}
+
+### 7.2 UMMA + TMEM：把 accumulator 从 register 里解耦出来
+
+Blackwell 的 UMMA / `tcgen05.mma` 变成单线程发起的异步 MMA，结果直接写入 Tensor Memory
+（TMEM）。TMEM 是每个 SM 约 256 KB 的片上内存，组织成 128 行 × 512 列 32-bit cell。
+
+这给 SonicMoE 的 heavy epilogue 带来两个好处：
+
+- accumulator 不再长期占据 128 线程 register file。
+- TMEM 的 512 列可以分成两个 256-column stage：MMA warp 写一个 stage，epilogue warps
+  从另一个 stage 通过 `tcgen05.ld` 读出处理，实现 double buffering。
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/tmem-blackwell.png" label="T22" caption="Blackwell TMEM double buffer：MMA warp 填一个 accumulator stage，epilogue warps drain 另一个 stage。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/pingpong-blackwell.png" label="T23" caption="Blackwell warp-specialized pipeline：producer、MMA warp、epilogue warps 可同时推进。SonicMoE dH kernel 正是依赖这类 overlap 承受重 epilogue。图源：Dao-AILab/sonic-moe。" >}}
+
+### 7.3 2CTA MMA：共享 B tile，提升 varlen-M GEMM 的复用
+
+Blackwell 的 `cta_group::2` 允许同 cluster 的两个 CTA 协同执行一个 MMA。单 CTA UMMA 的
+M tile 通常到 128，2CTA UMMA 可把 M tile 扩到 256。关键不是“tile 大一点”这么简单，而是
+B tile 可以通过 TMA multicast 在两个 CTA 间共享。
+
+对 varlen-M Grouped GEMM，这很有价值：
+
+- M 维是 per-expert token 数，越稀疏越容易碎。
+- B 侧是 expert weight tile，读取和 SMEM traffic 成本高。
+- 两个 CTA 共享 B tile，相当于单位输出元素上的 B 侧复用更好。
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/2cta-mma.png" label="T24" caption="2CTA MMA：两个 CTA 协作执行一个更大的 M tile，并通过 multicast 共享 B tile，减少 B 侧 SMEM traffic。图源：Dao-AILab/sonic-moe。" >}}
+
+### 7.4 CLC：动态 persistent scheduler 不再靠 GMEM atomic
+
+MoE 的 expert token count 不均匀，静态 tile 分配容易导致某些 SM 早早没活干。动态 persistent
+scheduler 可以改善负载均衡，但 Hopper 上若靠 GMEM counter 和 atomic，会引入同步流量。
+
+Blackwell 的 Cluster Launch Control（CLC）提供 `clusterlaunchcontrol.try_cancel`：
+running cluster 可以向硬件 work queue 请求下一个 tile coordinate；如果任务取尽，硬件返回
+decline signal。这样动态 tile 调度不需要每个 CTA 去 GMEM 上抢 atomic counter。
+
+Tri Dao 博客指出，CLC scheduler 与 2CTA MMA 已经让 SonicMoE 的 varlen-M Grouped GEMM
+比 DeepGEMM SM100 contiguous Grouped GEMM 与 Triton official example 高约 10%。
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/non-persistent-heatmap.png" label="T25" caption="没有 persistent tile scheduler 时，SM 工作分布更容易出现尾部空洞。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/clc-heatmap.png" label="T26" caption="CLC tile scheduler 让硬件 work queue 直接给 cluster 分发 tile，减少 GMEM atomic 调度开销并改善尾部负载均衡。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/grouped_gemm_benchmark-B300.png" label="T27" caption="B300 上 varlen-M Grouped GEMM contiguous-input benchmark：CLC + 2CTA MMA 给 SonicMoE 基础 GEMM 带来约 10% 级别收益。图源：Dao-AILab/sonic-moe。" >}}
+
+### 7.5 Async store / TMA scatter4：为什么 SonicMoE 仍选 gather-and-sum
+
+一个自然问题是：既然 Blackwell 有 `st.async.release.global` 和 TMA scatter4，为什么不把
+down-proj epilogue 直接 scatter 回 token 位置，顺便 sum？
+
+SonicMoE 的选择是：down-proj GEMM 仍把 expert 输出写成 contiguous expert-packed tensor，
+再用 expert aggregation kernel 对每个 token gather-and-sum。
+
+原因分两层：
+
+- Hopper 上，scatter fusion 需要同步 `st.global`，fine-grained MoE 上曾观察到约 20%
+  TFLOPS 下降。
+- Blackwell 上 async scatter 缓解了这个问题，但博客的 ablation 仍显示 `GEMM w. TMA +
+  gather-and-sum` 比 `GEMM w. TMA scatter + sum` 略高：GEMM-only 约高 5%，GEMM+aggregation
+  约高 3%；gather-and-sum 带宽只比 contiguous sum 低约 2%。
+
+Expert aggregation 本身是 memory-bound kernel。博客显示 Triton 实现的 gather-and-sum 在
+B300 上多数配置超过 6.5 TB/s，达到 85%+ peak，并且约为 optimized contiguous summation
+kernel 的 98%。
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/expert-agg.png" label="T28" caption="SonicMoE 选择 GEMM 输出保持 expert-packed，然后由 expert aggregation kernel 做 gather-and-sum，而不是在 GEMM epilogue 里强行 scatter。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/reduction_benchmark-B300.png" label="T29" caption="B300 expert aggregation bandwidth：Triton gather-and-sum 接近 contiguous summation 上界，多数配置超过 6.5 TB/s。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/triton_example_grouped_gemm_expert_agg.png" label="T30" caption="Blackwell 上 TMA + gather-and-sum 与 TMA scatter + sum 的 ablation：差距比 Hopper 小，但 SonicMoE 的选择仍略优。图源：Dao-AILab/sonic-moe。" >}}
+
+## Stage 8 · Token Rounding：论文第三条主线，不能省
+
+Token rounding 是论文里很重要、但 Tri Dao Blackwell 博客没有重点展开的一条线。它解决的不是
+activation memory，而是 sparse MoE 下 Grouped GEMM 的 tile quantization waste。
+
+### 8.1 为什么 top-K token-choice 会浪费 tile
+
+普通 token-choice routing 是每个 token 独立选 top-$K$ expert。这样每个 expert 收到多少
+token 是随机变量。当 $E$ 很大、$\rho=K/E$ 很小，每个 expert 平均 token 数变少，很多 expert
+的 M 维不是 tile size 的倍数。
+
+如果 GEMM M tile size 是 $b=128$：
+
+- expert 收 128 tokens，刚好 1 个 tile。
+- expert 收 129 tokens，要跑 2 个 tile，多出来 127 个 padded rows。
+- expert 收 1 token，也要跑 1 个 tile，浪费 127 rows。
+
+Sparse MoE 越稀疏，这个 padding waste 越显著。Token rounding 的目标是：让每个 expert 的
+frequency 变成 tile size 的倍数，从源头减少 padding FLOPs。
+
+### 8.2 Token rounding 怎么做
+
+论文把 token rounding 描述为两步 sorting：
+
+1. 先计算 vanilla token-choice top-$K$ routing。
+2. 对每个 expert 的 candidate tokens 按 router score 排序，决定是 discard TC 已选 token，
+   还是 pad 一些额外 token，使 expert frequency 对齐到 tile size 的倍数。
+
+中间会处理 routing weight，使 TC tokens 总是优先于 EC-style candidates。这样 discard 或
+padding 只影响每个 expert 的最后一个 tile。默认 rounding subroutine 是 nearest rounding：
+把 expert frequency round 到最近的 $b$ 倍数，论文实验中常用 $b=128$。
+
+这个算法有两个关键性质：
+
+- 每个 expert 相对原始 token-choice 的最大偏差不超过一个 tile。
+- 总 token 数在期望上保持一致，尽量不改变模型的路由分布。
+
+### 8.3 训练用 TR、推理用 TC：review 关注的核心
+
+Token rounding 最大争议是：训练时用 TR，评估/推理时切回普通 token-choice top-$K$。这会产生
+train-inference routing mismatch。OpenReview 多个 reviewer 都抓住了这一点。
+
+作者的回应和论文实验主要说明：
+
+- TR 不是 expert-choice routing。它仍从 TC top-$K$ 出发，只对每个 expert 的尾 tile 做
+  rounding。
+- 论文在 0.5B、1.4B、1.8B 等规模上比较 TR、TC top-$K$、TC token drop、EC、EC aux router、
+  fine-tuned TC router 等变体。
+- 评估时直接切回 TC top-$K$，validation perplexity 和 11 个 downstream task 平均准确率
+  与 TC 接近，有些配置还略高。
+- 训练 loss curve 与 TC 基本重合，说明 TR 不只是最后评估偶然对齐。
+- 在高 sparsity 场景，TR 的 kernel execution time 相比 vanilla TC 可额外达到约 1.16x，
+  或说训练 throughput 在 scaling expert count 时可高约 16%。
+
+我的判断：TR 应该被看作 **routing 与 hardware tile 的共同设计**，不是纯 kernel trick。
+它牺牲了“训练路由完全等于推理路由”的洁癖，换来 tile 对齐和吞吐。这个 trade-off 在预训练
+阶段可能很划算，但如果用于 RL/对齐或强分布外任务，仍应重新验证 routing consistency。
+
+## Stage 9 · Benchmark 与 Ablation：哪些数字该放在一起看
+
+### 9.1 Activation memory
+
+论文 Figure 13 显示，从 1.4B 到 120B 配置，SonicMoE 的 per-layer activation memory 最低；
+7B fine-grained 配置上相比 ScatterMoE 降低约 45%。更重要的是，SonicMoE 的 activation
+memory 不随 expert granularity 线性上升，因为它只缓存 $X$、$H$ 和很小的 routing metadata。
+
+### 9.2 Hopper 训练吞吐
+
+Hopper 主结果：
+
+- Fine-grained 7B MoE 上，相比 ScatterMoE BF16 MoE kernel，SonicMoE 约 1.86x compute
+  throughput。
+- 64 H100 上 7B MoE 训练约 213B tokens/day，接近 ScatterMoE 96 H100 的 225B tokens/day。
+- 论文还写到，仅前两类优化（不含 token rounding）即可让 7B MoE end-to-end training
+  throughput 提升约 50%。
+
+### 9.3 Blackwell / B300 结果
+
+Tri Dao 博客的 Blackwell 部分应重点这样读：
+
+- B300 上 6 个真实开源 MoE 配置，SonicMoE 全部领先。
+- 相对 DeepGEMM-built baseline，平均 forward / backward TFLOPS 高约 54% / 35%。
+- 相对 Triton official example，forward 平均高约 21%。
+- 在 OLMoE-sized 7B B300 runtime breakdown 中，DeepGEMM baseline 的 separate gather 成本
+  被 SonicMoE 吸收到 GEMM bars 中；另有约 10% 来自更快的 Grouped GEMM（CLC + 2CTA MMA）。
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/real_moe_benchmark-B300.png" label="T31" caption="B300 上 6 个真实 MoE 配置的 forward/backward TFLOPS：SonicMoE 相对 DeepGEMM-built baseline 平均领先约 54%/35%。图源：Dao-AILab/sonic-moe。" >}}
+
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/tri-dao/moe_breakdown_fwd_bwd-B300.png" label="T32" caption="OLMoE-sized 7B B300 runtime breakdown：SonicMoE 把 gather X / gather dO 等 separate kernel 成本吸进 GEMM workflow。图源：Dao-AILab/sonic-moe。" >}}
+
+### 9.4 Baseline 应该怎么比
+
+不同 baseline 代表的问题不同：
+
+| Baseline | 它强在哪里 | SonicMoE 赢在哪里 |
+|---|---|---|
+| ScatterMoE | MoE 专用，支持一定 gather fusion | backward 仍需 $Y$ / $dY$ 相关路径，缺少重 epilogue overlap |
+| MoMoE | 通过 recomputation 等方式降低部分 memory | 仍有 gather / scatter / recompute trade-off，Blackwell overlap 不同 |
+| DeepGEMM | 很强的 Grouped GEMM 库 | 作为 drop-in GEMM 时跨 GEMM 边界的 gather/activation/aggregation fusion 不完整 |
+| Triton official example | forward 有 gather fusion，写法轻量 | 不是训练完整 workflow；backward、K=10 等支持有限；GEMM scheduler/aggregation 不如 SonicMoE |
+| MegaBlocks / Megatron | 生产系统常见 MoE 方案 | block-sparse 或多 kernel/多 stream 路径对 fine-grained MoE 的 IO 更敏感 |
+
+因此，SonicMoE 的 benchmark 不是在证明“某个 GEMM 比 DeepGEMM 全面更强”，而是在证明：
+**完整 MoE workflow 的跨边界 fusion + hardware-aware scheduling** 比 drop-in GEMM 拼装更适合
+fine-grained sparse MoE。
+
+## Stage 10 · Review 不是噪音：它给了阅读这篇论文的风险清单
+
+旧稿把 ICLR review 原文贴得太长，读者反而抓不住重点。这里把 review 提炼成有价值的工程
+问题。注意：OpenReview 早期 review/response 中有时把方法称作 SNaX，最终公开版本为
+SonicMoE。
+
+### 10.1 四个 reviewer 的核心判断
+
+| Reviewer | 初始分 | 认可点 | 主要质疑 |
+|---|---:|---|---|
+| Y7dy | 8 | 文章清楚，算法易懂，实验充分，三个改进点有系统价值 | 希望看到 H100 之外硬件，训练之外的 inference 效率，若干术语/引用细节 |
+| fRZc | 6 | 抓住 fine-grained MoE 从 compute-bound 转向 memory-bound 的关键趋势 | token rounding 训练/推理不一致；Hopper/Blackwell 依赖重；ping-pong novelty 与 baseline 细节 |
+| LFjW | 6 | 目标重要，写作清楚，token rounding 直觉有价值 | TR 与已有 load balancing / routing 的区别；硬件敏感性；routing mismatch 可能影响 bias / collapse |
+| tULt | 4 | 认可 bottleneck 分析和 throughput 改善 | TR 收敛、训练/推理一致性、术语定义、BF16 mixed precision 数值稳定性 |
+
+### 10.2 作者 rebuttal 真正补强了什么
+
+Meta-review 总结里最有价值的点是：作者用 rebuttal 补强了三个问题。
+
+第一，token rounding 的 train-inference mismatch。作者增加了 TR vs TC、EC、aux router、
+fine-tuned TC router 等比较，说明 TR 在 efficiency-quality Pareto 上比 EC 类方案更好，
+且切回 TC 评估时指标接近。
+
+第二，硬件泛化边界。作者把收益拆成硬件无关与硬件相关两部分：算法层的 activation/IO 减少
+是通用的；TMA、WGMMA/UMMA、TMEM、CLC、2CTA MMA 带来的峰值收益则明显偏向 Hopper/Blackwell。
+
+第三，数值稳定性。针对 BF16 fused backward，作者说明 $dZ$、$Y_1$、$dS$ 等 on-register
+操作使用 FP32，router score $S$ 保持 FP32，最终 store 到 BF16；还补充了相对 FP32 reference
+的误差测试。
+
+### 10.3 对工程读者最有价值的五个问题
+
+1. **TR 是 routing algorithm，不是纯 kernel 参数。** 如果模型发布后用户在不同硬件、不同
+   tile size 上继续训练，routing 分布是否仍匹配，需要重新验证。
+2. **算法收益和硬件收益要分开看。** $dS$ 换序、减少 $O(TKd)$ cache 是架构无关思想；
+   TMEM、CLC、2CTA MMA 是 Blackwell/Hopper 加速路径。
+3. **Benchmark 要比完整 workflow。** 只比 Grouped GEMM TFLOPS 会低估 gather、activation、
+   aggregation、routing sort 的成本。
+4. **Fusion 之后必须做数值测试。** 数学等价不自动保证 BF16 fused kernel 误差可控，尤其是
+   多路输出和 reduction 混在 epilogue 时。
+5. **Expert parallelism 是下一关。** SonicMoE 当前重点是 EP degree = 1；跨 GPU 后 all-to-all
+   network IO 更慢，IO-aware 思想更重要，但瓶颈会重新分配。
+
+## Stage 11 · 总结：这篇文章真正该带走什么
+
+SonicMoE 的完整逻辑链是：
+
+1. **模型趋势**：MoE 越来越 fine-grained、越稀疏，$G$ 上升、$\rho$ 下降。
+2. **瓶颈变化**：activation memory 随 $O(TKd)$ 张量增长，arithmetic intensity 下降，
+   sparse MoE 还多了 tile padding waste。
+3. **算法换序**：只缓存 $X,H,\pi,S$；用
+   $dS=\langle dO W_2^{\mathsf T},A\rangle$ 代替
+   $dS=\langle dO,Y\rangle$；不物化 $Y,dY,X_g$。
+4. **Kernel fusion**：gather fusion、SwiGLU/dSwiGLU epilogue fusion、$dH$ heavy epilogue
+   多输出，把 HBM 往返压到最少。
+5. **软件抽象**：QuACK 把 architecture base 和 epilogue mixin 分离，让 Hopper/Blackwell/SM120
+   迁移不是重写所有 kernel。
+6. **Blackwell 映射**：TMA/cp.async 处理 gather，UMMA/TMEM double buffer 支撑重 epilogue，
+   2CTA MMA 提升 B tile 复用，CLC 降低 dynamic persistent scheduling 开销，async store /
+   TMA scatter4 重新评估 scatter vs gather-and-sum。
+7. **Token rounding**：把每个 expert 的 token count 对齐 tile size，解决 sparse MoE 的
+   padding FLOPs；它是 routing-hardware co-design，也是 review 最关注的语义风险。
+
+如果只看一句话：**SonicMoE 把 MoE training kernel 的优化单位从“单个 GEMM”提升到了“routing
+决定的完整 MoE workflow”。** 这也是它和传统 drop-in Grouped GEMM 库最大的差别。
 
 ## References
 
 - Wentao Guo, Mayank Mishra, Xinle Cheng, Ion Stoica, Tri Dao.
   [SonicMoE: Accelerating MoE with IO and Tile-aware Optimizations](https://openreview.net/forum?id=KzTJ1raEgB),
   ICLR 2026 Poster.
+- Wentao Guo, Mayank Mishra, Xinle Cheng, Ion Stoica, Tri Dao.
+  [arXiv:2512.14080 v2](https://arxiv.org/abs/2512.14080),
+  submitted 2025-12-16, revised 2026-03-26.
 - Tri Dao.
   [SonicMoE: A Hardware-Efficient and Software-Extensible Blueprint for Fine-Grained MoEs](https://tridao.me/blog/2026/sonicmoe-blackwell/),
   2026.
 - Dao-AILab.
-  [sonic-moe](https://github.com/Dao-AILab/sonic-moe) and [quack](https://github.com/Dao-AILab/quack).
+  [sonic-moe](https://github.com/Dao-AILab/sonic-moe) and
+  [quack](https://github.com/Dao-AILab/quack).
 - NVIDIA CUTLASS documentation.
   [Blackwell Cluster Launch Control](https://docs.nvidia.com/cutlass/4.4.1/media/docs/cpp/blackwell_cluster_launch_control.html).
