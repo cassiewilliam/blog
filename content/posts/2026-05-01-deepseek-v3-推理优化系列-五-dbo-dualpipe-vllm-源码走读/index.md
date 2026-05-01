@@ -1,8 +1,8 @@
 ---
-title: "DeepSeek V3 推理优化系列（五）：DBO、DualPipe 与 vLLM 源码走读"
+title: "DeepSeek V3 推理优化系列（五）：DBO、DualPipe 与调度编排"
 date: 2026-05-01T11:20:00+08:00
 draft: false
-summary: "系列收束篇：解释 DBO 如何把 DeepEP、DeepGEMM、FlashMLA 编排起来，DualPipe 训练调度给 DBO 的启发，以及 vLLM 中 MoE forward 从 scheduler 到 DeepEP/DeepGEMM 的源码阅读路径。"
+summary: "调度专题：解释 DBO 如何把 DeepEP、DeepGEMM、FlashMLA 编排起来，DualPipe 训练调度给 DBO 的启发，以及 Decode 5-stage、CUDA Graph、shared expert overlap 等系统调度问题。"
 categories: ["LLM 推理系统", "通算融合"]
 tags: ["deepseek-v3", "dbo", "dualpipe", "vllm", "deepep", "deepgemm", "moe", "cuda-graph", "llm-serving", "deep-dive"]
 math: true
@@ -12,10 +12,10 @@ TocOpen: true
 UseHugoToc: true
 ---
 
-> 前四篇分别拆了系统、DeepEP、DeepGEMM、FlashMLA。本文收束到调度层：这些 kernel 如何在 stream 上重叠，DualPipe 给了什么思想来源，vLLM 源码该从哪里读。
+> 前四篇分别拆了系统、DeepEP、DeepGEMM、FlashMLA。本文进入调度层：这些 kernel 如何在 stream 上重叠，DualPipe 给了什么思想来源，Decode 5-stage 和 CUDA Graph 又为什么会成为在线系统的关键。
 
 {{< tip >}}
-**系列位置**：[上一篇：FlashMLA decode attention](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-四-flashmla-decode-attention/)。这是本系列第 5 篇；读完本文后，可以回到 [2026-04-30 原长稿](https://cassiewilliam.github.io/blog/posts/2026-04-30-deepseek-v3-推理系统拆解/)，把它当源码细节和图集索引查阅。
+**系列位置**：[上一篇：FlashMLA decode attention](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-四-flashmla-decode-attention/)；本文讲 DBO / DualPipe 调度；[下一篇：MTP、DSA 与长上下文稀疏 Attention](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-六-mtp-dsa-稀疏注意力/)。
 {{< /tip >}}
 
 单个 kernel 再快，如果 stream 编排错了，端到端吞吐还是会掉。DeepSeek V3/R1 的推理系统难点不只是 DeepEP、DeepGEMM、FlashMLA 各自优化，而是把通信、expert compute、shared expert、attention、CUDA Graph 与 load balancing 编织成一个稳定的 online service。
@@ -177,9 +177,9 @@ VLLM_CUDAGRAPH_CAPTURE_SIZES="1,2,4,8,16,32,64,128,256"
 
 这也是本系列最重要的判断：开源 kernel 能解释“为什么可能快”，但官方在线系统的稳定吞吐还来自调度、负载均衡、网络治理和容错。
 
-## 10 · 系列总结
+## 10 · 阶段总结
 
-把五篇串起来看，DeepSeek V3 推理系统是一条自顶向下的链：
+把前五篇串起来看，DeepSeek V3 推理系统已经形成一条自顶向下的主链：
 
 1. 系统层：PD 分离 + Cross-node EP 把 prefill 和 decode 拆开优化。
 2. 算法层：MLA 压 KV，MoE 压激活参数，MTP/DSA 继续压 decode 成本。
@@ -188,7 +188,7 @@ VLLM_CUDAGRAPH_CAPTURE_SIZES="1,2,4,8,16,32,64,128,256"
 5. Attention 层：FlashMLA 把 absorbed MLA decode 做成专用 kernel。
 6. 调度层：DBO、CUDA Graph、5-stage pipeline、load balancer 把单点优化变成在线服务吞吐。
 
-原 545% margin 不是某个单点优化的结果，而是算法、通信、算子、调度和生产治理同时成立后的系统结果。
+但这还不是完整覆盖。后面三篇继续补参考资料里被压缩掉的算法层 MTP/DSA、系统层性能建模/负载均衡，以及 vLLM 源码全链路。
 
 ## References
 

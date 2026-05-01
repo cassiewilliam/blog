@@ -15,7 +15,7 @@ UseHugoToc: true
 > 上一篇讲 DeepGEMM 如何跑 MoE expert。本文转向 attention：DeepSeek V3 的 decode MLA 为什么需要 FlashMLA，以及 FlashMLA 如何把 absorbed MLA 做成 persistent attention kernel。
 
 {{< tip >}}
-**系列位置**：[上一篇：DeepGEMM expert compute](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-三-deepgemm-fp8-grouped-gemm/)；本文 FlashMLA 讲 decode attention；[下一篇：DBO/DualPipe/vLLM 源码走读](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-五-dbo-dualpipe-vllm-源码走读/)。
+**系列位置**：[上一篇：DeepGEMM expert compute](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-三-deepgemm-fp8-grouped-gemm/)；本文 FlashMLA 讲 decode attention；[下一篇：DBO/DualPipe 调度编排](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-五-dbo-dualpipe-vllm-源码走读/)。
 {{< /tip >}}
 
 FlashMLA 是 DeepSeek 开源的 MLA decode attention kernel。它不是通用 FlashAttention 的简单替代品，而是专门针对 DeepSeek MLA 的 absorbed decode 形态：KV cache 是低维 latent，多 Q head 共享同一份 KV。

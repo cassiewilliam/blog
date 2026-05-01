@@ -2,7 +2,7 @@
 title: "DeepSeek V3 推理优化系列（一）：从 545% 毛利反推一套推理系统"
 date: 2026-05-01T10:00:00+08:00
 draft: false
-summary: "系列总览篇：从 DeepSeek Day 6 官方在线服务数字出发，解释 V3/R1 推理系统为什么必须同时使用 PD 分离、Cross-node EP、MLA、MoE、DeepEP、DeepGEMM、FlashMLA、DBO 与三层负载均衡。"
+summary: "系列总览篇：从 DeepSeek Day 6 官方在线服务数字出发，解释 V3/R1 推理系统为什么必须同时使用 PD 分离、Cross-node EP、MLA、MoE、DeepEP、DeepGEMM、FlashMLA、DBO、MTP/DSA 与三层负载均衡。"
 categories: ["LLM 推理系统", "CUDA Hopper & Blackwell"]
 tags: ["deepseek-v3", "llm-inference", "moe", "mla", "deepep", "deepgemm", "flashmla", "vllm", "fp8", "hopper", "deep-dive"]
 math: true
@@ -12,7 +12,7 @@ TocOpen: true
 UseHugoToc: true
 ---
 
-> 本系列把 2026-04-30 的长稿拆成可连续阅读的 5 篇：系统总览、DeepEP、DeepGEMM、FlashMLA、DBO/DualPipe/vLLM 源码走读。原长稿仍保留为资料全集，新系列承担主阅读路径。
+> 本系列把 2026-04-30 的长稿拆成可连续阅读的 8 篇：系统总览、DeepEP、DeepGEMM、FlashMLA、DBO/DualPipe、MTP/DSA、性能建模与 vLLM 源码全链路。原长稿仍保留为资料全集，新系列承担主阅读路径。
 >
 > 主参考：[DeepSeek-V3/R1 Inference System Overview](https://github.com/deepseek-ai/open-infra-index/blob/main/202502OpenSourceWeek/day_6_one_more_thing_deepseekV3R1_inference_system_overview.md)。源码参考：[vLLM](https://github.com/vllm-project/vllm)、[DeepEP](https://github.com/deepseek-ai/DeepEP)、[DeepGEMM](https://github.com/deepseek-ai/DeepGEMM)、[FlashMLA](https://github.com/deepseek-ai/FlashMLA)。
 
@@ -23,7 +23,10 @@ UseHugoToc: true
 2. [DeepEP：HT / LL 双通信路径](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-二-deepep-通信内核/)
 3. [DeepGEMM：FP8 grouped GEMM 与两套 layout](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-三-deepgemm-fp8-grouped-gemm/)
 4. [FlashMLA：decode MLA 的 attention kernel](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-四-flashmla-decode-attention/)
-5. [DBO / DualPipe / vLLM：调度与源码路径](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-五-dbo-dualpipe-vllm-源码走读/)
+5. [DBO / DualPipe：调度编排](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-五-dbo-dualpipe-vllm-源码走读/)
+6. [MTP / DSA：长上下文稀疏 Attention](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-六-mtp-dsa-稀疏注意力/)
+7. [性能建模：负载均衡与 vLLM Gap](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-七-性能建模-负载均衡-vllm-gap/)
+8. [源码全链路：从 Engine 到 DeepEP / DeepGEMM](https://cassiewilliam.github.io/blog/posts/2026-05-01-deepseek-v3-推理优化系列-八-vllm-源码全链路走读/)
 {{< /tip >}}
 
 DeepSeek 在 Open-Source Week Day 6 公开过一组罕见的在线推理系统数字：在 UTC+8 的 2025-02-27 12:00 到 2025-02-28 12:00 这个统计窗口内，平均 226.75 个 H800 节点服务 V3/R1，24 小时处理 608B input tokens 与 168B output tokens；按 R1 定价推算，单日基础设施成本约 **USD 87,072**，理论收入约 **USD 562,027**，cost-profit margin 为 **545%**。
