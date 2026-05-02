@@ -27,25 +27,25 @@
   <text x="40" y="48" class="title">Top-K kernel: make the sortable key carry the expert id</text>
   <text x="40" y="76" class="subtitle">This explains the paper Figure 15: ties disappear because equal scores still have distinct packed low mantissa bits.</text>
   <rect x="65" y="125" width="175" height="84" rx="9" fill="#eef7ff" stroke="#4a6fd3" class="box"/>
-  <text x="152.5" y="156" text-anchor="middle" class="head">Router row</text>
-  <text x="152.5" y="183" text-anchor="middle" class="small">S[t, :]</text>
+  <text x="152.5" y="153" text-anchor="middle" class="head">Router row</text>
+  <text x="152.5" y="181" text-anchor="middle" class="formula">S<tspan class="sub">t</tspan>∈[0,1]<tspan baseline-shift="super" font-size="12">E</tspan></text>
   <rect x="310" y="112" width="220" height="110" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
-  <text x="420.0" y="143" text-anchor="middle" class="head">Pack key</text>
-  <text x="420.0" y="170" text-anchor="middle" class="small">score high bits</text>
-  <text x="420.0" y="191" text-anchor="middle" class="small">expert id low bits</text>
+  <text x="420.0" y="140" text-anchor="middle" class="head">Pack key</text>
+  <text x="420.0" y="168" text-anchor="middle" class="formula">key<tspan class="sub">t,e</tspan>=pack(S<tspan class="sub">t,e</tspan>,e)</text>
+  <text x="420.0" y="195" text-anchor="middle" class="small">column id in low bits</text>
   <rect x="600" y="112" width="220" height="110" rx="9" fill="#fff8e7" stroke="#e0b300" class="box"/>
-  <text x="710.0" y="143" text-anchor="middle" class="head">Register sort</text>
-  <text x="710.0" y="170" text-anchor="middle" class="small">thread / warp</text>
-  <text x="710.0" y="191" text-anchor="middle" class="small">compare-swap</text>
-  <rect x="890" y="125" width="175" height="84" rx="9" fill="#eef7ff" stroke="#4a6fd3" class="box"/>
-  <text x="977.5" y="156" text-anchor="middle" class="head">Top-K</text>
-  <text x="977.5" y="183" text-anchor="middle" class="small">π[t,k], score</text>
+  <text x="710.0" y="140" text-anchor="middle" class="head">Register sort</text>
+  <text x="710.0" y="168" text-anchor="middle" class="formula">sort({key<tspan class="sub">t,e</tspan>})</text>
+  <text x="710.0" y="195" text-anchor="middle" class="small">thread / warp compare-swap</text>
+  <rect x="870" y="125" width="220" height="84" rx="9" fill="#eef7ff" stroke="#4a6fd3" class="box"/>
+  <text x="980.0" y="153" text-anchor="middle" class="head">Top-K</text>
+  <text x="980.0" y="181" text-anchor="middle" class="formula">(I<tspan class="sub">topK</tspan>,S<tspan class="sub">topK</tspan>)</text>
   <path d="M240 167 L310 167" class="edge"/>
   <path d="M530 167 L600 167" class="edge"/>
-  <path d="M820 167 L890 167" class="edge"/>
+  <path d="M820 167 L870 167" class="edge"/>
   <rect x="235" y="285" width="650" height="74" rx="9" fill="#fff8e7" stroke="#e0b300" class="box"/>
-  <text x="560" y="317" text-anchor="middle" class="formula"><tspan>key</tspan><tspan class="sub">e</tspan><tspan> = score</tspan><tspan class="sub">e</tspan><tspan> || e</tspan></text>
-  <text x="560" y="344" text-anchor="middle" class="small">Sort by the packed FP32 value; the score and column id move together.</text>
+  <text x="560" y="317" text-anchor="middle" class="formula"><tspan>key</tspan><tspan class="sub">t,e</tspan><tspan> = S</tspan><tspan class="sub">t,e</tspan><tspan> || e</tspan><tspan class="sub">low</tspan></text>
+  <text x="560" y="344" text-anchor="middle" class="small">Sort by the packed FP32 value; score order and expert id move together.</text>
   <path d="M420 222 L450 285" class="dash"/>
   <path d="M710 222 L685 285" class="dash"/>
 </svg>

@@ -13,13 +13,13 @@
         <mxCell id="logits" value="&lt;b&gt;Logits&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 22px;&quot;&gt;&lt;i&gt;S&lt;sub&gt;t&lt;/sub&gt;&lt;/i&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef7ff;strokeColor=#4a6fd3;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="55" y="135" width="165" height="82" as="geometry" />
         </mxCell>
-        <mxCell id="topk" value="&lt;b&gt;Top-K kernel&lt;/b&gt;&lt;br&gt;&lt;br&gt;same token-choice" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4faf4;strokeColor=#5fa55f;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+        <mxCell id="topk" value="&lt;b&gt;Top-K kernel&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 20px;&quot;&gt;&lt;i&gt;TopK&lt;sub&gt;K&lt;/sub&gt;(S&lt;sub&gt;t&lt;/sub&gt;)&lt;/i&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4faf4;strokeColor=#5fa55f;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="275" y="125" width="210" height="102" as="geometry" />
         </mxCell>
-        <mxCell id="metadata" value="&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 22px;&quot;&gt;&lt;i&gt;(π&lt;sub&gt;t&lt;/sub&gt;, α&lt;sub&gt;t&lt;/sub&gt;) = TopK&lt;sub&gt;K&lt;/sub&gt;(S&lt;sub&gt;t&lt;/sub&gt;)&lt;/i&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;routing metadata is unchanged" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e7;strokeColor=#e0b300;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+        <mxCell id="metadata" value="&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 22px;&quot;&gt;&lt;i&gt;(S&lt;sub&gt;topK&lt;/sub&gt;, I&lt;sub&gt;topK&lt;/sub&gt;) = TopK(S,K)&lt;/i&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;same TC routing semantics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e7;strokeColor=#e0b300;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="540" y="125" width="275" height="102" as="geometry" />
         </mxCell>
-        <mxCell id="moe" value="&lt;b&gt;MoE kernels&lt;/b&gt;&lt;br&gt;&lt;br&gt;consume π and α" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef7ff;strokeColor=#4a6fd3;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+        <mxCell id="moe" value="&lt;b&gt;MoE kernels&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 20px;&quot;&gt;&lt;i&gt;consume π, S&lt;/i&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef7ff;strokeColor=#4a6fd3;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="870" y="135" width="220" height="82" as="geometry" />
         </mxCell>
         <mxCell id="e1" edge="1" parent="1" source="logits" target="topk" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4d5562;strokeWidth=2.2;endArrow=block;">
@@ -34,19 +34,19 @@
         <mxCell id="lane_b" value="B · policy / shape lever" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;fontStyle=1;fontColor=#667085;" vertex="1" parent="1">
           <mxGeometry x="55" y="288" width="260" height="28" as="geometry" />
         </mxCell>
-        <mxCell id="round" value="&lt;b&gt;Token rounding&lt;/b&gt;&lt;br&gt;&lt;br&gt;training-time route counts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5f0;strokeColor=#b85450;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+        <mxCell id="round" value="&lt;b&gt;Token rounding&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 20px;&quot;&gt;&lt;i&gt;f&lt;sub&gt;e&lt;/sub&gt; = Σ&lt;sub&gt;t&lt;/sub&gt; 1{e∈I&lt;sub&gt;topK,t&lt;/sub&gt;}&lt;/i&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5f0;strokeColor=#b85450;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="275" y="330" width="210" height="94" as="geometry" />
         </mxCell>
-        <mxCell id="round_formula" value="&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 22px;&quot;&gt;&lt;i&gt;n'&lt;sub&gt;e&lt;/sub&gt; = ⌈n&lt;sub&gt;e&lt;/sub&gt; / M&lt;sub&gt;tile&lt;/sub&gt;⌉ M&lt;sub&gt;tile&lt;/sub&gt;&lt;/i&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;counts are aligned to GEMM tiles" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e7;strokeColor=#e0b300;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+        <mxCell id="round_formula" value="&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 17px;&quot;&gt;&lt;i&gt;f⁺&lt;sub&gt;e&lt;/sub&gt;=ceil(f&lt;sub&gt;e&lt;/sub&gt;/M&lt;sub&gt;tile&lt;/sub&gt;)M&lt;sub&gt;tile&lt;/sub&gt;&lt;br&gt;f⁻&lt;sub&gt;e&lt;/sub&gt;=floor(f&lt;sub&gt;e&lt;/sub&gt;/M&lt;sub&gt;tile&lt;/sub&gt;)M&lt;sub&gt;tile&lt;/sub&gt;&lt;br&gt;π′&lt;sub&gt;e&lt;/sub&gt;,s′&lt;sub&gt;e&lt;/sub&gt; ← round_and_sparsify(·)&lt;/i&gt;&lt;/font&gt;&lt;br&gt;expert counts align to GEMM tiles" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e7;strokeColor=#e0b300;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="540" y="318" width="275" height="118" as="geometry" />
         </mxCell>
         <mxCell id="tail" value="&lt;b&gt;Tail tile&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4faf4;strokeColor=#5fa55f;strokeWidth=2;align=center;verticalAlign=top;fontFamily=Helvetica;fontSize=13;spacingTop=13;" vertex="1" parent="1">
           <mxGeometry x="870" y="318" width="220" height="118" as="geometry" />
         </mxCell>
-        <mxCell id="before_label" value="before" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=#344054;" vertex="1" parent="1">
+        <mxCell id="before_label" value="&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 18px;&quot;&gt;&lt;i&gt;R&lt;sub&gt;e&lt;/sub&gt;&lt;/i&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=#344054;" vertex="1" parent="1">
           <mxGeometry x="900" y="365" width="55" height="24" as="geometry" />
         </mxCell>
-        <mxCell id="after_label" value="after" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=#344054;" vertex="1" parent="1">
+        <mxCell id="after_label" value="&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 18px;&quot;&gt;&lt;i&gt;R′&lt;sub&gt;e&lt;/sub&gt;=0&lt;/i&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=#344054;" vertex="1" parent="1">
           <mxGeometry x="900" y="397" width="55" height="24" as="geometry" />
         </mxCell>
         <mxCell id="b1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#4a6fd3;strokeColor=none;opacity=80;" vertex="1" parent="1"><mxGeometry x="950" y="367" width="26" height="18" as="geometry" /></mxCell>
@@ -69,7 +69,7 @@
         <mxCell id="e7" edge="1" parent="1" source="tail" target="moe" style="edgeStyle=orthogonalEdgeStyle;rounded=1;dashed=1;html=1;strokeColor=#667085;strokeWidth=2;endArrow=block;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="rule" value="Top-K kernel preserves routing semantics; token rounding changes counts so compute tiles waste less work." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f7f8fa;strokeColor=#d0d7de;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=#344054;" vertex="1" parent="1">
+        <mxCell id="rule" value="Top-K keeps TC ordering; TR makes each expert count an Mtile multiple." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f7f8fa;strokeColor=#d0d7de;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=#344054;" vertex="1" parent="1">
           <mxGeometry x="95" y="485" width="990" height="44" as="geometry" />
         </mxCell>
       </root>
