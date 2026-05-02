@@ -17,7 +17,7 @@
 <rect x="20" y="20" width="940" height="80" rx="6" fill="#fafbfc" stroke="#d0d7de"/>
 <text x="40" y="42" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#1f2328">字符串 vs token id 序列</text>
 <text x="40" y="62" font-family="monospace" font-size="11.5" fill="#1f2328">"&lt;｜DSML｜tool_calls&gt;"  →  ["&lt;", "｜", "DS", "ML", "｜", "tool", "_calls", "&gt;"]</text>
-<text x="40" y="80" font-family="sans-serif" font-size="11" fill="#55606b">&nbsp;&nbsp;&nbsp;&nbsp;不是注册过的 special token；分词器把它拆成普通 BPE 段</text>
+<text x="40" y="80" font-family="sans-serif" font-size="11" fill="#55606b">    不是注册过的 special token；分词器把它拆成普通 BPE 段</text>
 
 <rect x="20" y="120" width="460" height="180" rx="6" fill="#fff5f0" stroke="#b85450"/>
 <text x="40" y="142" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4a1515">skip_special_tokens=True（vLLM 默认）</text>
