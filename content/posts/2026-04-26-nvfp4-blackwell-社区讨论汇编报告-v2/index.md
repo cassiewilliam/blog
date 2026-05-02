@@ -1,7 +1,7 @@
 ---
 title: "NVIDIA Blackwell FP4 / NVFP4 深度解读：硬件支持、格式机制、量化流程与推理落地"
 date: 2026-04-26T00:12:21+08:00
-lastmod: 2026-05-02T23:15:00+08:00
+lastmod: 2026-05-02T23:20:00+08:00
 draft: false
 description: "重新设计 NVFP4 × Blackwell 文章：从 Blackwell FP4 支持矩阵、NVFP4 与 MXFP4 格式差异、E2M1/E4M3/FP32 两级缩放、Tensor Core block-scaled GEMM 计算流，到 ModelOpt、Transformer Engine、TensorRT-LLM、vLLM 与 PTQ/QAD/预训练论文脉络。"
 tags: ["nvfp4", "fp4", "blackwell", "quantization", "tensor-core", "tensorrt-llm", "modelopt", "deep-dive"]
@@ -403,11 +403,13 @@ student 重新学习 BF16 teacher 的行为。
 
 QAD 则把问题改写成 teacher-student 对齐：
 
+<div>
 $$
 \mathcal{L}_{QAD} =
 \lambda \cdot KL(p_{teacher}(\cdot|x) \Vert p_{student}(\cdot|x))
 + (1-\lambda) \cdot \mathcal{L}_{task}.
 $$
+</div>
 
 这里 student 是带 NVFP4 quantization noise 的模型；teacher 通常是 BF16/FP8 路径。QAD 的价值不是
 改变 E2M1 码点，而是让模型适应 4-bit scale、rounding 和 mixed precision 带来的系统性扰动。
