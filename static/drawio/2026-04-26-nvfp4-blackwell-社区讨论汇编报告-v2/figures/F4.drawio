@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="codex" version="22.0.0">
+  <diagram name="figure" id="figure">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="920" pageHeight="460" math="0" shadow="0">
+      <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="Blackwell FP4 支持矩阵" style="text;html=1;strokeColor=none;fillColor=none;fontSize=22;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="30" y="20" width="820" height="42" as="geometry"/>
+    </mxCell>
+    <mxCell id="n1" value="B200/GB200/B300/GB300
+原生 NVFP4/MXFP4
+tcgen05 block-scaled GEMM
+推荐生产路径" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontFamily=Helvetica;fontSize=13;strokeWidth=1.2;spacing=10;fillColor=#dff8ec;strokeColor=#20a66b;" vertex="1" parent="1">
+      <mxGeometry x="45" y="100" width="390" height="95" as="geometry"/>
+    </mxCell>
+    <mxCell id="n2" value="RTX PRO 6000 / RTX 50
+5th Gen Tensor Core FP4
+逐模型验证 MoE/KV/kernel" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontFamily=Helvetica;fontSize=13;strokeWidth=1.2;spacing=10;fillColor=#e5f0ff;strokeColor=#3b82f6;" vertex="1" parent="1">
+      <mxGeometry x="485" y="100" width="390" height="95" as="geometry"/>
+    </mxCell>
+    <mxCell id="n3" value="DGX Spark / GB10
+FP4 Tensor Core + 128GB UM
+容量友好但带宽较低" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontFamily=Helvetica;fontSize=13;strokeWidth=1.2;spacing=10;fillColor=#fff3d8;strokeColor=#f59e0b;" vertex="1" parent="1">
+      <mxGeometry x="45" y="250" width="390" height="95" as="geometry"/>
+    </mxCell>
+    <mxCell id="n4" value="Hopper / Ada / Ampere
+无 Blackwell FP4
+使用 FP8 或 W4A16 fallback" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontFamily=Helvetica;fontSize=13;strokeWidth=1.2;spacing=10;fillColor=#ffe4e6;strokeColor=#fb7185;" vertex="1" parent="1">
+      <mxGeometry x="485" y="250" width="390" height="95" as="geometry"/>
+    </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="440" viewBox="0 0 920 440" role="img">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.2; rx: 8; }
+      .title { font: 700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .label { font: 700 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .small { font: 500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .tiny { font: 500 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .mono { font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #334155; }
+      .green { fill: #dff8ec; stroke: #20a66b; }
+      .blue { fill: #e5f0ff; stroke: #3b82f6; }
+      .amber { fill: #fff3d8; stroke: #f59e0b; }
+      .rose { fill: #ffe4e6; stroke: #fb7185; }
+      .purple { fill: #f0e7ff; stroke: #8b5cf6; }
+      .ink { stroke: #334155; stroke-width: 1.4; fill: none; marker-end: url(#arrow); }
+      .soft { stroke: #94a3b8; stroke-width: 1.2; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <rect class="bg" x="0" y="0" width="920" height="440"/>
+  <text class="title" x="36" y="44">Blackwell FP4 支持矩阵：硬件支持、kernel 成熟度、推荐路线分开看</text>
+  <rect class="panel" x="36" y="76" width="848" height="50" rx="8"/>
+  <text class="label" x="52" y="108">平台</text>
+  <text class="label" x="238" y="108">硬件 FP4</text>
+  <text class="label" x="430" y="108">典型路径</text>
+  <text class="label" x="650" y="108">部署建议</text>
+  <rect class="green" x="36" y="142" width="848" height="62" rx="8"/>
+  <text class="small" x="52" y="170">B200/GB200/B300/GB300</text>
+  <text class="small" x="238" y="170">原生 NVFP4 / MXFP4</text>
+  <text class="small" x="430" y="170">tcgen05 block-scaled GEMM</text>
+  <text class="small" x="650" y="170">优先使用 TensorRT-LLM / CUTLASS / TE</text>
+  <rect class="blue" x="36" y="214" width="848" height="62" rx="8"/>
+  <text class="small" x="52" y="242">RTX PRO 6000 / RTX 50</text>
+  <text class="small" x="238" y="242">5th Gen Tensor Core FP4</text>
+  <text class="small" x="430" y="242">TensorRT FP4, vLLM/FlashInfer, ModelOpt</text>
+  <text class="small" x="650" y="242">逐模型验证；MoE / KV / grouped GEMM 看框架版本</text>
+  <rect class="amber" x="36" y="286" width="848" height="62" rx="8"/>
+  <text class="small" x="52" y="314">DGX Spark / GB10</text>
+  <text class="small" x="238" y="314">FP4 Tensor Core + 128GB UM</text>
+  <text class="small" x="430" y="314">ModelOpt + TensorRT-LLM / vLLM</text>
+  <text class="small" x="650" y="314">容量友好，带宽较低；把它当开发机而非 B200 替代</text>
+  <rect class="rose" x="36" y="358" width="848" height="62" rx="8"/>
+  <text class="small" x="52" y="386">Hopper / Ada / Ampere</text>
+  <text class="small" x="238" y="386">无 Blackwell FP4</text>
+  <text class="small" x="430" y="386">FP8, INT4/AWQ/GPTQ, W4A16 fallback</text>
+  <text class="small" x="650" y="386">不要期待 native NVFP4 compute</text>
+  <text class="small" x="52" y="405">原则：官方硬件规格说明“能表示/能执行 FP4”；生产系统还要确认模型 checkpoint、scale metadata、kernel backend 和 attention/KV cache 路径。</text>
+</svg>

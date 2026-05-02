@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="430" viewBox="0 0 920 430" role="img">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.2; rx: 8; }
+      .title { font: 700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .label { font: 700 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .small { font: 500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .tiny { font: 500 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .mono { font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #334155; }
+      .green { fill: #dff8ec; stroke: #20a66b; }
+      .blue { fill: #e5f0ff; stroke: #3b82f6; }
+      .amber { fill: #fff3d8; stroke: #f59e0b; }
+      .rose { fill: #ffe4e6; stroke: #fb7185; }
+      .purple { fill: #f0e7ff; stroke: #8b5cf6; }
+      .ink { stroke: #334155; stroke-width: 1.4; fill: none; marker-end: url(#arrow); }
+      .soft { stroke: #94a3b8; stroke-width: 1.2; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <rect class="bg" x="0" y="0" width="920" height="430"/>
+  <text class="title" x="36" y="44">Blackwell FP4 软件/硬件栈：从格式到服务路径</text>
+  <rect class="panel green" x="48" y="82" width="240" height="102" rx="8"/>
+  <text class="label" x="66" y="112">硬件层</text>
+  <text class="small" x="66" y="138">B200/GB200/B300: SM100/110</text>
+  <text class="small" x="66" y="158">RTX PRO/GeForce: SM120</text>
+  <text class="small" x="66" y="178">DGX Spark: GB10/SM121</text>
+  <rect class="panel blue" x="330" y="82" width="250" height="102" rx="8"/>
+  <text class="label" x="348" y="112">Tensor Core 指令</text>
+  <text class="small" x="348" y="138">Data center: tcgen05 + block scale</text>
+  <text class="small" x="348" y="158">RTX/Spark: FP4 Tensor Core</text>
+  <text class="small" x="348" y="178">scale 与 tile 约束不同</text>
+  <rect class="panel amber" x="622" y="82" width="250" height="102" rx="8"/>
+  <text class="label" x="640" y="112">Kernel / Runtime</text>
+  <text class="small" x="640" y="138">CUTLASS block-scaled GEMM</text>
+  <text class="small" x="640" y="158">TensorRT-LLM / TensorRT</text>
+  <text class="small" x="640" y="178">vLLM / FlashInfer / SGLang</text>
+  <rect class="panel purple" x="250" y="235" width="270" height="118" rx="8"/>
+  <text class="label" x="268" y="265">量化工具</text>
+  <text class="small" x="268" y="291">Transformer Engine recipe</text>
+  <text class="small" x="268" y="311">TensorRT Model Optimizer</text>
+  <text class="small" x="268" y="331">LLM Compressor / torchao</text>
+  <rect class="panel rose" x="572" y="235" width="300" height="118" rx="8"/>
+  <text class="label" x="590" y="265">模型与部署</text>
+  <text class="small" x="590" y="291">LLM: W4A4 / mixed precision</text>
+  <text class="small" x="590" y="311">Diffusion: FC FP4 + attn FP8</text>
+  <text class="small" x="590" y="331">KV cache 多数仍用 FP8/BF16</text>
+  <path class="ink" d="M 288 133 L 330 133"/>
+  <path class="ink" d="M 580 133 L 622 133"/>
+  <path class="soft" d="M 455 184 L 390 235"/>
+  <path class="soft" d="M 747 184 L 722 235"/>
+  <path class="ink" d="M 520 294 L 572 294"/>
+  <text class="small" x="63" y="394">读法：硬件宣传里的 FP4 只是入口；真正可用性取决于格式、scale 布局、kernel tile、框架支持和模型量化 recipe 是否匹配。</text>
+</svg>
