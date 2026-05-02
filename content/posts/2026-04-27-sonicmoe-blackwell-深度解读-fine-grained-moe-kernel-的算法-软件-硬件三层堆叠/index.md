@@ -1,7 +1,7 @@
 ---
-title: "SonicMoE × Blackwell 深度解读：Fine-Grained MoE Kernel 的算法、软件与硬件三层堆叠"
+title: "SonicMoE 深度解读：细粒度 MoE 的 IO 消除、Tile 对齐与 Blackwell Kernel 共设计"
 date: 2026-04-27T19:18:52+08:00
-lastmod: 2026-05-02T17:20:00+08:00
+lastmod: 2026-05-02T17:35:00+08:00
 draft: false
 description: "系统重构 SonicMoE 论文与 Tri Dao Blackwell 博客：从 fine-grained MoE 趋势、activation/IO 瓶颈、反向计算图换序、QuACK epilogue 抽象、TMA/UMMA/TMEM/2CTA/CLC 硬件特性，到 tile-aware token rounding 与 ICLR review 的关键争议。"
 tags: ["sonicmoe", "moe", "blackwell", "hopper", "cuda", "gpu-kernel", "quack", "token-rounding", "deep-dive"]
