@@ -1,0 +1,23 @@
+<svg viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#24292f"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="1000" height="400" fill="#ffffff"/>
+<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">Route math: pooled tokens become per-expert M dimensions</text>
+<text x="500" y="64" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#57606a">pooled tokens become per-expert M dimensions</text>
+<text x="250" y="96" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#b85450">Baseline</text>
+<text x="750" y="96" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#5fa55f">Optimized</text>
+<rect x="80" y="124" width="340" height="170" rx="8" fill="#fff5f0" stroke="#b85450" stroke-width="2"/>
+<rect x="580" y="124" width="340" height="170" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
+<text x="250" y="160" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">contiguous pool</text>
+<text x="250" y="184" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">dynamic M_e</text>
+<text x="250" y="208" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">prefill</text>
+<text x="750" y="160" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">masked 3D</text>
+<text x="750" y="184" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">fixed max_m</text>
+<text x="750" y="208" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">decode graph</text>
+<line x1="425" y1="210" x2="575" y2="210" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="190" y="330" width="620" height="44" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="1.6"/>
+<text x="500" y="358" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#4a6fd3">Two layouts serve different system phases.</text>
+</svg>

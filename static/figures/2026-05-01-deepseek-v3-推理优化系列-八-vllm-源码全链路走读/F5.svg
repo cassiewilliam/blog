@@ -1,0 +1,37 @@
+<svg viewBox="0 0 1000 390" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#24292f"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="1000" height="390" fill="#ffffff"/>
+<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">DeepEP handle: state lives in buffers and handles</text>
+<text x="500" y="64" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#57606a">state lives in buffers and handles</text>
+<rect x="69.0" y="108" width="150" height="88" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
+<text x="144.0" y="136" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">Config</text>
+<text x="144.0" y="160" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">DP/EP</text>
+<text x="144.0" y="177" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">groups</text>
+<line x1="226.0" y1="152" x2="240.0" y2="152" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="247.0" y="108" width="150" height="88" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
+<text x="322.0" y="136" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">Router</text>
+<text x="322.0" y="160" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">top-k</text>
+<text x="322.0" y="177" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">metadata</text>
+<line x1="404.0" y1="152" x2="418.0" y2="152" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="425.0" y="108" width="150" height="88" rx="8" fill="#fff8e7" stroke="#e0b300" stroke-width="2"/>
+<text x="500.0" y="136" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">DeepEP</text>
+<text x="500.0" y="160" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">buffer</text>
+<text x="500.0" y="177" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">handle</text>
+<line x1="582.0" y1="152" x2="596.0" y2="152" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="603.0" y="108" width="150" height="88" rx="8" fill="#fbf0fb" stroke="#a33ea1" stroke-width="2"/>
+<text x="678.0" y="136" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">DeepGEMM</text>
+<text x="678.0" y="160" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">layout</text>
+<text x="678.0" y="177" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">backend</text>
+<line x1="760.0" y1="152" x2="774.0" y2="152" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="781.0" y="108" width="150" height="88" rx="8" fill="#fff5f0" stroke="#b85450" stroke-width="2"/>
+<text x="856.0" y="136" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">Profiler</text>
+<text x="856.0" y="160" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">gap</text>
+<text x="856.0" y="177" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">validate</text>
+<rect x="160" y="252" width="680" height="62" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.6"/>
+<text x="500" y="278" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">Read left to right as this article&#x27;s runtime path.</text>
+<text x="500" y="300" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">The diagram names the boundary being removed, hidden, or made schedulable.</text>
+</svg>

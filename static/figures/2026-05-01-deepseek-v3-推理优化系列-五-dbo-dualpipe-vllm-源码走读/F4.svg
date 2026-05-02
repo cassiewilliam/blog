@@ -1,0 +1,26 @@
+<svg viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#24292f"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="1000" height="400" fill="#ffffff"/>
+<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">Five-stage decode: more boundaries can hide more waits</text>
+<text x="500" y="64" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#57606a">more boundaries can hide more waits</text>
+<line x1="110" y1="320" x2="900" y2="320" stroke="#57606a" stroke-width="1.5"/>
+<text x="915" y="324" text-anchor="start" font-family="sans-serif" font-size="12" font-weight="600" fill="#57606a">time</text>
+<text x="105" y="127" text-anchor="end" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">mb0 comm</text>
+<rect x="130" y="105" width="210" height="28" rx="5" fill="#eef7ff" stroke="#4a6fd3" stroke-width="1.5"/>
+<text x="235.0" y="124" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">dispatch</text>
+<text x="105" y="175" text-anchor="end" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">mb1 gemm</text>
+<rect x="260" y="153" width="250" height="28" rx="5" fill="#f4faf4" stroke="#5fa55f" stroke-width="1.5"/>
+<text x="385.0" y="172" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">compute</text>
+<text x="105" y="223" text-anchor="end" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">mb2 attn</text>
+<rect x="470" y="201" width="210" height="28" rx="5" fill="#fff8e7" stroke="#e0b300" stroke-width="1.5"/>
+<text x="575.0" y="220" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">MLA</text>
+<text x="105" y="271" text-anchor="end" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">mb3 reduce</text>
+<rect x="680" y="249" width="150" height="28" rx="5" fill="#fbf0fb" stroke="#a33ea1" stroke-width="1.5"/>
+<text x="755.0" y="268" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="600" fill="#24292f">combine</text>
+<rect x="170" y="346" width="660" height="38" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.4"/>
+<text x="500" y="371" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#24292f">Performance comes from overlap plus stable shapes.</text>
+</svg>
