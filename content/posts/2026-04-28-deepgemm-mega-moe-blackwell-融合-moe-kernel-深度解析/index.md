@@ -93,28 +93,38 @@ agent serving 等小批长尾场景最高 1.96x。
 
 ### 1.1 Baseline 路径：五个 kernel，四个硬边界
 
-优化前的路径可以写成：
+优化前这里指 DeepGEMM 测试里的 non-overlapped baseline，而不是一个抽象的
+PyTorch eager MoE。先把符号固定住：`g=(t,k)` 表示 token `t` 的第 `k`
+条 route，也就是 dispatch 后的一个 pool slot；`e=\pi_{t,k}` 是它去的 expert；
+`s_g=s_{t,k}` 是这条 route 的 top-k weight。
 
-{{< formula type="std" label="传统路径 · 每段都回到全局边界" >}}
+{{< formula type="std" label="DeepGEMM baseline · 数学语义与实现边界分开看" >}}
 $$
 \begin{aligned}
-(X_g, s_g) &= \mathrm{Dispatch}(X,\pi,s),\\
-H_e &= X_{g,e} W_{1,e}^{\top},\quad H_e=[G_e,U_e],\\
-A_e &= \mathrm{SiLU}(G_e)\odot U_e\odot s_g,\\
-Z_{g,e} &= A_e W_{2,e}^{\top},\\
-Y_t &= \sum_{k=1}^{K_t} Z_{g(t,k),\pi_{t,k}}.
+(X_g, s_g) &= \mathrm{DispatchGather}(X_t,\pi_{t,k},s_{t,k}),\\
+H_g &= X_g W_{1,e}^{\top}=[G_g,U_g],\\
+A_g &= \mathrm{SiLU}(\mathrm{clip}(G_g))\odot \mathrm{clip}(U_g)\cdot s_g,\\
+(\widetilde A_g,A_{sf,g}) &= Q_{\mathrm{FP8+UE8M0}}(A_g),\\
+Z_g &= \widetilde A_g W_{2,e}^{\top},\\
+Y_t &= \sum_{k:\pi_{t,k}\ne -1} Z_{(t,k)}.
 \end{aligned}
 $$
 {{< /formula >}}
 
-慢不只来自五次 launch，而是每一段都把“下一段马上要用”的数据落到全局边界：
-Dispatch 写出 `recv_x`，L1 写出 `l1_y`，SwiGLU 又写出量化后的 `l1_y_fp8`，
-L2 写出 `l2_y`，Combine 再读回 K 份已经带权的 expert 输出做 slot-sum。
+慢不只来自五次 launch，而是每一段都把“下一段马上要用”的对象落到全局边界。
+对应到 `tests/test_mega_moe.py`，Dispatch 写出 `recv_x` 并返回
+`recv_topk_weights`；L1 grouped GEMM 写出 BF16 的 gate/up 张量 `l1_y`；
+TileLang SwiGLU 读取 `l1_y` 和 `recv_topk_weights`，生成供 L2 使用的
+FP8 intermediate activation 与 scale（测试代码里变量名复用为 `l1_y`，
+不是源码里另有一个 `l1_y_fp8` 名字）；L2 写出 BF16 `l2_y`；
+最后 `ep_buffer.combine(l2_y, handle)` 读取有效 top-k slot 并累加。
 
-这里要特别避免一个容易写错的点：对 DeepGEMM 的这条实现路径，`topk_weights`
-不是在 Combine 里再乘一次。Dispatch 会把每个 pool slot 的权重存到
-`l1_topk_weights_buffer`，L1 epilogue 计算的是
-`silu(gate) * up * topk_weight`，所以 Linear2 的输出已经是带权贡献。
+这里要特别避免一个容易写错的点：高层 MoE 常写成
+`Y_t=\sum_k s_{t,k} f_{\pi_{t,k}}(X_t)`，但 DeepGEMM 这条实现路径把
+`s_{t,k}` 提前折进 SwiGLU 输出。Dispatch 会把每个 pool slot 的权重存到
+`l1_topk_weights_buffer`；L1 epilogue 的实际语义是
+`A_g = silu(gate_g) * up_g * s_g`。因此 Linear2 的输出 `Z_g`
+已经是带权贡献，Combine 不应再乘一次 `s`。
 
 DeepGEMM 的 baseline 测试就是这条路径：`deep_ep.Buffer.dispatch`、
 `m_grouped_fp8_fp4_gemm_nt_contiguous`、TileLang SwiGLU、第二个 grouped
@@ -149,9 +159,10 @@ $$
 
 {{< dd title="为什么不是“少几个 launch”这么简单" >}}
 如果只消掉 launch，而中间 activation 仍然在 HBM materialize，收益会很快被
-`H/A/Y_e` 的读写吃掉。Mega MoE 真正改变的是数据生命周期：`H` 不再是跨 kernel
-传递的大 tensor，而是 TMEM/register 中的一段短命状态；`A` 不再被全局调度器重新发现，
-而是 L1 epilogue 直接喂给 L2 TMA 的 pool layout。
+`X_g/H_g/A_g/Z_g` 的读写吃掉。Mega MoE 真正改变的是数据生命周期：`H_g`
+不再是跨 kernel 传递的大 tensor，而是 TMEM/register 中的一段短命状态；
+`A_g` 不再被全局调度器重新发现，而是 L1 epilogue 直接喂给 L2 TMA 的
+pool layout。
 {{< /dd >}}
 
 ### 1.3 V4 的 C/B 平衡式：通信是否能被完全藏住
@@ -340,7 +351,8 @@ DeepGEMM 的 buffer layout 在 `csrc/apis/mega.hpp` 里可以读出来：
 | buffer | dtype / shape 语义 | 用途 |
 |---|---|---|
 | `x`, `x_sf` | FP8 token 与 UE8M0 scale | 本 rank 原始输入 |
-| `topk_idx`, `topk_weights` | router metadata | dispatch 与 combine 都用 |
+| `topk_idx` | router expert index | dispatch 选择远端 expert；combine 构造有效 slot mask |
+| `topk_weights` | routing weight | dispatch 复制到 `l1_topk_weights_buffer`，SwiGLU 消费 |
 | `l1_acts`, `l1_acts_sf` | pooled FP8 token | dispatch 后供 Linear1 |
 | `l2_acts`, `l2_acts_sf` | post-SwiGLU FP8 | Linear2 输入 |
 | combine token buffer | BF16, `[K, T, d_model]` 逻辑槽 | 跨 rank 写回后本地 reduce |
@@ -383,11 +395,23 @@ $$
 
 {{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F15.svg" label="F15" caption="Combine 路径：远端 rank 写回 BF16 slot，源 rank 读取有效 top-k slot 并累加；权重已在 SwiGLU 侧折叠。" >}}
 
-Combine 这一步的数学语义是 slot-sum，而不是再次做 `s_{t,k}Y_{t,k}`。
-代码里 L1 epilogue 已经把 `topk_weight` 乘进
-`A_e = SiLU(G_e) \odot U_e \odot s_{t,k}`，因此 L2 写回的 BF16 slot
-就是带权贡献。Combine 只需要按 `topk_idx` 的有效 mask 依次 TMA load，
-在 FP32 寄存器里累加，最后 cast 回 BF16 存到最终输出。
+Combine 这一步的数学语义是 slot-sum，而不是再次做
+`s_{t,k}\widehat Z_{t,k}`。代码里 L1 epilogue 已经把 `topk_weight`
+乘进 `A_g = SiLU(G_g) \odot U_g \cdot s_g`，因此 L2 写回的 BF16 slot
+`Z_g` 已经是带权贡献。Combine 只需要按 `topk_idx` 的有效 mask
+依次 TMA load，在 FP32 寄存器里累加，最后 cast 回 BF16 存到最终输出。
+
+从代数上看，这个移动是成立的，因为 `s_{t,k}` 对一条 route 来说是标量，
+而 Linear2 是线性层：
+
+$$
+s_{t,k}\left(A_{t,k}W_{2,e}^{\top}\right)
+=
+\left(s_{t,k}A_{t,k}\right)W_{2,e}^{\top}.
+$$
+
+DeepGEMM 选择右边的写法：先在 SwiGLU / quant epilogue 里得到
+`s_{t,k}A_{t,k}`，再做 L2，最后 Combine 只做 `\sum_k Z_{t,k}`。
 
 DeepGEMM 测试里对 NVLink 字节数的估算是：
 
@@ -460,14 +484,17 @@ Mega MoE 的矩阵乘不是 BF16 grouped GEMM，而是 SM100 FP8xFP4。测试里
 前向数据流可以简化成：
 
 $$
+\begin{aligned}
 X_{bf16}
-\rightarrow (X_{fp8}, X_{sf})
-\rightarrow X_{fp8} W_{1,fp4}
-\rightarrow H_{fp32}
-\rightarrow A_{fp32}=\mathrm{SwiGLU}(H_{fp32})\odot s_g
-\rightarrow (A_{fp8}, A_{sf})
-\rightarrow A_{fp8} W_{2,fp4}
-\rightarrow Y_{bf16}.
+&\rightarrow (X_{fp8}, X_{sf})
+\rightarrow H_g=X_{fp8}W_{1,e,fp4}^{\top}=[G_g,U_g],\\
+A_g
+&=\mathrm{SiLU}(\mathrm{clip}(G_g))\odot \mathrm{clip}(U_g)\cdot s_g,\\
+A_g
+&\rightarrow (A_{fp8},A_{sf})
+\rightarrow Z_g=A_{fp8}W_{2,e,fp4}^{\top}
+\rightarrow Y_t=\sum_k Z_{(t,k)}.
+\end{aligned}
 $$
 
 ### 7.2 L1 epilogue：SwiGLU、amax、quant 不再单独落地
