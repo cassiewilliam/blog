@@ -116,7 +116,7 @@ $$
 `recv_topk_weights`；L1 grouped GEMM 写出 BF16 的 gate/up 张量 `l1_y`；
 TileLang SwiGLU 读取 `l1_y` 和 `recv_topk_weights`，生成供 L2 使用的
 FP8 intermediate activation 与 scale（测试代码里变量名复用为 `l1_y`，
-不是源码里另有一个 `l1_y_fp8` 名字）；L2 写出 BF16 `l2_y`；
+不是源码里另有一个独立的固定变量名）；L2 写出 BF16 `l2_y`；
 最后 `ep_buffer.combine(l2_y, handle)` 读取有效 top-k slot 并累加。
 
 这里要特别避免一个容易写错的点：高层 MoE 常写成
