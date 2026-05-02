@@ -1,0 +1,26 @@
+<svg viewBox="0 0 1000 405" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#24292f"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="1000" height="405" fill="#ffffff"/>
+<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">LoRA: frozen trunk plus trainable low-rank branch</text>
+<text x="500" y="64" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#57606a">the backward pass updates D and U while the base W stays frozen</text>
+<rect x="70" y="105" width="150" height="70" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
+<text x="145" y="135" text-anchor="middle" font-family="monospace" font-size="16" font-weight="700" fill="#24292f">X</text>
+<line x1="220" y1="140" x2="360" y2="100" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="220" y1="140" x2="360" y2="205" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="360" y="70" width="230" height="70" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5" stroke-dasharray="7 6"/>
+<text x="475" y="100" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">frozen dense</text>
+<text x="475" y="122" text-anchor="middle" font-family="monospace" font-size="13" font-weight="600" fill="#57606a">XW</text>
+<rect x="360" y="180" width="230" height="80" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
+<text x="475" y="210" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">trainable low rank</text>
+<text x="475" y="234" text-anchor="middle" font-family="monospace" font-size="13" font-weight="600" fill="#24292f">α X D U</text>
+<line x1="592" y1="105" x2="760" y2="150" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="592" y1="220" x2="760" y2="150" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="760" y="115" width="170" height="70" rx="8" fill="#fff8e7" stroke="#e0b300" stroke-width="2"/>
+<text x="845" y="145" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#24292f">Y = XW + αXDU</text>
+<rect x="160" y="315" width="680" height="48" rx="8" fill="#fff5f0" stroke="#b85450" stroke-width="2"/>
+<text x="500" y="344" text-anchor="middle" font-family="monospace" font-size="13" font-weight="700" fill="#24292f">∂D = α Xᵀ ΔY Uᵀ,   ∂U = α Dᵀ Xᵀ ΔY</text>
+</svg>

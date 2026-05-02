@@ -1,0 +1,37 @@
+<svg viewBox="0 0 1000 390" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#24292f"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="1000" height="390" fill="#ffffff"/>
+<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">Paper reading map: Transformer backprop from end to start</text>
+<text x="500" y="64" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#57606a">rebuild the paper as a sequence of adjoint transformations</text>
+<rect x="69.0" y="108" width="150" height="92" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
+<text x="144.0" y="136" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">Notation</text>
+<text x="144.0" y="162" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">Δ : dA</text>
+<text x="144.0" y="180" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">shape typed</text>
+<line x1="227.0" y1="154" x2="239.0" y2="154" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="247.0" y="108" width="150" height="92" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
+<text x="322.0" y="136" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">Embedding</text>
+<text x="322.0" y="162" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">lookup</text>
+<text x="322.0" y="180" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">scatter-add</text>
+<line x1="405.0" y1="154" x2="417.0" y2="154" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="425.0" y="108" width="150" height="92" rx="8" fill="#fff8e7" stroke="#e0b300" stroke-width="2"/>
+<text x="500.0" y="136" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">Attention</text>
+<text x="500.0" y="162" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">Q,K,V</text>
+<text x="500.0" y="180" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">softmax</text>
+<line x1="583.0" y1="154" x2="595.0" y2="154" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="603.0" y="108" width="150" height="92" rx="8" fill="#fbf0fb" stroke="#a33ea1" stroke-width="2"/>
+<text x="678.0" y="136" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">LN / LoRA</text>
+<text x="678.0" y="162" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">normalize</text>
+<text x="678.0" y="180" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">low rank</text>
+<line x1="761.0" y1="154" x2="773.0" y2="154" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="781.0" y="108" width="150" height="92" rx="8" fill="#fff5f0" stroke="#b85450" stroke-width="2"/>
+<text x="856.0" y="136" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">GPT block</text>
+<text x="856.0" y="162" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">residual</text>
+<text x="856.0" y="180" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">compose</text>
+<rect x="160" y="260" width="680" height="58" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
+<text x="500" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">Read each layer as forward object plus backward adjoint.</text>
+<text x="500" y="306" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">Keep tensors, adjoints, and parameters in separate lanes.</text>
+</svg>
