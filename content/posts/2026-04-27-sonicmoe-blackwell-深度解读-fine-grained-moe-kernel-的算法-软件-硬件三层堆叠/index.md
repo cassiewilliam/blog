@@ -548,16 +548,51 @@ Router 侧只需要抓住一个区分：**top-K kernel 是实现优化，token r
 
 {{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/paper/figure15-topk-packing.png" label="P15" caption="论文 Figure 15 原图：把 column id pack 到 FP32 mantissa 低位，让排序 key 同时携带 score 与 expert id，从而得到稳定的 top-K 顺序。图源：SonicMoE paper。" >}}
 
-核心做法：
+先看优化前。Router GEMM 得到 $S\in[0,1]^{T\times E}$ 后，常见实现会把每个 token 的一行
+$S_t$ 交给通用 `torch.topk`，得到 $I_{\mathrm{topK}},S_{\mathrm{topK}}\in\mathbb{R}^{T\times K}$，
+再单独对这 $K$ 个 score 做 softmax / renormalization，形成 MoE kernel 要消费的 routing metadata：
 
-- 每个 token 的一行 logits 独立处理，沿 $T$ 维并行。
-- 把 expert id pack 到 FP32 mantissa 低位，让 score 和 index 一起排序。
-- 用 sorting network / bitonic compare-swap，尽量留在 register 与 warp shuffle 内。
-- 可选融合 top-K score 的 softmax，少一次 kernel launch 和 HBM 往返。
+$$
+S\in[0,1]^{T\times E}
+\xrightarrow{\texttt{torch.topk}}
+(I_{\mathrm{topK}},S_{\mathrm{topK}})
+\xrightarrow{\texttt{softmax}}
+(\pi,S).
+$$
+
+这里慢的地方不是 top-K 的数学定义，而是**通用算子路径太重**。论文 Appendix F.4 说，在大 $T$、
+中等 $E$、小 $K$ 的 MoE router 场景里，PyTorch 会走 single-block top-K：radix-select 之后
+gather，且会做 2 次 shared memory scan。换句话说，每一行 $S_t$ 都要反复在 GMEM / SMEM /
+register 之间搬 score，并且还要把 value 和 index 重新配对；如果 softmax 没融合，还会多一次
+kernel launch 和一次 $T\times K$ 的读写。
+
+SonicMoE 的 top-K kernel 把这条路径收窄成 MoE 专用版本：
+
+| 代价项 | 优化前：通用 top-K 路径 | SonicMoE：专用 TC top-K kernel |
+|---|---|---|
+| 行处理 | 每行 $S_t$ 走通用 selection / gather | 每行独立，沿 $T$ 维并行，专门假设 $E\le4096,K\le16$ |
+| 中间存储 | PyTorch single-block 路径有 2 次 SMEM scan | compare-swap 尽量停在 register / warp shuffle |
+| score-index 绑定 | score 与 expert id 是两份 metadata，排序后还要保持配对 | 构造 $key_{t,e}=S_{t,e}\Vert e_{\mathrm{low}}$，一个 FP32 key 同时带 score 与 expert id |
+| tie-breaking | 需要额外规则保证相同 score 的 index 顺序 | expert id 被 pack 到低 mantissa 位，key 唯一，排序天然稳定 |
+| score 后处理 | top-K 后另跑 softmax / renorm | 可在同一个 kernel 内只对 $K$ 个 top score 做 softmax |
+
+所以它快的原因可以压成一句：**没有改变 token-choice top-K 语义，只是把“找 top-K + 保持
+score/index 配对 + top-K softmax”从通用、SMEM-heavy、分 kernel 的路径，改成 register/warp
+内的一条专用路径。**
+
+更细一点看，SonicMoE 在 base case（值数量 $\le64$）使用 optimal low-latency sorting network；
+更大的行用 bitonic compare / merge，并让比较与交换发生在同一个 thread 或同一个 warp 内。这样
+每次 swap 搬的是 packed key，而不是 “score 数组 + index 数组” 两套东西。Triton official top-K
+也使用 bit packing 与 bitonic merge，但论文指出主要差异在 base case：SonicMoE 使用预先选出的
+最小并行步数 / compare-swap 数的 sorting network，而 Triton 直接调用 `tl.topk`，因此在 Figure 22
+的配置上仍慢于 SonicMoE。Tilelang 的 K-pass maximum reduction 在 $K$ 增大时吞吐下降；RTop-K
+是 iterative threshold / bisection，并且更依赖 SMEM scan。这些对比说明：这里的胜负主要发生在
+**router 形状固定后的常数项和内存层级**，不是换了一个新的 routing algorithm。
 
 {{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F4.svg" label="F4" caption="Figure 15 的直觉版拆解：排序的对象不是裸 score，而是 packed key；compare-swap 只移动这个 key，最后自然得到稳定的 top-K metadata。" >}}
 
-一句话：它不是新的 routing algorithm，而是把 vanilla TC top-K 从通用算子改成 MoE 专用算子。
+一句话：它不是新的 routing algorithm，而是把 vanilla TC top-K 从通用算子改成 MoE 专用算子；
+它降低的是 router overhead，后面的 token rounding 才处理 GEMM tile 浪费。
 
 ### 8.1 为什么 top-K token-choice 会浪费 tile
 
