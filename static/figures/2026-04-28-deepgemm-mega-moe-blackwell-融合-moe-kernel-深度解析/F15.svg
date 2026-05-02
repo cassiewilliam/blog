@@ -12,20 +12,21 @@
 <text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">Combine as slot fill plus local reduction</text>
 <rect x="70" y="110" width="170" height="84" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
 <text x="155" y="142" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#4a6fd3">rank r0</text>
-<text x="155" y="166" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="14" font-weight="600" fill="#24292f">y_t,0</text>
+<text x="155" y="166" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="14" font-weight="600" fill="#24292f">Z<tspan baseline-shift="sub" font-size="10.1">t,0</tspan></text>
 <rect x="70" y="220" width="170" height="84" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
 <text x="155" y="252" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#4a6fd3">rank r1</text>
-<text x="155" y="276" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="14" font-weight="600" fill="#24292f">y_t,1</text>
+<text x="155" y="276" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="14" font-weight="600" fill="#24292f">Z<tspan baseline-shift="sub" font-size="10.1">t,1</tspan></text>
 <rect x="360" y="140" width="270" height="140" rx="8" fill="#fff8e7" stroke="#e0b300" stroke-width="2"/>
 <text x="495" y="172" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="700" fill="#e0b300">source rank slots</text>
-<text x="495" y="205" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">slot k=0</text>
-<text x="495" y="227" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">slot k=1</text>
-<text x="495" y="249" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">slot ...</text>
+<text x="495" y="205" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="13" font-weight="500" fill="#24292f">slot k=0: Z<tspan baseline-shift="sub" font-size="9.4">t,0</tspan></text>
+<text x="495" y="227" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="13" font-weight="500" fill="#24292f">slot k=1: Z<tspan baseline-shift="sub" font-size="9.4">t,1</tspan></text>
+<text x="495" y="249" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="13" font-weight="500" fill="#24292f">valid mask from π</text>
 <rect x="745" y="168" width="170" height="84" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
-<text x="830" y="200" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#5fa55f">Y_t</text>
-<text x="830" y="224" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="600" fill="#24292f">Σ s_t,k y_t,k</text>
+<text x="830" y="200" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="18" font-weight="700" fill="#5fa55f">Y<tspan baseline-shift="sub" font-size="13.0">t</tspan></text>
+<text x="830" y="224" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="16" font-weight="600" fill="#24292f">Σ<tspan baseline-shift="sub" font-size="11.5">k</tspan> Z<tspan baseline-shift="sub" font-size="11.5">t,k</tspan></text>
 <line x1="240" y1="152" x2="360" y2="178" stroke="#4a6fd3" stroke-width="2" marker-end="url(#arrow)"/>
 <line x1="240" y1="262" x2="360" y2="232" stroke="#4a6fd3" stroke-width="2" marker-end="url(#arrow)"/>
 <line x1="630" y1="210" x2="745" y2="210" stroke="#5fa55f" stroke-width="2" marker-end="url(#arrow)"/>
-<text x="500" y="326" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="500" fill="#57606a">Remote ranks write BF16 copies; source rank performs the weighted top-K reduction locally.</text>
+<text x="500" y="318" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="13" font-weight="500" fill="#57606a">s<tspan baseline-shift="sub" font-size="9.4">t,k</tspan> has been folded into A<tspan baseline-shift="sub" font-size="9.4">e</tspan> = SiLU(G<tspan baseline-shift="sub" font-size="9.4">e</tspan>) * U<tspan baseline-shift="sub" font-size="9.4">e</tspan> * s<tspan baseline-shift="sub" font-size="9.4">t,k</tspan> before Linear2.</text>
+<text x="500" y="340" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="500" fill="#57606a">Combine loads valid BF16 slots, accumulates in FP32, and stores the final BF16 token.</text>
 </svg>
