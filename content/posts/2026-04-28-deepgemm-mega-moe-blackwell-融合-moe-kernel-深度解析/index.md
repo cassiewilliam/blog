@@ -1,8 +1,11 @@
 ---
-title: "DeepGEMM Mega MoE · Blackwell 融合 MoE Kernel 深度解析【进行中...】"
+title: "DeepGEMM Mega MoE 深度解读：把 MoE 通信、双 GEMM 与 Combine 融成一个 Blackwell Kernel"
 date: 2026-04-28T10:57:20+08:00
+lastmod: 2026-05-02T18:20:00+08:00
 draft: false
-tags: ["mega-moe", "deepgemm", "blackwell", "gpu", "cuda", "deep-dive"]
+description: "重写 DeepGEMM Mega MoE：从 DeepSeek-V4 Figure 5 的 wave overlap、Blackwell SM100 的 UMMA/TMEM/2CTA，到 symmetric memory、warp specialization、barrier、FP8×FP4 与性能边界。"
+tags: ["deepgemm", "mega-moe", "deepseek-v4", "blackwell", "cuda", "gpu-kernel", "symmetric-memory", "fp8-fp4", "deep-dive"]
+categories: ["CUDA Hopper & Blackwell", "LLM 推理系统"]
 math: true
 drawio: true
 ShowToc: true
@@ -10,563 +13,487 @@ TocOpen: true
 UseHugoToc: true
 ---
 
-## 📖 Prologue · 背景知识与符号定义
+> **一句话读法：**DeepGEMM Mega MoE 不是一个更快的 Grouped GEMM，
+> 而是把 EP Dispatch、Linear1、SwiGLU、Linear2、EP Combine 放进
+> 一个 SM100 persistent kernel，让 NVLink 通信、TMA load、UMMA 计算、
+> epilogue 量化与 combine reduction 在不同 wave 和不同 warp 里同时前进。
+> 它的核心收益不是“少一个 kernel launch”，而是把原来暴露在 HBM/NVLink/host
+> 边界上的等待，改造成 kernel 内部可流水、可隐藏的生产消费关系。
+
+这篇重写版只保留旧文里真正有用的机制图，去掉重复的草稿段、完整指南粘贴和
+同图多 caption 的问题。正文按“论文 Figure 5 → DeepGEMM 实现 → Blackwell
+硬件 → 性能边界”的顺序重构。
+
+主要资料：
+
+- DeepSeek-V4 Technical Report：
+  [DeepSeek_V4.pdf](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/blob/main/DeepSeek_V4.pdf)
+- DeepGEMM 仓库：
+  [deepseek-ai/DeepGEMM](https://github.com/deepseek-ai/DeepGEMM)
+- DeepGEMM 2026-04 public release：
+  [PR #304](https://github.com/deepseek-ai/DeepGEMM/pull/304)
+- DeepGEMM 测试入口：
+  [`tests/test_mega_moe.py`](https://github.com/deepseek-ai/DeepGEMM/blob/main/tests/test_mega_moe.py)
+
+## Prologue · 先把 Mega MoE 的问题说清楚
+
+MoE FFN 的常规推理路径有五段：
+
+1. Router / TopK 在本 rank 得到 `topk_idx` 与 `topk_weights`。
+2. EP Dispatch 把 token 按 expert 所在 rank 跨 GPU 搬运。
+3. Linear1 做 gate/up 两个投影。
+4. SwiGLU 做逐元素激活，并通常要重新量化给 Linear2。
+5. Linear2 得到 expert 输出，EP Combine 再按 token 聚合回源 rank。
+
+DeepGEMM README 对 Mega MoE 的定义很直接：它把 EP dispatch、Linear1
+FP8xFP4、SwiGLU、Linear2 FP8xFP4、EP combine 融合并重叠到一个
+mega-kernel 中，并依赖 multi-process symmetric memory。DeepSeek-V4 技术报告
+则把这个方向称为 fine-grained communication-computation overlap。
+
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/P1-deepseek-v4-fig5.png" label="P1" caption="DeepSeek-V4 Technical Report Figure 5 原图裁剪：Naive 串行、Comet 两段重叠、Mega MoE 按 expert wave 细粒度重叠。" >}}
+
+P1 是整篇文章的锚点。Naive 路径把 Dispatch、L1、SwiGLU、L2、Combine
+排成一条长串；Comet 把 Dispatch 与 L1、L2 与 Combine 分别重叠；Mega MoE
+进一步把 expert 切成 wave，使当前 wave 的计算、下一 wave 的 token 搬运、
+上一 wave 的结果回传同时发生。理论加速在 DeepSeek-V4-Flash 配置上给到
+1.92x，报告中给出的实测区间是一般推理 1.50-1.73x，RL rollout / high-speed
+agent serving 等小批长尾场景最高 1.96x。
+
+符号先固定下来，后文都沿用这套：
+
+| 符号 | 含义 | DeepSeek-V4 / DeepGEMM 典型值 |
+|---|---|---|
+| `T` | 每 rank 的 token 数 | `256-2048` 是主要收益区 |
+| `K` | 每 token 激活 expert 数 | `6` |
+| `E` | 全局 expert 数 | `384` |
+| `N_rank` | EP 并行 rank 数 | `8` |
+| `d_model` | hidden size | `7168` |
+| `d_ff` | SwiGLU 后 intermediate hidden | `3072` |
+| `BLOCK_M/N/K` | GEMM tile | 当前启发式常用 `192/128/128` |
+| `W1/W2` | expert 两层权重 | FP4 payload + UE8M0 scale |
+| `X, X_sf` | 输入 token 与 scale | FP8 E4M3 + packed UE8M0 |
+
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F1.svg" label="F1" caption="自制机制图：传统五段会在 kernel 与 HBM 边界反复 materialize；Mega MoE 把中间状态留在 SMEM/TMEM/register。" >}}
+
+## Stage 1 · 为什么五段拆开会慢
+
+优化前的路径可以写成：
+
+$$
+X \rightarrow \text{Dispatch}(X, \pi, s)
+\rightarrow X_{recv}
+\rightarrow H = X_{recv}W_1
+\rightarrow A = \mathrm{SwiGLU}(H)
+\rightarrow Y_e = AW_2
+\rightarrow Y = \mathrm{Combine}(Y_e, s).
+$$
+
+慢不只来自五次 launch，而是每一段都把“下一段马上要用”的数据落到全局边界：
+Dispatch 写出 `recv_x`，L1 写出 `l1_y`，SwiGLU 又写出量化后的 `l1_y_fp8`，
+L2 写出 `l2_y`，Combine 再读回 K 份 expert 输出。
+
+DeepGEMM 的 baseline 测试就是这条路径：`deep_ep.Buffer.dispatch`、
+`m_grouped_fp8_fp4_gemm_nt_contiguous`、TileLang SwiGLU、第二个 grouped
+GEMM、`ep_buffer.combine`。也就是说，baseline 并不弱，它已经用了 DeepEP、
+DeepGEMM 与专门的 SwiGLU kernel；Mega MoE 要赢，就必须把跨阶段边界本身消掉。
+
+优化后的路径变成：
+
+$$
+\text{persistent grid}
+\left[
+\text{pull dispatch} \parallel
+\text{TMA} \parallel
+\text{UMMA} \parallel
+\text{epilogue} \parallel
+\text{combine}
+\right].
+$$
+
+这里的关键变化有四个：
+
+| 原路径暴露的工作 | Mega MoE 的处理方式 | 为什么会快 |
+|---|---|---|
+| kernel launch 串行化 | 一个 persistent kernel 驻留 | host gap 不再出现在五段之间 |
+| 中间 activation 写 HBM | L1 输出进入 SMEM/TMEM/register 流水 | 少掉 `TKd` 级别读写 |
+| Dispatch/Combine 与 GEMM 串行 | 不同 wave 的通信和计算错位 | NVLink 延迟被 GEMM 吞掉 |
+| 不同阶段独立调度 | 同一 scheduler 发 L1/L2 block | 避免跨 kernel 重新建元数据 |
 
-本节铺垫阅读正文需要的背景：**MoE 推理流程**、**Blackwell GPU 层级与内存**、**Tensor Core 指令家族**、**符号速查**。正文每一章都会回引这里的数字与术语。
+DeepSeek-V4 报告给出的硬件平衡式是：
 
-### ① MoE 推理流程回顾
+$$
+\frac{C}{B}\le \frac{V_{comp}}{V_{comm}}.
+$$
 
-一个 MoE FFN 层对 microbatch 内 T 个 token 做如下处理：
+对 V4-Pro，每个 token-expert 对有 gate、up、down 三个矩阵乘，约
+`6 d_model d_ff` FLOPs；通信是 FP8 dispatch 加 BF16 combine，约
+`3 d_model` bytes。因此：
 
-1. **Router / TopK**：每 token 选 K 个 expert，得到 $topk&#95;{idx} \in ℤ^{T\times K}$, $topk&#95;w \in ℝ^{T\times K}$。（在 Mega MoE 之前完成）
-2. **EP Dispatch**：在 EP=N_rank 并行下，每 rank 持有部分 expert，需要把 token 按 `topk_idx` 跨 rank 搬运 / 聚合。
-3. **Linear1**：对每个 expert e 算 `H_e = X_{g,e} W_{1,e}^T`，其中 $W&#95;{1} \in ℝ^{2I\times d}$（gate‖up 两半拼接）。
-4. **SwiGLU**：`A = silu(H_gate) ⊙ H_up \cdot topk_w`，Mega MoE 顺手把 topk 权重预乘进来。
-5. **Linear2**：`Y_e = A_e W_{2,e}^T`，$W&#95;{2} \in ℝ^{d\times I}$。
-6. **EP Combine**：每 token 把自己的 K 份 expert 输出 $y&#95;{k}$ 加权求和 $O&#95;{t} = \Sigma &#95;{k} s&#95;{t,k}\cdot y&#95;{k}$，拼回源 rank。
+$$
+\frac{V_{comp}}{V_{comm}}
+=\frac{6d_{model}d_{ff}}{3d_{model}}
+=2d_{ff}
+=6144\ \text{FLOPs/Byte}.
+$$
 
-传统实现是 5 个 kernel（Dispatch / GEMM1 / SwiGLU / GEMM2 / Combine），每段之间走 HBM；Mega MoE 把它们塞进**一个**持久 kernel —— 这是全文的主线。
+这句话的工程含义很重要：只要 kernel 真的能做到通信计算完全重叠，互联带宽不是越高越好，
+而是达到 `C/B <= 6144` 这个平衡点后，继续堆带宽的边际收益会下降。Mega MoE 的价值，
+就是把这个论文里的平衡点做成可运行的 CUDA kernel。
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F1.svg" label="F1" caption="DeepSeek V4 §3.1 Figure 5 的对照视图。 (a) Naive 完全串行； (b) Comet 实现两段重叠（Dispatch‖L1，L2‖Combine），理论 1.42x； (c) Mega MoE 把每 rank 的 expert 切分成多个 wave， 3-4 个 wave 的不同阶段同时在飞 （红框稳态：wave1 的 Combine + wave1 的 L2 + wave2 的 L1 + wave3 的 Dispatch），理论 1.92x，实测一般推理 1.50-1.73x、RL rollout 等长尾小批场景最高 1.96x 。" >}}
+## Stage 2 · Wave scheduler：让 expert 之间形成稳态流水
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F1.svg" label="F1" caption="五段融合的宏观对比。传统实现（上）把 Dispatch / Linear1 / SwiGLU / Linear2 / Combine 拆成 5 个 kernel，每段之间必须走 HBM 交换中间张量并受 CPU 端 cudaLaunchKernelEx 串行化。Mega MoE（下）把五段塞进同一个 persistent kernel，中间结果全部留在 SMEM/TMEM/register 中，通信与 GEMM 在 warp 之间天然重叠。" >}}
+Mega MoE 不把 48 个 local expert 一次性排完，而是切成多个 wave。
+每个 wave 包含 `kNumExpertsPerWave` 个相邻 local expert；一个 wave 内先发完
+Linear1 blocks，再回到 wave 起点发 Linear2 blocks，然后进入下一 wave。
 
-### ② Blackwell SM100 执行层级
+DeepGEMM 的 scheduler 在
+`deep_gemm/include/deep_gemm/scheduler/mega_moe.cuh` 中定义，核心状态机是：
 
-Mega MoE 的优化几乎在 **所有 5 个粒度** 上同时展开，理解层级是理解 kernel 的前提。
+```text
+Linear1 on wave i
+  -> rewind expert cursor to wave i start
+  -> Linear2 on wave i
+  -> advance to wave i+1
+```
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F2.svg" label="F2" caption="Blackwell SM100 执行层级与 Mega MoE 在每一层的落点。相比 Hopper 新增两个关键粒度： Cluster （2-CTA）让 UMMA 用 1 份 B 权重同时喂两颗 SM， Warpgroup （128 thread）作为 WGMMA/UMMA 的最小 issue 单位。" >}}
+`get_num_experts_per_wave_for_mega_moe` 的启发式也很实用：先估算每个 expert
+平均有多少 M-block 和 N-block，再让一个 wave 的总 block 数至少达到
+`2 * num_sms`，给真实路由不均衡留余量。最后还要求 `kNumExpertsPerWave`
+整除 `kNumExpertsPerRank`，这样 wave 边界固定，scheduler 不需要处理碎尾。
 
-### ③ 内存层级与带宽
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F12.svg" label="F12" caption="Output-stationary：同一个 pool block 的 L1 与 L2 尽量由同一条持久调度链完成，避免跨 SM reduction。" >}}
 
-Blackwell B200 相对 Hopper 引入一个关键新层级 — **TMEM**（Tensor Memory）：一块专用于 Tensor Core 累加的 SRAM，容量 512 × 128 per CTA，UMMA 直接读写，不再占用普通寄存器。这是 Mega MoE 能把 SwiGLU 融进同一个 kernel 的前提条件之一 —— 省下的 register 全给了 epilogue。
+为什么这会快？对比一下优化前后：
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F3.svg" label="F3" caption="B200 内存层级。Mega MoE 的数据流是单向的： HBM → L2 → SMEM → TMEM → Register → SMEM → HBM ，中间任何一段 都不回写 HBM 。SMEM 是 K-pipeline 的工作区，TMEM 是 UMMA 专用的累加器，FP32 partial sum 从 TMEM 流到 Register 里做 SwiGLU 与 FP8 量化。" >}}
+| 路径 | 调度粒度 | 中间状态 |
+|---|---|---|
+| grouped GEMM baseline | 每个 kernel 独立按 expert/token count 调度 | L1 结束后把 `H/A` 交给下一个 kernel |
+| Mega MoE | persistent scheduler 在 L1/L2 间切 phase | 同一 wave 的 `pool_block` 只在片上流转 |
 
-### ④ Tensor Core 指令家族演进
+Output-stationary 的直觉是“谁生产，谁尽快消费”。L1 的 epilogue 不把完整 BF16
+`H` 写到 HBM，而是在片上完成 SwiGLU、amax、FP8 量化，再让 L2 的 TMA-A
+从同一逻辑 pool 读取。这样 `A` 不再是一个要被全局调度器重新发现的大 tensor，
+而是 wave 内部的生产消费项。
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F4.svg" label="F4" caption="Tensor Core 三代演进。UMMA 带来的两项变化决定了 Mega MoE 的骨架：① 累加器搬到 TMEM，释放出 register 给 SwiGLU & 量化；② 2-CTA cluster 让 B（权重）只传一次到两颗 SM，使得一对 CTA 共享 L1 输出。" >}}
+边界条件也要讲清楚：如果 `T` 太小，某些 expert 的 token 数远低于 `BLOCK_M=192`，
+wave 内 block 数不够，persistent kernel 固定同步成本就会显眼；如果路由极度不均，
+`kImbalanceFactor=2` 仍可能不够，需要更细的 wave 或 fallback。
 
-### ⑤ 符号速查表
+## Stage 3 · 16 warp specialization：不是所有 thread 都做同一件事
 
-<table>
-<tr><th>符号</th><th>含义</th><th>DeepSeek V3 典型值</th></tr>
-<tr><td><code>T</code></td><td>每 rank 的 token 数（per-microbatch）</td><td>256 – 2048</td></tr>
-<tr><td><code>K</code></td><td>每 token 激活的 expert 数（topK）</td><td>6</td></tr>
-<tr><td><code>E</code></td><td>总 expert 数</td><td>384</td></tr>
-<tr><td><code>d</code></td><td>hidden size</td><td>7168</td></tr>
-<tr><td><code>I</code></td><td>intermediate (FFN) size</td><td>3072</td></tr>
-<tr><td>$N&#95;{rank}$</td><td>EP 并行度（GPU 数）</td><td>8</td></tr>
-<tr><td>$BLOCK&#95;M / N / K$</td><td>GEMM tile 形状（CTA 级）</td><td>192 / 128 / 128</td></tr>
-<tr><td><code>UMMA_M</code></td><td>Blackwell UMMA 硬件 M 下限</td><td>128（block-scaled FP8）</td></tr>
-<tr><td><code>kNumStages</code></td><td>TMA / MMA 软件流水深度</td><td>6</td></tr>
-<tr><td><code>kNumRanks</code></td><td>EP 规模</td><td>8</td></tr>
-<tr><td><code>UE8M0</code></td><td>MX-FP8 的 block-level scale dtype (E8M0=8bit expo)</td><td>—</td></tr>
-</table>
+Mega MoE 一个 CTA 配 512 threads，也就是 16 warps。DeepGEMM 选择固定三类角色：
 
-## 问题陈述 · 通信藏进计算
-*DeepSeek V4 §3.1 的核心洞察 —— 一个 MoE 层的计算时间本来就比通信时间长，问题只是怎么把它们重叠起来。*
+| 角色 | 线程数 | 职责 |
+|---|---:|---|
+| Dispatch | 128 = 4 warps | expert count、remote pull、send buffer |
+| Non-epilogue | 128 = 4 warps | TMA-A、TMA-B、UMMA issue、调度辅助 |
+| Epilogue | 256 = 8 warps | TMEM 读出、SwiGLU、amax、FP8/BF16 store、combine |
 
-### 1.1 V4 论文的关键观察
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F5.svg" label="F5" caption="16 warp 分工：Dispatch、TMA/UMMA、Epilogue 分别持有自己的寄存器预算与同步路径。" >}}
 
-把一个 MoE 层拆成**四个时序段**：两个通信受限段（Dispatch、Combine），两个计算受限段（Linear1、Linear2）。在 DeepSeek-V4-Pro（d=7168, I=3072, E=384, K=6）的 profile 里，**同一层内总通信时间小于总计算时间**。这意味着只要两条流水能完全并行，**计算就是性能下界**，通信完全不暴露 —— 系统因此可以容忍更低的互联带宽而端到端延迟不退化。
+优化前，分离 kernel 的好处是每个 kernel 可以专注一类工作；坏处是阶段之间必须回到
+HBM/host 边界。Mega MoE 反过来：把所有工作塞进一个 kernel，但用 warp specialization
+恢复“专职”。Dispatch warp 不参与 UMMA，epilogue warp 不去数 expert，MMA warp
+只关心 K-loop 与 Tensor Core issue。
 
-{{< formula type="sm" label="✅ V4 提出的'硬件可编程平衡点'" >}}
-设峰值算力 `C`（FLOPs/s），互联带宽 `B`（Bytes/s），层内总计算量 $V&#95;{comp}$，总通信量 $V&#95;{comm}$。要让通信完全藏住，需要：
+这背后的成本模型是寄存器。UMMA mainloop 要高吞吐，epilogue 要同时做 SwiGLU、amax、
+scale 生成与 store，二者的寄存器需求完全不同。如果所有 warp 使用同一上限，要么
+MMA spill，要么 epilogue 不够用。Blackwell 的 `setmaxnreg` 让不同 warpgroup 在同一个
+kernel 内动态调整寄存器配额，Mega MoE 才能把这几种工作放在一起。
 
-C / B  ≤  V_comp / V_comm
-对 V4-Pro：每个 token-expert 对的 FLOPs = 6·hidden·intermediate（gate+up+down 三段 matmul），通信 = 3·hidden 字节（FP8 dispatch + BF16 combine）。代入得：
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F6.svg" label="F6" caption="TMA、UMMA、epilogue 是三条错位流水：producer 领先 consumer，mbarrier 只传递 full/empty 状态。" >}}
 
-C / B  ≤  6·d·I / (3·d)  =  2·I  =  6144  FLOPs/Byte
-即 **每 GB/s 互联带宽足够覆盖 6.1 TFLOPs/s 的算力**。一旦带宽超过这条线，再加带宽收益递减。Mega MoE 把这条理论上界做成了真实可达 —— 实测 1.50～1.73× 端到端加速；在 RL rollout 等小批长尾场景最高 1.96×。
-{{< /formula >}}
+F6 的“6-stage”不是装饰。对每个 K tile：
 
-### 1.2 传统的两段重叠（Comet）为什么不够
+1. TMA 先把 A/B tile 和 scale tile 搬入 SMEM。
+2. UMMA 在前一拍的数据上计算，累加进 TMEM。
+3. Epilogue 从更早的 TMEM tile 读出，做激活、量化或写回。
 
-Comet (Zhang et al., 2025) 实现了"Dispatch ‖ Linear1"和"Linear2 ‖ Combine"两组配对重叠 —— 理论加速 1.42×。问题在于：
+只要 TMA 比 UMMA 快一点点，UMMA 比 epilogue 快一点点，`mbarrier` 的 wait
+在稳态就不会暴露。它不让同步消失，而是让同步落在流水间隙里。
 
-- 同一对 (Dispatch, Linear1) 内部仍然是**整个 MoE 层一次重叠**，重叠粒度 = 一个层。
-- L1 与 L2 之间是个硬墙：所有 expert 的 L1 必须先全部完成，才能开始 L2。
-- 所以"Combine 与 L2"重叠，但 Combine 不能与**下一层**的 Dispatch 重叠，更不能与下一波 expert 的 L1 重叠。
+## Stage 4 · Blackwell 硬件：为什么 Mega MoE 基本是 SM100 专属
 
-### 1.3 Mega MoE 的解锁思路
+DeepGEMM 的 normal FP8/BF16 GEMM 可以覆盖 SM90/SM100，但 Mega MoE 的实现入口
+会检查 arch major，当前路径只 dispatch 到 `sm100_fp8_fp4_mega_moe`。
+原因不是“代码没移植”，而是它同时依赖几类 Blackwell 能力。
 
-把 expert 切成**多个 wave**，让相邻 wave 的 Dispatch / L1 / L2 / Combine 在时间上交错排布 —— 形成 expert 间的**细粒度软件流水线**。稳态下计算和通信各自连续不断，三到四个 wave 的不同阶段同时在飞。理论加速 1.92×（V4 Fig 5），逼近"计算就是下界"的极限。这是 Layer 2 的主线。
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F2.svg" label="F2" caption="Mega MoE 在 Grid、Cluster、CTA、Warpgroup、Warp/Thread 五层同时做调度。" >}}
 
-硬件前提（Blackwell 同时解开了三把锁）：
-- **TMEM**：UMMA 累加器从 register 搬到专用 SRAM，省下来的寄存器才装得下 SwiGLU + amax + cast。
-- **2-CTA cluster + UMMA multicast**：weight 只需广播到 cluster 一次，2 个 SM 共享 N=256 行。
-- **Symmetric memory（PyTorch 2.9+）**：跨 rank 通信不再要 NCCL 介入，TMA 直接读写远端 buffer。
+第一是 UMMA + TMEM。Hopper WGMMA 把累加器放在 register 里；Blackwell UMMA
+把 Tensor Core 累加放进 Tensor Memory。对普通 GEMM，这主要是 register pressure
+改善；对 Mega MoE，这直接决定能不能在同一个 kernel 里塞进 SwiGLU 与 quant。
 
-## 核心 · Wave 粒度流水线
-*把每 rank 的 expert 切成几个 wave，让相邻 wave 的 Dispatch / L1 / L2 / Combine 时间错位 —— 这是 1.92× 理论加速的来源。*
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F4.svg" label="F4" caption="从 MMA 到 WGMMA 再到 UMMA：TMEM 与 2-CTA cluster 是 Mega MoE 能融合 epilogue 的硬件前提。" >}}
 
-### 2.1 Wave 是什么
+第二是 2-CTA cluster multicast。DeepGEMM 的 heuristic 固定 `block_n=128`、
+`block_k=128`，并让 `load_block_m=block_m/2`。相邻 CTA 组成 cluster 后，
+同一份 tile 可以通过 UMMA multicast 喂给两颗 SM，减少权重或 activation tile
+在片上层级的重复搬运。
 
-每个 rank 持有 `kNumExpertsPerRank = E / N_rank` 个 expert（V4-Pro 8 卡 EP 时为 384/8 = 48 个）。Mega MoE 把它们划成 **kNumExpertsPerWave 个 expert 一组**，称为一个 wave。kernel 内部的状态机依次处理每个 wave 的**所有阶段**，但**不同 wave 在时间上是错位的**，相邻 wave 之间形成软件流水。
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F7.svg" label="F7" caption="2-CTA cluster 让两个 CTA 共享一次 UMMA multicast，减少重复搬运并保持 N/K 对齐。" >}}
 
-启发式（[csrc/jit_kernels/heuristics/mega_moe.hpp:96-126](csrc/jit_kernels/heuristics/mega_moe.hpp#L96-L126)）的目标：让一个 wave 内的总 GEMM block 数 ≥ 2× SM 数。这样即使 expert 之间的 token 分布不均，也能喂饱所有 SM；同时 wave 不能太大，否则后一波的 Dispatch 没机会与前一波的 GEMM 重叠。
+第三是 block-scaled FP8xFP4。Mega MoE 的矩阵乘输入是 FP8 activation 与 FP4 weight，
+scale 采用 packed UE8M0。FP4 把 expert 权重带宽压低，FP8 activation 让 dispatch
+与 L2 输入都维持 1 byte payload，UE8M0 scale 又能满足 TMA/UMMA 的 block-scale
+布局要求。
 
-### 2.2 调度状态机
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F3.svg" label="F3" caption="内存层级的目标：HBM 只承担输入、权重和最终输出，中间 activation 尽量留在片上流水中。" >}}
 
-调度器（[scheduler/mega_moe.cuh:203-231](deep_gemm/include/deep_gemm/scheduler/mega_moe.cuh#L203-L231)）在 persistent kernel 内运行，每个 SM 自行枚举"该算哪些 block"。状态机两层：
+边界条件是硬件和框架都要到位。DeepGEMM README 写明 Mega MoE 需要 multi-process
+symmetric memory；示例里注释要求 PyTorch 2.9+。如果只有单卡、没有 symmetric memory、
+或不是 SM100，这条路径就不是可直接落地的路径。
 
-{{< formula type="sm" label="✅ 双重相位：Wave + Phase" >}}
-for wave in 0..num_waves:
-    # Phase 1：当前 wave 内所有 expert 的 Linear1
-    for expert in wave:
-        for (m_block, n_block) in expert.l1_blocks:
-            issue Linear1 GEMM tile         (FP8 act × FP4 weight → TMEM accum)
-            epilogue: SwiGLU + amax + FP8 cast → 写入 L2_acts (symm pool)
-            置位 l2_arrival_mask[pool_block][n_block]
+## Stage 5 · Symmetric Memory：把 EP 通信变成 kernel 内部的远端 load/store
 
-    # Phase 2：同一 wave 的 Linear2
-    for expert in wave:
-        for (m_block, n_block) in expert.l2_blocks:
-            等 l2_arrival_mask 中所需的 N-tile 都到位 (等价于 L1 完成)
-            issue Linear2 GEMM
-            epilogue: BF16 cast → 通过 NVLink push 到源 rank 的 combine slot
+传统 EP 通信通常把 dispatch/combine 当成通信库问题：先 all-to-all 把 token 送到
+expert 所在 rank，再等 GEMM 算完，再 all-to-all 把输出送回源 rank。它的语义清楚，
+但边界很硬。
 
-# 与上面状态机并行的两条独立流水：
-#   Dispatch warps:  while True: pull next wave's tokens (远端 rank)
-#   Combine path:    收到 NVLink 写入后 → TMA load topK 副本 → weighted sum → Y
-{{< /formula >}}
+Mega MoE 的做法是给每个 rank 分配一块 symmetric buffer：同名 buffer 在不同 rank
+上有一致的偏移布局。于是 kernel 内部只要知道 `rank_idx` 与 offset，就能用远端地址
+主动 pull token，或者把结果写到源 rank 的 combine slot。
 
-这就构造了 F1(c) 的稳态：在 wave N 跑 L2 的同时，wave N+1 的 L1 正在 GEMM，wave N+2 的 Dispatch 正在 NVLink 上 pull。
+DeepGEMM 的 buffer layout 在 `csrc/apis/mega.hpp` 里可以读出来：
 
-### 2.3 Output-Stationary：同一 expert 的 L1 + L2 都在同一 SM
+| buffer | dtype / shape 语义 | 用途 |
+|---|---|---|
+| `x`, `x_sf` | FP8 token 与 UE8M0 scale | 本 rank 原始输入 |
+| `topk_idx`, `topk_weights` | router metadata | dispatch 与 combine 都用 |
+| `l1_acts`, `l1_acts_sf` | pooled FP8 token | dispatch 后供 Linear1 |
+| `l2_acts`, `l2_acts_sf` | post-SwiGLU FP8 | Linear2 输入 |
+| combine token buffer | BF16, `[K, T, d_model]` 逻辑槽 | 跨 rank 写回后本地 reduce |
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F12.svg" label="F12" caption="Output-Stationary 的含义：同一个 pool_block（一组 tokens 的 L1 输出 tile）由 同一颗 SM 连续完成 Linear1 与 Linear2，不跨 SM 规约。这是 Mega MoE 可以把中间张量留在 SMEM 而不写 HBM 的前提。" >}}
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F8.svg" label="F8" caption="Dispatch 采用 pull：本 rank 根据 expert count 从远端 symmetric buffer 主动拉 token。" >}}
 
-调度器的 `fetch_next_l1_block` / `fetch_next_l2_block` 都用同一个 `block_idx` 游标，并且只在 wave 内有效。一个 SM 在 Phase 1 处理一组 (expert, m, n) 的 L1，**Phase 2 时回退 expert 游标到 wave 起点再跑一遍 L2**，但 wave 起点之内 expert 的 L1 输出（intermediate FP8）已经写到 `l2_acts` symm pool —— 同一颗 SM 立即在 Phase 2 读它做 L2 GEMM，期间不必跨 SM 规约。
+为什么 pull 比 push 更适合这里？Push 模式下，每个源 rank 要频繁通知目标 rank
+“我给你发了多少 token、写到哪里了”。通知粒度越细，跨 GPU signaling 延迟越痛。
+Pull 模式把控制权交给 expert 所在 rank：等 count 表稳定后，本 rank 自己按 offset
+把远端 token 拉进本地 pool。DeepSeek-V4 报告也把“低延迟跨 GPU signaling 未来会让
+push 更自然”列为硬件建议，这侧面说明当前实现选择 pull 是现实约束下的工程选择。
 
-{{< dd title="为什么不直接 Split-K？" >}}
-Split-K 把每 expert 的 K 维拆给多个 SM，最后做跨 SM atomicAdd。两个问题：
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F15.svg" label="F15" caption="Combine 路径：远端 rank 写回 BF16 expert 输出，源 rank 本地读取 K 份结果并按 routing 权重求和。" >}}
 
-1. L2 GEMM 必须等 atomicAdd 全部完成才能开始 → 引入同步墙；
-2. L1 中间结果不再是单 SM 私有，要么走 HBM（破坏融合），要么走 cluster DSMEM（约束规模）。
+DeepGEMM 测试里对 NVLink 字节数的估算是：
 
-Output-Stationary 的代价：BLOCK_M=192 是 expert 内 token-M 的最小步长，所以每 expert 至少要有 ~192 个被路由的 token 才填满（V4-Pro 384 expert × top-6，T=2048/rank → 平均每 expert ~32 token，仍不足，所以要靠 wave 级跨 expert 调度配合 imbalance factor=2 来吃掉负载抖动）。
-{{< /dd >}}
+```text
+num_nvlink_bytes = num_recv_tokens * hidden * 3
+```
 
-### 2.4 五段融合的数据流
+这里的 `3` 对应 FP8 dispatch 的 `1 * hidden` bytes 与 BF16 combine 的
+`2 * hidden` bytes。也就是说，Mega MoE 不是让通信量凭空变小，而是让这 `3d_model`
+bytes 尽可能与 `6d_model d_ff` FLOPs 同时发生。
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F1.svg" label="F1" caption="五段融合的宏观对比。传统实现（上）把 Dispatch / Linear1 / SwiGLU / Linear2 / Combine 拆成 5 个 kernel，每段之间必须走 HBM 交换中间张量并受 CPU 端 cudaLaunchKernelEx 串行化。Mega MoE（下）把五段塞进同一个 persistent kernel，中间结果全部留在 SMEM/TMEM/register 中，通信与 GEMM 在 warp 之间天然重叠。" >}}
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F13.svg" label="F13" caption="粗粒度时间线：Dispatch、L1、L2、Combine 的可见时间被相邻 wave 的工作吸收。" >}}
 
-## 并行分工 · 16 Warp Specialization
-*每类 warp 各司其职 —— 让硬件规划变得像 "流水车间"。*
+## Stage 6 · Barrier 才是这个 kernel 的控制平面
 
-### 3.1 16 个 warp 的角色分配
+把五段都放进一个 kernel 后，真正危险的不是“能不能发出 UMMA”，而是“谁能安全地读谁写的东西”。
+Mega MoE 需要同时处理 CTA 内、cluster 内、grid 内、rank 间的生产消费关系。
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F5.svg" label="F5" caption="16 warp 的角色分配（4 dispatch + 4 TMA/MMA + 8 epilogue）。这是一个典型的 warp-specialization 设计：每类 warp 专注单一职责，彼此通过 SMEM 上的 mbarrier 传递数据，没有任何一个 warp 同时承担两个职责，这使得寄存器预算可以为每类 warp 单独裁剪。" >}}
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F9.svg" label="F9" caption="Barrier 分层：片内流水用 mbarrier/named barrier，跨 SM/跨 rank 依赖用 grid 或 NVLink 级同步。" >}}
 
-### 3.2 为什么是 4 : 4 : 8 的非均匀？
+可以把同步分成三类：
 
-Blackwell SM100 有 255 reg/thread × 1024 thread/SM 的上限，Mega MoE 用了 512 thread/CTA（一颗 SM 放 1 个 CTA，两颗组成 cluster）。要在 32 KB register 里同时装下 dispatch、TMA、MMA、SwiGLU、量化、cast，**非均匀分配** 是唯一出路：
+| 同步范围 | 典型对象 | 解决的问题 |
+|---|---|---|
+| warp / CTA | `__syncwarp`, named barrier | 角色 warp 的局部 rendezvous |
+| TMA / UMMA pipeline | `mbarrier`, `tcgen05.commit` | full/empty、TMEM tile 可读写 |
+| grid / rank | atomic counter, `grid_sync`, `nvlink_barrier` | dispatch count、combine slot、cleanup |
 
-{{< formula type="sm" label="✅ 4 : 4 : 8 的背后逻辑" >}}
-- **Dispatch 4 warps**：lane-parallel 扫 topk_idx，32 lane 分别处理 `32/K` 个 token 的 K 条路由，刚好一个 warp 每次一小批。
-- **TMA + MMA 4 warps**：UMMA 发射只需 1 个 issuer warp，TMA 每路一个 warp，剩 1 个留作寄存器 dealloc（降低该 CTA 的 active warp 数，释放 reg 给 epi）。
-- **Epilogue 8 warps**：SwiGLU + amax + UE8M0 + FP8 cast + TMA store 的**数据通路宽**（N 维 128 elements），需要 2 个 warpgroup 并行消化，每个 warpgroup 负责一半 N。
-{{< /formula >}}
+`mbarrier` 的核心是 phase bit。producer 到达后切换 phase，consumer 等待期望 phase，
+同一组 barrier 可以在多轮 stage 中复用，不需要每轮重新分配对象。
 
-### 3.3 寄存器动态重分配（`setmaxnreg`）
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F10.svg" label="F10" caption="mbarrier phase bit：同一个 full/empty 槽位在多轮流水中复用，避免每轮重新建同步对象。" >}}
 
-{{< dd title="寄存器预算管理 —— Warp 级 '借贷'" >}}
-Blackwell 支持 `setmaxnreg.inc / setmaxnreg.dec` PTX 指令，让一个 warp 主动"让出"寄存器给同 CTA 的其它 warp。Mega MoE 的实际配置（[sm100_fp8_fp4_mega_moe.cuh:447-453](deep_gemm/include/deep_gemm/impls/sm100_fp8_fp4_mega_moe.cuh#L447-L453)）：
+grid-scope 同步也有类似思路。旧式 counter 常见写法是到 0 后 reset，reset 本身又需要
+额外同步，容易引入 ABA 问题。F16 展示的 bit31 flip 把轮次信息塞进 int32 高位，
+counter 持续递增，通过奇偶 phase 区分新旧轮次。
 
-<table>
-<tr><th>Warp 类</th><th>线程数</th><th>每线程寄存器</th><th>合计</th></tr>
-<tr><td>Dispatch (warp 0-3)</td><td>128</td><td>48</td><td>6,144</td></tr>
-<tr><td>Non-Epilogue (warp 4-7: TMA-A/B + MMA + cold)</td><td>128</td><td>40</td><td>5,120</td></tr>
-<tr><td>Epilogue + Combine (warp 8-15)</td><td>256</td><td>208</td><td>53,248</td></tr>
-<tr><td colspan="3">合计</td><td>64,512 / SM (= SM100 物理上限)</td></tr>
-</table>
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F16.svg" label="F16" caption="grid_sync bit31-flip：用高位表示轮次，省掉 reset counter 的额外全局同步。" >}}
 
-**关键比例**：Epilogue 拿到 ~80% 的寄存器（每 thread 208 个），刚好够装下 `WG_BLOCK_M \times kNumAtomsPerStore` 个 fp32 SwiGLU 中间值 + 4 路 amax 缓冲 + STSM packing slot。Dispatch 仅 48 reg / thread 是因为它是 TMA-driven，主体逻辑都在 SMEM 上。
-{{< /dd >}}
+为什么 barrier 是性能优化，而不只是正确性工具？因为它决定 wait 能否被隐藏。
+如果 producer 刚写完，consumer 才开始 spin，barrier 就变成裸延迟；如果 producer
+始终领先一个 stage，consumer 的 wait 大多落在 TMA/UMMA 的自然空隙里。
+Mega MoE 的 pipeline stage、warp role、wave 粒度，本质上都是为了让 barrier
+从“停顿点”变成“交接点”。
 
-### 3.4 流水线结构
+## Stage 7 · 数值路径：FP8 activation、FP4 weight、UE8M0 scale
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F6.svg" label="F6" caption="6 级软件流水线。TMA 比 UMMA 超前 1 拍、UMMA 比 Epilogue 超前若干拍。稳态下任何一个环节都没有空档；启动瞬态的“热身”只在 K0-K1 发生。mbarrier 的 full/empty 一来一回正是三条流水线的绑带。" >}}
+Mega MoE 的矩阵乘不是 BF16 grouped GEMM，而是 SM100 FP8xFP4。测试里输入先被
+`per_token_cast_to_fp8(..., use_ue8m0=True, gran_k=32)` 转成 FP8 + packed UE8M0；
+权重从 BF16 cast 到 FP4，同样用 `gran_k=32` 的 UE8M0 scale，并通过
+`transform_weights_for_mega_moe` 转成 kernel 需要的布局。
 
-🔑 关键结论：稳态下 TMA / UMMA / Epilogue 三条流水互不等待，时间上完全重叠。kernel 总时间 ≈ max(TMA 时间, UMMA 时间, Epilogue 时间) + 少量启动瞬态，不再是三者之和。
+前向数据流可以简化成：
 
-## 内存层级 · 单向数据流
-*FP4 权重 + FP8 激活 + UE8M0 scale + TMEM 累加器，把带宽与容量压到极致。*
+$$
+X_{bf16}
+\rightarrow (X_{fp8}, X_{sf})
+\rightarrow X_{fp8} W_{1,fp4}
+\rightarrow H_{fp32}
+\rightarrow \mathrm{SwiGLU}(H)
+\rightarrow (A_{fp8}, A_{sf})
+\rightarrow A_{fp8} W_{2,fp4}
+\rightarrow Y_{bf16}.
+$$
 
-### 4.1 FP8 × FP4 混合精度的收益
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F11.svg" label="F11" caption="L1 epilogue 在片上完成 TMEM 读出、SwiGLU、amax、UE8M0 scale 与 FP8 store。" >}}
 
-<table>
-<tr><th>Tensor</th><th>Dtype</th><th>字节/元素</th><th>HBM 占用（DeepSeek V3）</th></tr>
-<tr><td>Activations x / A</td><td>FP8 e4m3</td><td>1</td><td>~2 GB · 访问 O(T·K·d)</td></tr>
-<tr><td>Weights W₁ / W₂</td><td><b>FP4 e2m1</b></td><td>0.5</td><td>~1 GB / layer · 访问 O(N)</td></tr>
-<tr><td>SF_x (activation scale)</td><td>UE8M0（1 byte / 32 elem）</td><td>0.031</td><td>~60 MB</td></tr>
-<tr><td>SF_w (weight scale)</td><td>UE8M0（1 byte / 32 elem）</td><td>0.031</td><td>~30 MB</td></tr>
-<tr><td>Accumulator</td><td>FP32（in TMEM）</td><td>—</td><td>0 byte HBM（不外溢）</td></tr>
-</table>
+优化前，SwiGLU 常常是一个独立 kernel：读 BF16/FP32 L1 输出，做 activation，
+乘 routing 权重，求 amax，生成 scale，再写 FP8 给 L2。优化后，L1 epilogue warp
+直接从 TMEM 读出 partial result 到 register，在 register 内做 SwiGLU 与 amax，
+通过 warp shuffle 做 reduction，最后写 FP8 activation 与 UE8M0 scale。
 
-**核心洞察**：Mega MoE 选 FP4 权重不是因为它精度不足（实际误差可控在 < 0.5% logit diff），而是因为**权重是 HBM 最大头**。每降一半 bit，MoE kernel 的 HBM 压力就下一半。
+这会快的原因很具体：
 
-### 4.2 数据走向：一次 forward，零次 HBM 回写（中间张量）
+| baseline | Mega MoE |
+|---|---|
+| `H` materialize 到 HBM | `H` 从 TMEM/register 直接消费 |
+| amax 需要跨 kernel 读完整 activation | amax 在 epilogue 内随数据经过完成 |
+| scale tensor 作为独立产物进入下一 kernel | scale 与 activation 一起写入 L2 input pool |
+| L2 重新读取全局 `A_fp8` | L2 TMA 按 pool block 读取已经排好的片上/全局布局 |
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F3.svg" label="F3" caption="B200 内存层级。Mega MoE 的数据流是单向的： HBM → L2 → SMEM → TMEM → Register → SMEM → HBM ，中间任何一段 都不回写 HBM 。SMEM 是 K-pipeline 的工作区，TMEM 是 UMMA 专用的累加器，FP32 partial sum 从 TMEM 流到 Register 里做 SwiGLU 与 FP8 量化。" >}}
+边界条件是数值策略。`fast_math=1` 是测试默认路径，`activation_clamp` 默认为 10。
+这些选择服务于吞吐，但并不意味着任何模型、任何 calibration 都能无脑迁移。
+真正落地时，要把 FP8/FP4 QAT 或 PTQ 口径、scale 粒度、敏感层 fallback 与端到端
+质量一起验证。
 
-### 4.3 2-CTA Cluster：让 TMA-B 只发一次
+## Stage 8 · 性能甜点区与不适用场景
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F7.svg" label="F7" caption="Blackwell 2-CTA cluster 的 UMMA 广播模式。leader CTA（0）发出 tcgen05.mma.cta_group=2 ，硬件自动让 follower CTA（1）的 TMEM 也收到同一份 B 权重参与计算，相当于把 B 的 HBM→SMEM 带宽需求减半。Mega MoE 的 cluster=2 就是为此而设。" >}}
+Mega MoE 的收益随 `T` 增大并不是单调无限增长。它有固定成本，也有 buffer 上限。
 
-### 4.4 UMMA Block-Scaled FP8×FP4 的 SMEM 布局
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F14.svg" label="F14" caption="收益区间：极小 batch 被固定同步成本吃掉，中等 batch 最适合，大 batch 受 symmetric buffer 与拆分策略限制。" >}}
 
-# SMEM 里的 multi-stage 缓冲（kNumStages = 6）
-for s in 0..5:
-    tma_a_buf[s]    = [BLOCK_M, BLOCK_K]        FP8  (load_block_m=BLOCK_M/2 in 2-CTA)
-    tma_b_buf[s]    = [BLOCK_N, BLOCK_K]        FP4
-    sfa_buf[s]      = [SF_BLOCK_M, 4 bytes]     uint32 (UTCCP layout)
-    sfb_buf[s]      = [SF_BLOCK_N, 4 bytes]     uint32
+可以按四档理解：
 
-mbarriers:
-    full[s]   —— TMA A/B 都到 → arrive(expect_tx = tile_bytes)
-    empty[s]  —— MMA 消耗完 → arrive
-    tmem_full[e] / tmem_empty[e]  —— UMMA commit / Epi 读 TMEM 的环
+| 每 rank token 数 | 判断 | 原因 |
+|---:|---|---|
+| `<64` | 通常不推荐 | barrier、nvlink signal、persistent resource 固定成本占比高 |
+| `128-256` | 可能 breakeven | 通信开始能被部分隐藏，但 expert block 仍偏碎 |
+| `256-2048` | 主要目标区 | wave 足够多，GEMM 与 NVLink 都能连续前进 |
+| `>4096` | 需要切分或评估 fallback | symmetric buffer 与 pool 容量成为显存/调度约束 |
 
-{{< dd title="UTCCP：Uniform Tensor Core Copy Pipeline" >}}
-Blackwell 新增 PTX 指令 `tcgen05.cp`，用于把 SMEM 里的 scale factor 快速 copy 到 TMEM 的"scale 专用分区"。传统做法要 warp 读 SMEM 再写 TMEM，每次 ~30 cycles；UTCCP 直接 DMA 走，< 5 cycles，且与 UMMA 可以并发。
+DeepGEMM 测试的性能打印也暗示了该怎么看指标：它同时报告 fused kernel 时间、
+TFLOPS、HBM GB/s、NVLink GB/s，以及一个 combine reduction 的串行近似时间。
+这比只看 TFLOPS 更合理，因为 Mega MoE 的目标本来就是三件事同时好：
+Tensor Core 不饿，HBM 不被中间张量打爆，NVLink 不裸露在 critical path 上。
 
-Mega MoE 的 `_transpose_sf_for_utccp()` 在 Python 端预处理权重 SF 的布局，让运行时 UTCCP 能一次 burst 128-aligned。
-{{< /dd >}}
+## Stage 9 · 其他工程点：PDL、JIT、layout 与 baseline 公平性
 
-## 通信-计算重叠 · Symmetric Memory + NVLink TMA
-*把 dispatch / combine 的 NVLink 传输塞进 Tensor Core 忙的时候。*
+旧文把这一章写成“技巧列表”，重写后按“它解决什么边界问题”来放。
 
-### 5.1 Dispatch 的 NVLink 并发模型
+### 9.1 PDL：减少相邻 kernel 的 host gap
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F8.svg" label="F8" caption="Expert Parallel 的 NVLink dispatch 采用 “pull” 模式：本 rank 的 dispatch warp 根据本地 expert 计数表，用 TMA 从 symmetric buffer 上的远端副本拉取 token。symmetric memory 的魅力是“每个 rank 的同名 buffer 偏移一致”，只要一个 rank_idx 就可以跨节点寻址。" >}}
+Mega MoE 自身已经是一个大 kernel，但它仍然生活在更大的推理流水中。
+Programmatic Dependent Launch 允许后继 kernel 在前驱 kernel 的尾部阶段开始准备，
+减少 stream 上的 launch gap。DeepGEMM README 也暴露了 `deep_gemm.set_pdl/get_pdl`。
 
-### 5.2 Symmetric Memory：让"远端地址"变成一个偏移量
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F18.svg" label="F18" caption="PDL 解决的是 Mega MoE 与相邻 kernel 的边界，而不是 Mega MoE 内部五段的融合。" >}}
 
-{{< formula type="sm" label="✅ symmetric memory 的三个属性" >}}
-1. **对齐的虚拟地址**：每个 rank 的 buffer 映射到相同的 VA，本地访问就是 NVLink 远程访问（由 PAG 硬件路由）。
-2. **PyTorch 2.9+ 原生支持**：`torch.distributed._symmetric_memory.empty() / rendezvous()`。
-3. **TMA 兼容**：Blackwell 的 TMA descriptor 可直接指向 symm buffer，load/store 走 NVLink PAG 而非 NCCL 运行时。
-{{< /formula >}}
+### 9.2 JIT：shape-dependent config 不是手写常量
 
-# Mega MoE 的 symm buffer 布局（简化）
-struct SymBuffer[N_rank]:
-    x         [N_rank, T, d]        FP8       # 每 rank 自己的 token
-    x_sf      [N_rank, T, d/32]     UE8M0
-    topk_idx  [N_rank, T, K]        int32
-    topk_w    [N_rank, T, K]        float
-    l1_acts   [N_rank, ..., 2I]     FP8       # Linear1 跨 rank 输出
-    l1_acts_sf[...]                 UE8M0
-    l2_acts   [N_rank, T, K, d]     BF16      # combine 槽（K 份 expert 输出）
+DeepGEMM 的 JIT 入口会根据 shape 生成模板参数：`block_m/n/k`、`sf_block_m/n`、
+`num_experts_per_wave`、`num_stages`、动态 shared memory 大小、warp thread
+布局等。`DG_PRINT_CONFIGS=1` 可以打印这些配置。
 
-### 5.3 Combine：远端 rank 写你，你本地求和
+这意味着文章里出现的 `BLOCK_M=192`、`BLOCK_N=128`、`BLOCK_K=128` 应理解为
+当前 heuristic 的典型选择，不是数学上唯一正确的常量。未来当 `num_tokens`、
+SM 数、SMEM 容量或 FP4 指令约束变化时，这些值理应由 heuristic 调整。
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F15.svg" label="F15" caption="Combine 阶段的数据路径。各远端 rank（算出 token 的 expert 输出）把 BF16 结果通过 NVLink 写到源 rank 的 l2_acts[topk_slot] ；源 rank 在本地 TMA load 这 K 份副本，按 routing 权重 s 做 fma 求和，最后写出 Y。该阶段与 L2 GEMM 的下一 wave 重叠。" >}}
+### 9.3 Swap A/B：要谨慎表达成 layout 问题
 
-### 5.4 通信-计算重叠的时间线
+{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F19.svg" label="F19" caption="Swap A/B 的价值在于让 UMMA multicast 与实际复用方向对齐；它首先是布局约定，不是运行时魔法开关。" >}}
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F13.svg" label="F13" caption="一次 Mega MoE kernel 内的粗粒度时间线。Dispatch 与 Linear1 重叠（dispatch 只占前期 1/3），L1 epi 与 Linear2 重叠，Linear2 又与 Combine 重叠。每一段的时间都被下一段“吸收”，不再暴露成独立的 launch 代价。" >}}
+这类图很容易被误读成“运行时把 A/B 对调一下就快”。更准确的说法是：
+UMMA 对 operand major、TMA descriptor、scale layout、multicast 方向都有要求。
+如果某个 operand 在 cluster 内复用，layout 就应该提前为这个复用方向服务。
+因此它属于 weight transform / tensor map / kernel contract 的一部分，不是最后一刻
+改一个 flag。
 
-🔑 为什么 PULL 比 PUSH 好？  接收端最清楚"我要哪些 token"，PUSH 则要求发送端先做 expert counting（本质是重复计算）。PULL 让 dispatch 只在本 rank 内 read topk_idx 一次。
+### 9.4 Baseline 公平性：Mega MoE 赢的不是弱 baseline
 
-## 同步机制 · 6 类 barrier
-*"选用原则：能用 mbarrier 不用 named bar，能用 named bar 不用 grid_sync。"*
+`tests/test_mega_moe.py` 的 baseline 已经包含：
 
-### 6.1 六类同步原语一览
+- DeepEP dispatch/combine；
+- DeepGEMM grouped FP8xFP4 GEMM；
+- TileLang SwiGLU + FP8 quant；
+- CUDA graph benchmark；
+- bitwise correctness check。
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F9.svg" label="F9" caption="Mega MoE 使用的 6 类同步原语。左上三格（mbarrier / named bar / tcgen05.commit）是 CTA-scope，右侧（grid_sync / nvlink_barrier / per-block）是 grid/rank-scope。选用原则：能用 mbarrier 不用 named bar，能用 named bar 不用 grid_sync，因为粒度越大延迟越高。" >}}
+所以这篇文章不应该把 Mega MoE 写成“拿 fused kernel 打 PyTorch eager”。
+它更像是在一个已经高度优化的 MoE runtime 上继续合并边界：少一次 materialization、
+少一次调度、少一次可见同步，累积起来才接近 Figure 5 的理论收益。
 
-### 6.2 mbarrier 的 Phase Bit 魔法
+## Stage 10 · Optimization Audit：逐项查漏
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F10.svg" label="F10" caption="mbarrier 的 64-bit 状态字段与 phase bit 机制。每轮 arrive 完整 → flip，consumer 的 wait 只需知道“目前是第几轮”（phase 的期望值），因此同一个 mbarrier 可以被 producer-consumer 无限次复用。grid_sync 的 bit31-flip 借用了同一思想。" >}}
+| 优化点 | 来源位置 | baseline 瓶颈 | 机制 | tradeoff / 适用边界 |
+|---|---|---|---|---|
+| wave-based EP overlap | DeepSeek-V4 §3.1 / P1 | Dispatch、GEMM、Combine 串行或粗粒度两段重叠 | 按 expert wave 交错执行通信与计算 | batch 太小或路由极不均时固定成本显眼 |
+| mega-kernel fusion | DeepGEMM README / API | 五段 kernel 边界反复 materialize | 一个 persistent kernel 承载五段 | 需要 SM100 与 symmetric memory |
+| output-stationary L1/L2 | scheduler / F12 | L1 输出交给下个 kernel，走 HBM | 同一 wave 内生产消费 L1 输出 | `BLOCK_M` padding 与 expert token 不均会影响效率 |
+| warp specialization | heuristic / F5 | 单一 thread 角色无法兼顾通信、MMA、epilogue | 4 dispatch + 4 non-epi + 8 epi warps | 资源被固定切分，小 batch 可能浪费 |
+| register reallocation | SM100 kernel design | MMA 与 epilogue register 需求冲突 | `setmaxnreg` 给不同 warpgroup 不同预算 | 硬件相关，移植性差 |
+| 6-stage TMA/UMMA pipeline | heuristic / F6 | TMA、MMA、epilogue 互相等待 | multi-stage SMEM + mbarrier full/empty | stage 数受 SMEM 容量约束 |
+| 2-CTA cluster UMMA | SM100 / F7 | 相邻 CTA 重复搬运可复用 operand | cluster multicast 共享 tile | 要求 SM 数、N-block 对齐 |
+| symmetric memory pull dispatch | API layout / F8 | push 通知延迟高，通信 kernel 边界硬 | 远端地址 = rank + offset，本 rank 主动 pull | 需要 PyTorch symmetric memory 与多进程 |
+| combine slot + local reduce | API layout / F15 | Combine 独立 all-to-all 暴露 | 远端写回 BF16 slot，本地按 `s` 求和 | combine reduction 对极小 batch 是固定开销 |
+| mbarrier phase pipeline | kernel sync / F10 | 每 stage 重新同步或 reset | phase bit 复用 full/empty barrier | producer 不领先时 wait 仍暴露 |
+| grid_sync bit31 flip | grid sync / F16 | reset counter 需要额外同步 | 高位编码轮次，counter 持续递增 | 只解决同步管理，不减少必要等待 |
+| FP8xFP4 + UE8M0 | README / API checks | weight/activation 带宽过大 | FP4 weight、FP8 act、packed scale | 质量依赖量化 recipe |
+| SwiGLU + amax + quant epilogue | F11 / test baseline | activation 独立 kernel 读写 HBM | TMEM/register 内完成激活与 scale | 激活函数复杂度会直接压 epilogue |
+| PDL | README utilities / F18 | kernel 间 host launch gap | 后继 kernel 提前 setup | 作用在 Mega MoE 外层流水 |
+| JIT config | README / heuristic | 手写固定参数难覆盖 shape | shape-dependent template generation | 首次编译与 cache 管理需要工程化 |
 
-{{< dd title="Transaction Count：TMA 的'精确到字节'同步" >}}
-普通 mbarrier.arrive 只减 `expected_arrival`；TMA-aware arrive 额外携带 `expect_tx = bytes`，硬件会累加收到的 TMA 数据字节数。只有 **expected_arrival=0 AND 累计 tx 达到 expect_tx** 时才 flip phase。
+如果只记一个判断标准：每个优化点都应该回答“原来哪块数据、哪次同步、哪段通信或哪次
+调度还暴露在 critical path 上；现在它被删除了，还是被藏到别的工作下面了”。答不上来，
+就只是技巧名词。
 
-这让 "TMA 完成" 的语义精确到字节，避免传统"loop arrive"的 race condition。
-{{< /dd >}}
+## Appendix · 用法、调试与源码入口
 
-### 6.3 grid_sync 的 bit31-flip 优化
+DeepGEMM README 的最小调用路径是：
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F16.svg" label="F16" caption="Grid-scope 同步的经典实现要么靠 atomicSub 到 0 后热轮询，要么每次 reset counter。Mega MoE 的 grid_sync 借用 mbarrier 的 phase bit 思想，用 int32 的 bit31 作“轮次奇偶位”，counter 永远只增，省掉 reset。" >}}
+```python
+buffer = deep_gemm.get_symm_buffer_for_mega_moe(
+    group, num_experts, num_max_tokens_per_rank, num_topk,
+    hidden, intermediate_hidden,
+)
 
-### 6.4 死锁预防的"三道防线"
+transformed_l1, transformed_l2 = deep_gemm.transform_weights_for_mega_moe(
+    l1_weights, l2_weights,
+)
 
-{{< formula type="sm" label="✅ 三道防线" >}}
-1. **mbarrier init=4 而不是 2**：冷启动时 MMA 超发一次也不会被 empty barrier 阻塞，消除了 "producer-consumer 同时卡零" 的死锁。
-2. **named bar id=1 (`kDispatchWithEpilogueBarrierIdx`)**：让 Dispatch warps 与 Epilogue warps 在 wave 结束处会合 —— dispatch 提前退出会让下一波 wave 读到错误 topk。
-3. **bit31-flip 抗 ABA**：grid_sync counter 永远只增，不需 reset，避免"上一轮残留计数被误解"。
-{{< /formula >}}
+buffer.x[:num_tokens].copy_(x_fp8)
+buffer.x_sf[:num_tokens].copy_(x_sf)
+buffer.topk_idx[:num_tokens].copy_(topk_idx)
+buffer.topk_weights[:num_tokens].copy_(topk_weights)
 
-## 数值 · FP8×FP4 + UE8M0
-*"精度不是一刀切，而是每一步选它刚好够用的 dtype。"*
+y = torch.empty((num_tokens, hidden), dtype=torch.bfloat16, device="cuda")
+deep_gemm.fp8_fp4_mega_moe(y, transformed_l1, transformed_l2, buffer)
+```
 
-### 7.1 Dtype 路径全景
+调试时最常用的环境变量：
 
-x (BF16 rel)
-  └─► per-token FP8 quant (UE8M0 scale, 1-per-32-elem)
-      └─► Dispatch via NVLink TMA → l1_acts (FP8)
-          └─► UMMA FP8 · FP4 → TMEM FP32 accumulator
-              └─► register FP32 (SwiGLU · topk_w · clamp)
-                  └─► amax per-32-col → UE8M0 scale
-                      └─► FP32 / scale → FP8 e4m3 (pack via __nv_fp8x4)
-                          └─► SMEM → TMA store (symm buffer)
-                              └─► (second UMMA for Linear2, FP8·FP4)
-                                  └─► TMEM FP32 → register → BF16 cast
-                                      └─► NVLink write to source rank
-                                          └─► Combine weighted sum in BF16
-                                              └─► Y (BF16)
+| 变量 | 作用 |
+|---|---|
+| `DG_PRINT_CONFIGS=1` | 打印每个 shape 选出的 MegaMoEConfig |
+| `DG_JIT_DEBUG=1` | 输出 JIT 调试信息 |
+| `DG_JIT_PTXAS_VERBOSE=1` | 查看 ptxas 资源信息 |
+| `DG_JIT_PTXAS_CHECK=1` | 检查 local memory spill |
+| `DG_COMM_KERNEL_DEBUG=1` | 每次调用后清零 symmetric buffer，定位通信脏数据 |
 
-### 7.2 L1 Epilogue 的 SwiGLU-amax-Quant 流水
+源码阅读顺序建议：
 
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F11.svg" label="F11" caption="L1 epilogue 的 7 步流水（TMEM → register → SwiGLU → amax → UE8M0 → FP8 → TMA）全部在一个 warp 内完成，中间不再落 HBM。关键技巧：amax 在 register 里用 __shfl_xor_sync 做 warp-shuffle reduce，避免 SMEM 同步开销。" >}}
+| 文件 | 读什么 |
+|---|---|
+| `README.md` | API、依赖、JIT/PDL/env var |
+| `tests/test_mega_moe.py` | baseline、correctness、性能指标口径 |
+| `csrc/apis/mega.hpp` | symmetric buffer layout 与 Python binding |
+| `csrc/jit_kernels/heuristics/mega_moe.hpp` | block、wave、stage、thread heuristic |
+| `deep_gemm/include/deep_gemm/scheduler/mega_moe.cuh` | wave scheduler 与 L1/L2 phase 状态机 |
+| `csrc/jit_kernels/impls/sm100_fp8_fp4_mega_moe.hpp` | JIT launch、TensorMap、SM100 分发 |
 
-{{< dd title="为什么 amax 选 UE8M0 而不是 FP16 scale？" >}}
-UE8M0 (E8M0) 只有指数，没有 mantissa —— 整个 scale 就是 2^e，e ∈ {-127..127}。这带来：
-
-- **硬件支持**：Blackwell UMMA block-scaled 模式原生以 E8M0 解释 SF，无需运行时转换。
-- **存储紧凑**：1 byte / 32 元素 → SF 张量仅占 activations 的 1/32 额外存储。
-- **除法免费**：x / scale = x × 2^(-e) = 位运算调整指数，不走 FP 除法 ALU。
-- **精度够用**：MX-FP8 规范证明对 attention / FFN 的 logits 误差 < 0.5%。
-{{< /dd >}}
-
-### 7.3 Fast-Math Trade-off
-
-<table>
-<tr><th>选项</th><th>Fast Math ON</th><th>Fast Math OFF</th></tr>
-<tr><td>$silu(x) = x \cdot sigmoid(x)$</td><td>`x \cdot __frcp_rn(1+exp2(-1.443\cdot x))`</td><td>IEEE expf + div</td></tr>
-<tr><td>amax / scale</td><td>shfl + 位运算提取 exp</td><td>frexp + scale quant</td></tr>
-<tr><td>FP8 cast</td><td><code>__nv_cvt_float_to_fp8_v2</code> (无 flush)</td><td>带 denormal flush</td></tr>
-<tr><td>精度差异</td><td>max ΔY ~0.1%</td><td>bit-exact</td></tr>
-</table>
-
-`args.fast_math=1` 是 Mega MoE 默认打开的路径，与 cuBLAS BF16 / FP16 比误差低一个数量级（max 0.1% vs 8.3 logit diff on cuBLAS FP16）。
-
-## 性能与 Batch Sweet Spot
-*不是所有 batch size 都适合 Mega MoE。*
-
-### 8.1 收益曲线
-
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F14.svg" label="F14" caption="Mega MoE 收益随每卡 token 数 T 的变化（源自 complete guide §8.3.7 的解析式）。T<128 固定 barrier 开销占主导，不如传统方案；T=256～2048 是最佳区间，融合收益完全抵消固定开销；T>4096 受限于 symmetric buffer 显存，需切分。" >}}
-
-### 8.2 四档推荐
-
-<table>
-<tr><th>T (tokens/rank)</th><th>推荐度</th><th>原因</th></tr>
-<tr><td>T &lt; 128</td><td>❌</td><td>固定 barrier 开销 ~24 µs 占绝对主导</td></tr>
-<tr><td>128 ≤ T &lt; 256</td><td>⚠️ breakeven</td><td>融合收益微弱，需实测</td></tr>
-<tr><td><b>256 ≤ T ≤ 2048</b></td><td><b>✅ 最佳</b></td><td>通信-计算完全重叠，SymmBuf &lt; 1.5 GB</td></tr>
-<tr><td>2048 &lt; T ≤ 4096</td><td>✅ 边际递减</td><td>SymmBuf &gt; 3 GB 需权衡</td></tr>
-<tr><td>T &gt; 4096</td><td>⚠️ 内存受限</td><td>SymmBuf &gt; 6 GB，建议切分</td></tr>
-</table>
-
-### 8.3 breakeven 公式（引自原始 complete guide §8.3.7）
-
-T_breakeven ≈ T_fixed_overhead / (T_comm_per_token + T_launch_saving_per_T)
-             ≈ 24 µs / (0.14 µs + 20/T)
-             ≈ 161 tokens (T→∞ 时)
-
-### 8.4 适用场景定位
-
-<table>
-<tr><th>场景</th><th>是否适用</th><th>替代</th></tr>
-<tr><td>Training prefill (T &gt; 8K)</td><td>⚠️ 切分后可用</td><td>传统 unfused GEMM 吞吐更高</td></tr>
-<tr><td>Online inference batched prefill</td><td>✅ 主目标</td><td>—</td></tr>
-<tr><td>Batched decoding (T=几百，spec/beam)</td><td>✅</td><td>—</td></tr>
-<tr><td>单 token decode (T=1～64)</td><td>❌</td><td>dense FFN + DeepEP，或正在 feature 分支上优化的 MegaFFN</td></tr>
-</table>
-
-### 8.5 V4 论文给出的端到端加速
-
-{{< formula type="sm" label="✅ DeepSeek V4 §3.1 实测数据" >}}
-- **一般推理工作负载**：1.50 ~ 1.73× vs 强非融合 baseline（NVIDIA + 华为 Ascend NPU 都验证过）
-- **RL rollout / 高速 agent serving 等延迟敏感场景**：最高 **1.96×**（贴近 1.92× 的理论上界）
-- 同一份 kernel 既服务训练也服务推理（V4 强调"训练-推理 bitwise 复现"）
-{{< /formula >}}
-
-### 8.6 C/B 平衡：硬件设计的可编程目标
-
-把 §1.1 的关键不等式重写一遍并实例化到 V4-Pro：
-
-C / B  ≤  V_comp / V_comm  =  6·d·I / (3·d)  =  2·I  =  6144  FLOPs/Byte
-
-<table>
-<tr><th>硬件</th><th>峰值 FP8 算力 C</th><th>NVLink 5 双向带宽 B</th><th>C/B</th><th>vs 6144</th></tr>
-<tr><td>B200 (8-GPU NVLink)</td><td>~10 PFLOP/s</td><td>~900 GB/s</td><td>~11,100</td><td>偏算力（通信不完全 hide，但接近）</td></tr>
-<tr><td>H100 (8-GPU NVLink 4)</td><td>~4 PFLOP/s</td><td>~600 GB/s</td><td>~6,700</td><td>恰好平衡</td></tr>
-<tr><td>"理想"硬件</td><td>—</td><td>≥ C/6144</td><td>= 6144</td><td>通信完全 hide</td></tr>
-</table>
-
-这个不等式给硬件团队一个明确的**带宽 / 算力配比目标**。V4 论文明确说："带宽超过这条线，再加带宽收益递减；建议未来硬件以这个平衡点为目标，而不是无脑堆带宽"。
-
-### 8.7 真实 benchmark（复刻 tests/test_mega_moe.py）
-
-运行：torchrun --nproc_per_node 8 tests/test_mega_moe.py --num-max-tokens-per-rank 2048 --hidden 7168 --intermediate-hidden 3072 --num-experts 384 --num-topk 6
-对照 baseline = DeepEP dispatch + Grouped-FP8FP4-GEMM + tilelang SwiGLU + Grouped-GEMM + DeepEP combine。报告内容：相对加速、TFLOPs、HBM GB/s、NVLink GB/s。
-
-## 其他优化点
-*PR #304 的"搭车"优化点 —— 每个都有独立价值。*
-
-### 9.1 Swap A/B 是布局约定，不是运行时开关
-
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F19.svg" label="F19" caption="Swap A/B 的直觉：UMMA 2-CTA multicast 只复制“第二个操作数 B”。默认约定 A=activations / B=weights 在 小 M 场景下浪费了这一硬件能力——因为 weights 本来可以共享。Swap 把两者对调，让 在 M 维短的 activations 走 multicast ，权重在 N 维拆给不同 CTA。" >}}
-
-纠正一个普遍误解：Mega MoE 的"Swap A/B"不是一个可开关的优化项 —— 它是 kernel 始终采用的布局约定。代码（[sm100_fp8_fp4_mega_moe.cuh:977-981](deep_gemm/include/deep_gemm/impls/sm100_fp8_fp4_mega_moe.cuh#L977-L981)）里 UMMA 描述符的第一模板参数填的是 b_dtype_t（FP4 weights），第二个填 a_dtype_t（FP8 activations）—— 这是"硬件 A 槽放 weight"。在 2-CTA UMMA cta_group=2 模式下硬件 A 是被 multicast 的那个操作数，所以 weight 在两颗 SM 之间共享，token 在两颗 SM 间被切分（leader CTA 拿前半 token，follower CTA 拿后半，LOAD_BLOCK_M = BLOCK_M/2）。
-
-### 9.2 Min-peeling 的多 rank 拉取负载均衡
-
-Dispatch 阶段每个 token 可能由**多个源 rank** 之一持有（实际由本 rank 的 expert 在所有源 rank 中的 token 计数决定）。如果朴素地按 token_idx 顺序对 rank 取模，会让 NVLink 单链路热度不均。
-
-实际算法（[sm100_fp8_fp4_mega_moe.cuh:638-700](deep_gemm/include/deep_gemm/impls/sm100_fp8_fp4_mega_moe.cuh#L638-L700)）：
-
-每一轮：length = min(active_ranks 的剩余 token 数)
-        本轮可分配 token 数 = length × num_active_ranks
-        slot_idx 落在本轮：rank = 第 (slot_idx % num_active_ranks) 个仍活跃 rank
-                          rank 内偏移 = offset + slot_idx / num_active_ranks
-        否则进入下一轮：每个 rank 扣掉 length，offset += length，剔除耗尽的 rank
-
-这保证**同一轮内所有活跃 rank 平均出 length 个 token**，相邻 token 来自不同 rank，NVLink 各方向负载自然均衡。
-
-### 9.3 PDL (Programmatic Dependent Launch)
-
-{{< fig src="/figures/2026-04-28-deepgemm-mega-moe-blackwell-融合-moe-kernel-深度解析/F18.svg" label="F18" caption="PDL 让下一个 kernel 在上一个 kernel 的 grid epilogue 还没退出时就开始 setup，消除了 launch gap。Mega MoE 的 host 调用通过 cudaLaunchKernelEx + cudaLaunchAttributeProgrammaticStreamSerialization 启用。" >}}
-
-### 9.4 JIT 与编译加速
-
-{{< dd title="PR #304 的 JIT 改进" >}}
-- **C++20 升级**：`csrc/` 全面用 concepts / constexpr-if，减少 if-constexpr 嵌套。
-- **Include parser 重写**：JIT 编译时只拉取真正被 kernel 用到的 include 链，SM100 mega_moe 编译时间 12s → 4s。
-- **Distributed FS 下的 .so lock fix**：多 rank 并发 JIT 时不会因 nfs flock 失败互卡。
-{{< /dd >}}
-
-### 9.5 FP4 Indexer（MQA Logits）
-
-Mega MoE 附带的第二个独立 kernel `sm100_fp4_mqa_logits.cuh` —— 对 MQA attention 做 FP4 logits scoring，支持更大 MTP (multi-token prediction)。与 Mega MoE 共享一套 UMMA block-scaled 基础设施。
-
-### 9.6 其他 bug fix
-
-- 分布式 FS 上 JIT 崩溃：改用 flock + backoff retry。
-- 部分 kernel hang：在 `tcgen05.alloc` 失败时 fallback，而不是死锁。
-- IMA（illegal memory access）：SM100 sanitizer 发现 combine 阶段 topk_slot > K 时越界，已加 guard。
-
-## 未来硬件 · 4 条建议
-*DeepSeek V4 §3.1 末尾的 "Observations & Proposals" —— 让 mega-kernel 这种极致融合更顺手。*
-
-### 10.1 算力 / 带宽配比
-
-已在 §1.1、§8.6 详述。重点：未来硬件应当瞄准 $C/B = 2\cdot I$ 这条平衡点而不是无限堆带宽。一旦带宽满足这个不等式，再加 silicon area 给互联收益递减。
-
-### 10.2 Power Budget
-
-极致 kernel fusion 把 compute / memory / network 三条管道同时拉满 → power throttling 容易成为新瓶颈。V4 建议未来芯片对"全并发"工作负载预留足够功率裕度。
-
-### 10.3 通信原语
-
-Mega MoE 当前选择 **pull-based**：每个 GPU 主动从远端读取数据，避免细粒度 push 所需的"通知延迟"。但 push 在很多语义上更自然（发送端知道目的，少一次寻址）。V4 建议：未来若硬件把 cross-GPU signaling 延迟降下来，push 模式就能重新可行。
-
-### 10.4 激活函数
-
-{{< formula type="std" label="⚠️ V4 提出的非常规建议" >}}
-"用低成本的 elementwise 激活替换 SwiGLU，没有 exp / div"。理由：
-
-- Post-GEMM activation 的代价直接随 FFN 规模线性增长。SwiGLU 需要 silu (= x·σ(x))，**每元素一次 expf + 一次 fdiv**，在 epilogue 里压寄存器。
-- 同样参数量预算下，**去掉 gate projection 可以放大 intermediate 维度 d_I**，反过来让 §1.1 的 V_comp/V_comm = 2·I 更大，进一步放松对带宽的要求。
-- 这是个"算法-系统协同"的设计建议：算法层选什么激活会直接影响硬件预算。
-{{< /formula >}}
-
-这四条建议在 V4-Pro 训练 1.6T 参数模型的实战中验证过 —— Mega MoE 不只是"今天能跑得快"的工程，它同时在告诉硬件团队"明天该怎么造"。
-
-## 编译、调试与源码导览
-*拿到代码立即上手需要知道的一切。*
-
-### A.1 编译（单条命令）
-
-git clone --recursive https://github.com/deepseek-ai/DeepGEMM.git && cd DeepGEMM
-git checkout <PR304-merge-commit>
-pip install -v -e . --no-build-isolation
-
-### A.2 运行测试（8 GPU）
-
-torchrun --nproc_per_node 8 tests/test_mega_moe.py \
-  --num-max-tokens-per-rank 2048 \
-  --hidden 7168 --intermediate-hidden 3072 \
-  --num-experts 384 --num-topk 6 \
-  --num-correctness-tests 100
-
-### A.3 调试环境变量
-
-<table>
-<tr><th>变量</th><th>用途</th></tr>
-<tr><td>`DG_JIT_DEBUG=1`</td><td>打印 JIT 选择的 kernel 配置（block_m / experts_per_wave / stages）</td></tr>
-<tr><td>`DG_DUMP_SASS=1`</td><td>导出 SASS 做指令级 profile</td></tr>
-<tr><td>`MEGA_MOE_TRACE=1`</td><td>在 kernel 里打 printf trace（编译期开关）</td></tr>
-<tr><td>`CUDA_LAUNCH_BLOCKING=1`</td><td>配合 sanitizer 定位 IMA</td></tr>
-</table>
-
-### A.4 源码路径导览
-
-<table>
-<tr><th>文件</th><th>内容</th></tr>
-<tr><td><a href="../../deep_gemm/include/deep_gemm/impls/sm100_fp8_fp4_mega_moe.cuh">impls/sm100_fp8_fp4_mega_moe.cuh</a></td><td><b>核心 kernel</b>，~2000 行 warp-specialized</td></tr>
-<tr><td><a href="../../deep_gemm/include/deep_gemm/scheduler/mega_moe.cuh">scheduler/mega_moe.cuh</a></td><td>Wave 调度 + pool_block 分配</td></tr>
-<tr><td><a href="../../deep_gemm/include/deep_gemm/layout/mega_moe.cuh">layout/mega_moe.cuh</a></td><td>Symm buffer 切片视图</td></tr>
-<tr><td><a href="../../deep_gemm/comm/barrier.cuh">comm/barrier.cuh</a></td><td>grid_sync / nvlink_barrier 实现</td></tr>
-<tr><td><a href="../../csrc/jit_kernels/heuristics/mega_moe.hpp">jit/heuristics/mega_moe.hpp</a></td><td>block_m / experts_per_wave 选择</td></tr>
-<tr><td><a href="../../csrc/jit_kernels/impls/sm100_fp8_fp4_mega_moe.hpp">jit/impls/sm100_fp8_fp4_mega_moe.hpp</a></td><td>Host-side TMA descriptor 构造与 launch</td></tr>
-<tr><td><a href="../../tests/test_mega_moe.py">tests/test_mega_moe.py</a></td><td>端到端测试 + DeepEP baseline 对比</td></tr>
-<tr><td><a href="../mega_moe_complete_guide.md">docs/mega_moe_complete_guide.md</a></td><td>3500 行详细指南（本文的素材来源）</td></tr>
-</table>
-
-### A.5 优化点清单
-
-★ Wave-based 细粒度 EP 流水（V4 §3.1）
-★ C/B ≤ 2·I 通信-计算平衡
-五段融合
-Output-Stationary
-Warp Specialization 4:4:8
-setmaxnreg 寄存器借贷
-动态 stage pipeline (≥2)
-Min-peeling rank round-robin
-PDL launch overlap
-TMEM 累加器
-2-CTA UMMA multicast
-UTCCP SF copy
-Swap A/B for small-M
-SMEM 跨 stage L1→L2
-L2 persisting cache hint
-FP4 权重
-FP8 e4m3 激活
-UE8M0 block scale
-Register SwiGLU + topk_w
-Warp-shuffle amax
-Activation clamp
-Fast-math silu
-mbarrier phase bit
-bit31-flip grid_sync
-Per-block arrival count
-Named bar id 隔离
-NVLink PULL dispatch
-Symmetric memory (torch 2.9)
-Combine weighted sum in-register
-TMA multicast for B
-UMMA block-scaled FP8·FP4
-JIT include parser 优化
-C++20 upgrade
-Distributed FS lock fix
-tcgen05.alloc fallback
-Combine barrier 双缓冲
-Expert count in-warp
-
-🤖 本文档基于 **DeepSeek V4 §3.1（Fine-Grained Communication-Computation Overlap）+ DeepGEMM PR #304 源码** 双重交叉派生 · 图示为手绘 SVG · 最后更新 2026-04-28（修订：将 wave-based fine-grained EP 提到核心位置；补充 C/B ≤ 2·I 平衡公式与最新 1.50-1.96× 实测加速；纠正 Swap A/B 是布局约定而非运行时开关；补全 min-peeling 拉取算法与 V4 硬件提议）
-
-## 完整技术指南
-*PR #304 技术报告 · Warp 级流程 · 设计原理 · Barrier 剖析 · 附录 —— 全部 3500 行原文渲染*
-
-## draw.io 四张原图
-*由 mega_moe_diagrams.drawio 按页拆分，内联 drawio viewer 渲染 —— 可缩放、切层、灯箱*
-
-## MegaFFN Qwen3-0.6B Decode Optimization Journey (v0 → v3.0)
-*B200 单 GPU dense FFN · 143 µs → 9.28 µs · 与 Mega MoE 互补的 decode-only kernel*
-
+最后，把 Mega MoE 放回 DeepSeek-V4 的系统语境里看：它不是孤立 kernel 炫技，
+而是模型、路由、量化、互联、Blackwell Tensor Core 与 runtime 共同对齐后出现的
+一个“通信可隐藏”的 MoE 执行单元。真正的工程难点也在这里：任何一层不对齐，
+论文 Figure 5 里的 1.92x 就会退回成一张好看的时间线。
