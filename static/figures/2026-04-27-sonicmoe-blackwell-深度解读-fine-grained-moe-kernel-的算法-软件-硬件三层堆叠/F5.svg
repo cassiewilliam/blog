@@ -1,4 +1,100 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640">
-<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><style>text{font-family:Arial,Helvetica,sans-serif;fill:#1f2328}.title{font-size:32px;font-weight:700}.h{font-size:16px;font-weight:700}.p{font-size:13px}.box{stroke-width:2;rx:10}.note{stroke-width:1.5;rx:8}.e{stroke:#555;stroke-width:2;fill:none;marker-end:url(#a)}</style></defs>
-<text x="30" y="48" class="title">SonicMoE optimization map from router to HBM</text>
-<rect x="30" y="100" width="205" height="150" fill="#dae8fc" stroke="#6c8ebf" class="box"/><text x="132.5" y="128" text-anchor="middle" class="h">Router / routing</text><text x="132.5" y="158" text-anchor="middle" class="p">top-K sorting kernel</text><text x="132.5" y="182" text-anchor="middle" class="p">top-K softmax fusion</text><text x="132.5" y="206" text-anchor="middle" class="p">token rounding TR</text><text x="132.5" y="230" text-anchor="middle" class="p">custom router interface</text><rect x="260" y="100" width="205" height="150" fill="#d5e8d4" stroke="#82b366" class="box"/><text x="362.5" y="128" text-anchor="middle" class="h">GMEM → SMEM load</text><text x="362.5" y="158" text-anchor="middle" class="p">gather fusion on M dim</text><text x="362.5" y="182" text-anchor="middle" class="p">gather fusion on K dim</text><text x="362.5" y="206" text-anchor="middle" class="p">cp.async / TMA gather4</text><text x="362.5" y="230" text-anchor="middle" class="p">relay warp for 2CTA gather</text><rect x="490" y="100" width="205" height="150" fill="#fff2cc" stroke="#d6b656" class="box"/><text x="592.5" y="128" text-anchor="middle" class="h">Grouped GEMM mainloop</text><text x="592.5" y="158" text-anchor="middle" class="p">varlen-M / varlen-K kernels</text><text x="592.5" y="182" text-anchor="middle" class="p">Ping-Pong scheduling on Hopper</text><text x="592.5" y="206" text-anchor="middle" class="p">UMMA + TMEM on Blackwell</text><text x="592.5" y="230" text-anchor="middle" class="p">2CTA MMA + CLC scheduler</text><rect x="720" y="100" width="205" height="150" fill="#e1d5e7" stroke="#9673a6" class="box"/><text x="822.5" y="128" text-anchor="middle" class="h">Epilogue fusion</text><text x="822.5" y="158" text-anchor="middle" class="p">SwiGLU / dSwiGLU</text><text x="822.5" y="182" text-anchor="middle" class="p">dH + dS + A_S outputs</text><text x="822.5" y="206" text-anchor="middle" class="p">async TMA load of H</text><text x="822.5" y="230" text-anchor="middle" class="p">async TMA store for heavy stores</text><rect x="950" y="100" width="205" height="150" fill="#f8cecc" stroke="#b85450" class="box"/><text x="1052.5" y="128" text-anchor="middle" class="h">Output / aggregation</text><text x="1052.5" y="158" text-anchor="middle" class="p">keep transient Y recyclable</text><text x="1052.5" y="182" text-anchor="middle" class="p">gather-and-sum aggregation</text><text x="1052.5" y="206" text-anchor="middle" class="p">avoid atomic scatter</text><text x="1052.5" y="230" text-anchor="middle" class="p">avoid sync st.global scatter fusion</text><path d="M235 175 H260" class="e"/><path d="M465 175 H490" class="e"/><path d="M695 175 H720" class="e"/><path d="M925 175 H950" class="e"/><rect x="30" y="310" width="205" height="115" fill="#fff" stroke="#666" class="note"/><text x="132.5" y="336" text-anchor="middle" class="h">Router overhead</text><text x="132.5" y="363" text-anchor="middle" class="p">torch.topk can be ~40% of router time;</text><text x="132.5" y="383" text-anchor="middle" class="p">generic top-K becomes visible after compute</text><text x="132.5" y="403" text-anchor="middle" class="p">kernels get faster.</text><path d="M132.5 250 V310" class="e"/><rect x="260" y="310" width="205" height="115" fill="#fff" stroke="#666" class="note"/><text x="362.5" y="336" text-anchor="middle" class="h">HBM traffic</text><text x="362.5" y="363" text-anchor="middle" class="p">Separate gather/pad materializes O(TKd)</text><text x="362.5" y="383" text-anchor="middle" class="p">buffers; fused load keeps source tensor</text><text x="362.5" y="403" text-anchor="middle" class="p">compact and L2-friendly.</text><path d="M362.5 250 V310" class="e"/><rect x="490" y="310" width="205" height="115" fill="#fff" stroke="#666" class="note"/><text x="592.5" y="336" text-anchor="middle" class="h">Small GEMM tiles</text><text x="592.5" y="363" text-anchor="middle" class="p">Fine-grained experts reduce arithmetic</text><text x="592.5" y="383" text-anchor="middle" class="p">intensity; persistent scheduling and tile</text><text x="592.5" y="403" text-anchor="middle" class="p">sharing keep SMs busy.</text><path d="M592.5 250 V310" class="e"/><rect x="720" y="310" width="205" height="115" fill="#fff" stroke="#666" class="note"/><text x="822.5" y="336" text-anchor="middle" class="h">Heavy epilogue</text><text x="822.5" y="363" text-anchor="middle" class="p">dSwiGLU/reduction/multi-output store would</text><text x="822.5" y="383" text-anchor="middle" class="p">stall MMA unless overlapped with async IO.</text><path d="M822.5 250 V310" class="e"/><rect x="950" y="310" width="205" height="115" fill="#fff" stroke="#666" class="note"/><text x="1052.5" y="336" text-anchor="middle" class="h">Aggregation choice</text><text x="1052.5" y="363" text-anchor="middle" class="p">Scatter fusion looks attractive but hurts</text><text x="1052.5" y="383" text-anchor="middle" class="p">determinism/BF16 atomic/all2all and may</text><text x="1052.5" y="403" text-anchor="middle" class="p">block next MMA tile.</text><path d="M1052.5 250 V310" class="e"/><rect x="95" y="500" width="1010" height="80" fill="#fff" stroke="#666" class="note"/><text x="600" y="530" text-anchor="middle" class="h">Design rule: optimize the whole MoE workflow, not just one GEMM.</text><text x="600" y="558" text-anchor="middle" class="p">SonicMoE wins by deciding what never materializes, what fuses into load/epilogue, what overlaps with MMA, and what remains as a separate memory-bound kernel.</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 680">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4d5562"/>
+    </marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#1f2328}
+      .title{font-size:30px;font-weight:700}
+      .head{font-size:15px;font-weight:700}
+      .body{font-size:12.5px}
+      .noteHead{font-size:14px;font-weight:700}
+      .noteText{font-size:12px}
+      .box{stroke-width:2}
+      .note{fill:#fff;stroke:#667085;stroke-width:1.4}
+      .flow{stroke:#4d5562;stroke-width:2.2;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+
+  <rect width="1280" height="680" fill="#fff"/>
+  <text x="40" y="54" class="title">SonicMoE optimization map from router to HBM</text>
+
+  <g id="top-row">
+    <rect x="40" y="105" width="220" height="145" rx="9" fill="#dae8fc" stroke="#6c8ebf" class="box"/>
+    <text x="150" y="132" text-anchor="middle" class="head">Router / routing</text>
+    <text x="150" y="160" text-anchor="middle" class="body">fused top-K sort</text>
+    <text x="150" y="182" text-anchor="middle" class="body">top-K softmax</text>
+    <text x="150" y="204" text-anchor="middle" class="body">token rounding</text>
+    <text x="150" y="226" text-anchor="middle" class="body">custom router API</text>
+
+    <rect x="280" y="105" width="220" height="145" rx="9" fill="#d5e8d4" stroke="#82b366" class="box"/>
+    <text x="390" y="132" text-anchor="middle" class="head">GMEM to SMEM load</text>
+    <text x="390" y="160" text-anchor="middle" class="body">gather on M dim</text>
+    <text x="390" y="182" text-anchor="middle" class="body">gather on K dim</text>
+    <text x="390" y="204" text-anchor="middle" class="body">cp.async / TMA gather</text>
+    <text x="390" y="226" text-anchor="middle" class="body">relay warp for 2CTA</text>
+
+    <rect x="520" y="105" width="220" height="145" rx="9" fill="#fff2cc" stroke="#d6b656" class="box"/>
+    <text x="630" y="132" text-anchor="middle" class="head">Grouped GEMM</text>
+    <text x="630" y="160" text-anchor="middle" class="body">varlen-M / varlen-K</text>
+    <text x="630" y="182" text-anchor="middle" class="body">persistent scheduling</text>
+    <text x="630" y="204" text-anchor="middle" class="body">UMMA + TMEM</text>
+    <text x="630" y="226" text-anchor="middle" class="body">2CTA + CLC scheduler</text>
+
+    <rect x="760" y="105" width="220" height="145" rx="9" fill="#e1d5e7" stroke="#9673a6" class="box"/>
+    <text x="870" y="132" text-anchor="middle" class="head">Epilogue fusion</text>
+    <text x="870" y="160" text-anchor="middle" class="body">SwiGLU / dSwiGLU</text>
+    <text x="870" y="182" text-anchor="middle" class="body">dH / dS / A_S outputs</text>
+    <text x="870" y="204" text-anchor="middle" class="body">async TMA load of H</text>
+    <text x="870" y="226" text-anchor="middle" class="body">async TMA store</text>
+
+    <rect x="1000" y="105" width="220" height="145" rx="9" fill="#f8cecc" stroke="#b85450" class="box"/>
+    <text x="1110" y="132" text-anchor="middle" class="head">Output / aggregation</text>
+    <text x="1110" y="160" text-anchor="middle" class="body">recycle transient Y</text>
+    <text x="1110" y="182" text-anchor="middle" class="body">gather-and-sum</text>
+    <text x="1110" y="204" text-anchor="middle" class="body">avoid atomics</text>
+    <text x="1110" y="226" text-anchor="middle" class="body">avoid sync scatter</text>
+  </g>
+
+  <path d="M260 178 H280" class="flow"/>
+  <path d="M500 178 H520" class="flow"/>
+  <path d="M740 178 H760" class="flow"/>
+  <path d="M980 178 H1000" class="flow"/>
+
+  <g id="bottom-row">
+    <rect x="40" y="330" width="220" height="125" rx="8" class="note"/>
+    <text x="150" y="358" text-anchor="middle" class="noteHead">Router overhead</text>
+    <text x="150" y="386" text-anchor="middle" class="noteText">top-K can dominate</text>
+    <text x="150" y="407" text-anchor="middle" class="noteText">once GEMM is faster</text>
+    <path d="M150 250 V330" class="flow"/>
+
+    <rect x="280" y="330" width="220" height="125" rx="8" class="note"/>
+    <text x="390" y="358" text-anchor="middle" class="noteHead">HBM traffic</text>
+    <text x="390" y="386" text-anchor="middle" class="noteText">avoid O(TKd) padding</text>
+    <text x="390" y="407" text-anchor="middle" class="noteText">keep X compact in L2</text>
+    <path d="M390 250 V330" class="flow"/>
+
+    <rect x="520" y="330" width="220" height="125" rx="8" class="note"/>
+    <text x="630" y="358" text-anchor="middle" class="noteHead">Small GEMM tiles</text>
+    <text x="630" y="386" text-anchor="middle" class="noteText">fine experts shrink tiles</text>
+    <text x="630" y="407" text-anchor="middle" class="noteText">scheduler hides imbalance</text>
+    <path d="M630 250 V330" class="flow"/>
+
+    <rect x="760" y="330" width="220" height="125" rx="8" class="note"/>
+    <text x="870" y="358" text-anchor="middle" class="noteHead">Heavy epilogue</text>
+    <text x="870" y="386" text-anchor="middle" class="noteText">multi-output stores</text>
+    <text x="870" y="407" text-anchor="middle" class="noteText">overlap with MMA</text>
+    <path d="M870 250 V330" class="flow"/>
+
+    <rect x="1000" y="330" width="220" height="125" rx="8" class="note"/>
+    <text x="1110" y="358" text-anchor="middle" class="noteHead">Aggregation choice</text>
+    <text x="1110" y="386" text-anchor="middle" class="noteText">deterministic reduce</text>
+    <text x="1110" y="407" text-anchor="middle" class="noteText">avoid blocking next tile</text>
+    <path d="M1110 250 V330" class="flow"/>
+  </g>
+
+  <rect x="90" y="535" width="1100" height="86" rx="8" class="note"/>
+  <text x="640" y="566" text-anchor="middle" class="noteHead">Design rule: optimize the whole MoE workflow, not just one GEMM.</text>
+  <text x="640" y="592" text-anchor="middle" class="noteText">Remove materialization, fuse load and epilogue, overlap memory traffic with MMA,</text>
+  <text x="640" y="612" text-anchor="middle" class="noteText">and leave only the kernels that should remain separate.</text>
+</svg>
