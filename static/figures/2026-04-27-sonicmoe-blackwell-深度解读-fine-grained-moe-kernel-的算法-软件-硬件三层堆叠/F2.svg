@@ -12,6 +12,7 @@
       .head{font-size:15px;font-weight:700}
       .small{font-size:12.5px;fill:#344054}
       .formula{font-family:Georgia,"Times New Roman",serif;font-size:21px;font-style:italic}
+      .formulaSm{font-family:Georgia,"Times New Roman",serif;font-size:17px;font-style:italic}
       .sub{font-size:12px;baseline-shift:sub}
       .box{stroke-width:2}
       .thin{stroke-width:1.4}
@@ -26,37 +27,39 @@
   <text x="40" y="48" class="title">SonicMoE: keep tensors close to the GEMM pipeline</text>
   <text x="40" y="76" class="subtitle">The workflow keeps the same MoE semantics but moves gather, activation, and reductions into the kernels that already touch the data.</text>
   <text x="55" y="125" class="lane">Forward: 3 kernels</text>
-  <rect x="120" y="145" width="170" height="86" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
-  <text x="205.0" y="176" text-anchor="middle" class="head">Up-proj</text>
-  <text x="205.0" y="203" text-anchor="middle" class="small">gather + act</text>
-  <rect x="380" y="145" width="170" height="86" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
-  <text x="465.0" y="176" text-anchor="middle" class="head">Down-proj</text>
-  <text x="465.0" y="203" text-anchor="middle" class="small">expert-packed Y</text>
-  <path d="M290 188 L380 188" class="edge"/>
-  <rect x="645" y="145" width="170" height="86" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
-  <text x="730.0" y="176" text-anchor="middle" class="head">Aggregation</text>
-  <text x="730.0" y="203" text-anchor="middle" class="small">gather-and-sum</text>
-  <path d="M550 188 L645 188" class="edge"/>
+  <rect x="120" y="145" width="190" height="86" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
+  <text x="215.0" y="173" text-anchor="middle" class="head">Up-proj</text>
+  <text x="215.0" y="201" text-anchor="middle" class="formula">H,A = f(X,π,W<tspan class="sub">1</tspan>)</text>
+  <rect x="380" y="145" width="190" height="86" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
+  <text x="475.0" y="173" text-anchor="middle" class="head">Down-proj</text>
+  <text x="475.0" y="201" text-anchor="middle" class="formula">Y<tspan class="sub">e</tspan> = A<tspan class="sub">e</tspan>W<tspan class="sub">2,e</tspan></text>
+  <text x="475.0" y="228" text-anchor="middle" class="small">transient</text>
+  <path d="M310 188 L380 188" class="edge"/>
+  <rect x="645" y="145" width="190" height="86" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
+  <text x="740.0" y="173" text-anchor="middle" class="head">Aggregation</text>
+  <text x="740.0" y="201" text-anchor="middle" class="formula">O<tspan class="sub">t</tspan> = Σ<tspan class="sub">e</tspan>πS Y</text>
+  <path d="M570 188 L645 188" class="edge"/>
   <rect x="900" y="145" width="170" height="86" rx="9" fill="#eef7ff" stroke="#4a6fd3" class="box"/>
-  <text x="985.0" y="176" text-anchor="middle" class="head">Output</text>
-  <text x="985.0" y="203" text-anchor="middle" class="small">O</text>
-  <path d="M815 188 L900 188" class="edge"/>
+  <text x="985.0" y="173" text-anchor="middle" class="head">Output</text>
+  <text x="985.0" y="201" text-anchor="middle" class="formula">O ∈ ℝ<tspan class="sub">T×d</tspan></text>
+  <path d="M835 188 L900 188" class="edge"/>
   <text x="55" y="305" class="lane">Backward: 5 kernels, but no Y / dY cache path</text>
   <rect x="120" y="330" width="185" height="88" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
-  <text x="212.5" y="361" text-anchor="middle" class="head">dX aggregation</text>
-  <text x="212.5" y="388" text-anchor="middle" class="small">sum expert grads</text>
+  <text x="212.5" y="358" text-anchor="middle" class="head">dX aggregation</text>
+  <text x="212.5" y="386" text-anchor="middle" class="formula">dX<tspan class="sub">t</tspan> = Σ<tspan class="sub">e</tspan>dX̃<tspan class="sub">t,e</tspan></text>
   <rect x="380" y="330" width="185" height="88" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
-  <text x="472.5" y="361" text-anchor="middle" class="head">Up act grad</text>
-  <text x="472.5" y="388" text-anchor="middle" class="small">dX + dW1</text>
+  <text x="472.5" y="358" text-anchor="middle" class="head">Up act grad</text>
+  <text x="472.5" y="386" text-anchor="middle" class="formula">dX̃<tspan class="sub">e</tspan>, dW<tspan class="sub">1,e</tspan></text>
   <rect x="645" y="318" width="220" height="112" rx="9" fill="#fff8e7" stroke="#e0b300" class="box"/>
-  <text x="755.0" y="349" text-anchor="middle" class="head">Fused dH kernel</text>
-  <text x="755.0" y="376" text-anchor="middle" class="small">dH + dS + A_S</text>
+  <text x="755.0" y="346" text-anchor="middle" class="head">Fused dH kernel</text>
+  <text x="755.0" y="374" text-anchor="middle" class="formula">dS<tspan class="sub">e,t</tspan>=⟨dA′<tspan class="sub">e,t</tspan>,A<tspan class="sub">e,t</tspan>⟩</text>
+  <text x="755.0" y="401" text-anchor="middle" class="small">also emits dH, A′</text>
   <rect x="930" y="330" width="170" height="88" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
-  <text x="1015.0" y="361" text-anchor="middle" class="head">Weight grad</text>
-  <text x="1015.0" y="388" text-anchor="middle" class="small">dW1 / dW2</text>
+  <text x="1015.0" y="358" text-anchor="middle" class="head">Weight grad</text>
+  <text x="1015.0" y="386" text-anchor="middle" class="formula">dW<tspan class="sub">2,e</tspan>=A′<tspan class="sub">e</tspan><tspan baseline-shift="super" font-size="12">T</tspan>dO<tspan class="sub">e</tspan></text>
   <path d="M305 374 L380 374" class="edge"/>
   <path d="M565 374 L645 374" class="edge"/>
   <path d="M865 374 L930 374" class="edge"/>
-  <rect x="420" y="245" width="320" height="40" rx="8" fill="#fff5f0" stroke="#b85450" class="thin"/>
-  <text x="580" y="270" text-anchor="middle" class="small">Only X, H, and routing metadata are cached for backward</text>
+  <rect x="350" y="246" width="460" height="44" rx="8" fill="#fff5f0" stroke="#b85450" class="thin"/>
+  <text x="580" y="274" text-anchor="middle" class="formulaSm">cache = {X,H,π,S}, |cache| = 2Td + 4TKn</text>
 </svg>

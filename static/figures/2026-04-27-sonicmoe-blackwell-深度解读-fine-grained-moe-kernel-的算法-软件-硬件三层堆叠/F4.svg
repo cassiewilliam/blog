@@ -12,6 +12,7 @@
       .head{font-size:15px;font-weight:700}
       .small{font-size:12.5px;fill:#344054}
       .formula{font-family:Georgia,"Times New Roman",serif;font-size:21px;font-style:italic}
+      .formulaSm{font-family:Georgia,"Times New Roman",serif;font-size:17px;font-style:italic}
       .sub{font-size:12px;baseline-shift:sub}
       .box{stroke-width:2}
       .thin{stroke-width:1.4}

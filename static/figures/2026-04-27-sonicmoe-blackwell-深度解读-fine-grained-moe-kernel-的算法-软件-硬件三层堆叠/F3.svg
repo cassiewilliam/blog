@@ -12,6 +12,7 @@
       .head{font-size:15px;font-weight:700}
       .small{font-size:12.5px;fill:#344054}
       .formula{font-family:Georgia,"Times New Roman",serif;font-size:21px;font-style:italic}
+      .formulaSm{font-family:Georgia,"Times New Roman",serif;font-size:17px;font-style:italic}
       .sub{font-size:12px;baseline-shift:sub}
       .box{stroke-width:2}
       .thin{stroke-width:1.4}
@@ -26,16 +27,16 @@
   <text x="40" y="48" class="title">SonicMoE works because three layers agree on what to eliminate</text>
   <rect x="70" y="90" width="980" height="72" rx="10" fill="#fff5f0" stroke="#b85450" class="box"/>
   <text x="105" y="120" class="head">Algorithm</text>
-  <text x="360" y="120" text-anchor="middle" class="small">do not materialize O(TKd)</text>
-  <text x="760" y="120" text-anchor="middle" class="small">fuse gather / activation / reductions</text>
+  <text x="360" y="120" text-anchor="middle" class="formula">¬cache {X<tspan class="sub">e</tspan>,Y,dY,dO<tspan class="sub">e</tspan>}</text>
+  <text x="760" y="120" text-anchor="middle" class="formula">dS<tspan class="sub">e,t</tspan>=⟨dA′<tspan class="sub">e,t</tspan>,A<tspan class="sub">e,t</tspan>⟩</text>
   <rect x="70" y="190" width="980" height="72" rx="10" fill="#fff8e7" stroke="#e0b300" class="box"/>
   <text x="105" y="220" class="head">QuACK software</text>
-  <text x="360" y="220" text-anchor="middle" class="small">one epilogue hook</text>
-  <text x="760" y="220" text-anchor="middle" class="small">express custom math without rewriting GEMM</text>
+  <text x="360" y="220" text-anchor="middle" class="formula">GEMM = base ⊕ epilogue</text>
+  <text x="760" y="220" text-anchor="middle" class="formula">epi_visit_subtile(dH,dS,A′)</text>
   <rect x="70" y="290" width="980" height="72" rx="10" fill="#f4faf4" stroke="#5fa55f" class="box"/>
   <text x="105" y="320" class="head">Blackwell/Hopper</text>
-  <text x="360" y="320" text-anchor="middle" class="small">async copy + TMEM + scheduler</text>
-  <text x="760" y="320" text-anchor="middle" class="small">hide remaining IO behind MMA</text>
+  <text x="360" y="320" text-anchor="middle" class="formula">MMA ∥ TMA/TMEM IO</text>
+  <text x="760" y="320" text-anchor="middle" class="formula">CLC: tile → cluster</text>
   <path d="M560 162 L560 190" class="edge"/>
   <path d="M560 262 L560 290" class="edge"/>
   <rect x="170" y="372" width="780" height="36" rx="8" fill="#f7f8fa" stroke="#d0d7de" class="thin"/>
