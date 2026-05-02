@@ -23,13 +23,13 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="f3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4faf4;strokeColor=#5fa55f;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;" value="&lt;b&gt;Aggregation&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 21px;&quot;&gt;&lt;i&gt;O&lt;sub&gt;t&lt;/sub&gt; = Σ&lt;sub&gt;e&lt;/sub&gt;πSY&lt;/i&gt;&lt;/font&gt;" vertex="1">
-          <mxGeometry height="86" width="190" x="645" y="145" as="geometry" />
+          <mxGeometry height="86" width="195" x="645" y="145" as="geometry" />
         </mxCell>
         <mxCell id="ef3" edge="1" parent="1" source="f2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4d5562;strokeWidth=2.2;endArrow=block;" target="f3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="f4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef7ff;strokeColor=#4a6fd3;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;" value="&lt;b&gt;Output&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 21px;&quot;&gt;&lt;i&gt;O ∈ ℝ&lt;sub&gt;T×d&lt;/sub&gt;&lt;/i&gt;&lt;/font&gt;" vertex="1">
-          <mxGeometry height="86" width="170" x="900" y="145" as="geometry" />
+          <mxGeometry height="86" width="170" x="920" y="145" as="geometry" />
         </mxCell>
         <mxCell id="ef4" edge="1" parent="1" source="f3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4d5562;strokeWidth=2.2;endArrow=block;" target="f4">
           <mxGeometry relative="1" as="geometry" />
@@ -44,10 +44,10 @@
           <mxGeometry height="88" width="185" x="380" y="355" as="geometry" />
         </mxCell>
         <mxCell id="b3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e7;strokeColor=#e0b300;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;" value="&lt;b&gt;Fused dH kernel&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 21px;&quot;&gt;&lt;i&gt;dS&lt;sub&gt;e,t&lt;/sub&gt;=⟨dA′&lt;sub&gt;e,t&lt;/sub&gt;,A&lt;sub&gt;e,t&lt;/sub&gt;⟩&lt;/i&gt;&lt;/font&gt;&lt;br&gt;also emits dH, A′" vertex="1">
-          <mxGeometry height="112" width="220" x="645" y="343" as="geometry" />
+          <mxGeometry height="112" width="195" x="645" y="343" as="geometry" />
         </mxCell>
         <mxCell id="b4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4faf4;strokeColor=#5fa55f;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;" value="&lt;b&gt;Weight grad&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font face=&quot;Times New Roman&quot; style=&quot;font-size: 21px;&quot;&gt;&lt;i&gt;dW&lt;sub&gt;2,e&lt;/sub&gt;=A′&lt;sub&gt;e&lt;/sub&gt;&lt;sup&gt;T&lt;/sup&gt;dO&lt;sub&gt;e&lt;/sub&gt;&lt;/i&gt;&lt;/font&gt;" vertex="1">
-          <mxGeometry height="88" width="170" x="930" y="355" as="geometry" />
+          <mxGeometry height="88" width="170" x="920" y="355" as="geometry" />
         </mxCell>
         <mxCell id="eb12" edge="1" parent="1" source="b1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4d5562;strokeWidth=2.2;endArrow=block;" target="b2">
           <mxGeometry relative="1" as="geometry" />
