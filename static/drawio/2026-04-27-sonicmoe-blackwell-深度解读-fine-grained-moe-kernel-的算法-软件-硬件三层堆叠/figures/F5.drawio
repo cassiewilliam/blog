@@ -1,30 +1,72 @@
-<mxfile host="generator" version="21.5.0" type="device">
+<mxfile host="embed.diagrams.net">
   <diagram name="figure" id="figure">
-    <mxGraphModel dx="1024" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="640" math="0" shadow="0">
+    <mxGraphModel dx="1770" dy="2828" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="640" math="0" shadow="0">
       <root>
-        <mxCell id="0"/>
-        <mxCell id="1" parent="0"/>
-        <mxCell id="d_1" value="&lt;font style=&quot;font-size: 50px;&quot;&gt;&lt;b&gt;SonicMoE optimization map from router to HBM&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontFamily=Times New Roman;fontSize=50;" vertex="1" parent="1"><mxGeometry x="30" y="10" width="1140" height="60" as="geometry"/></mxCell>
-        <mxCell id="d_2" value="&lt;b&gt;Router / routing&lt;/b&gt;&lt;br&gt;top-K sorting kernel&lt;br&gt;top-K softmax fusion&lt;br&gt;token rounding TR&lt;br&gt;custom router interface" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;" vertex="1" parent="1"><mxGeometry x="30" y="100" width="205" height="150" as="geometry"/></mxCell>
-        <mxCell id="d_3" value="&lt;b&gt;GMEM → SMEM load&lt;/b&gt;&lt;br&gt;gather fusion on M dim&lt;br&gt;gather fusion on K dim&lt;br&gt;cp.async / TMA gather4&lt;br&gt;relay warp for 2CTA gather" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;" vertex="1" parent="1"><mxGeometry x="260" y="100" width="205" height="150" as="geometry"/></mxCell>
-        <mxCell id="d_4" value="&lt;b&gt;Grouped GEMM mainloop&lt;/b&gt;&lt;br&gt;varlen-M / varlen-K kernels&lt;br&gt;Ping-Pong scheduling on Hopper&lt;br&gt;UMMA + TMEM on Blackwell&lt;br&gt;2CTA MMA + CLC scheduler" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;" vertex="1" parent="1"><mxGeometry x="490" y="100" width="205" height="150" as="geometry"/></mxCell>
-        <mxCell id="d_5" value="&lt;b&gt;Epilogue fusion&lt;/b&gt;&lt;br&gt;SwiGLU / dSwiGLU&lt;br&gt;dH + dS + A_S outputs&lt;br&gt;async TMA load of H&lt;br&gt;async TMA store for heavy stores" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;" vertex="1" parent="1"><mxGeometry x="720" y="100" width="205" height="150" as="geometry"/></mxCell>
-        <mxCell id="d_6" value="&lt;b&gt;Output / aggregation&lt;/b&gt;&lt;br&gt;keep transient Y recyclable&lt;br&gt;gather-and-sum aggregation&lt;br&gt;avoid atomic scatter&lt;br&gt;avoid sync st.global scatter fusion" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;" vertex="1" parent="1"><mxGeometry x="950" y="100" width="205" height="150" as="geometry"/></mxCell>
-        <mxCell id="d_7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" edge="1" parent="1" source="d_2" target="d_3"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="d_8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" edge="1" parent="1" source="d_3" target="d_4"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="d_9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" edge="1" parent="1" source="d_4" target="d_5"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="d_10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" edge="1" parent="1" source="d_5" target="d_6"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="d_11" value="&lt;b&gt;Router overhead&lt;/b&gt;&lt;br&gt;torch.topk can be ~40% of router time; generic top-K becomes visible after compute kernels get faster." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1"><mxGeometry x="30" y="310" width="205" height="115" as="geometry"/></mxCell>
-        <mxCell id="d_12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" edge="1" parent="1" source="d_2" target="d_11"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="d_13" value="&lt;b&gt;HBM traffic&lt;/b&gt;&lt;br&gt;Separate gather/pad materializes O(TKd) buffers; fused load keeps source tensor compact and L2-friendly." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1"><mxGeometry x="260" y="310" width="205" height="115" as="geometry"/></mxCell>
-        <mxCell id="d_14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" edge="1" parent="1" source="d_3" target="d_13"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="d_15" value="&lt;b&gt;Small GEMM tiles&lt;/b&gt;&lt;br&gt;Fine-grained experts reduce arithmetic intensity; persistent scheduling and tile sharing keep SMs busy." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1"><mxGeometry x="490" y="310" width="205" height="115" as="geometry"/></mxCell>
-        <mxCell id="d_16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" edge="1" parent="1" source="d_4" target="d_15"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="d_17" value="&lt;b&gt;Heavy epilogue&lt;/b&gt;&lt;br&gt;dSwiGLU/reduction/multi-output store would stall MMA unless overlapped with async IO." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1"><mxGeometry x="720" y="310" width="205" height="115" as="geometry"/></mxCell>
-        <mxCell id="d_18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" edge="1" parent="1" source="d_5" target="d_17"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="d_19" value="&lt;b&gt;Aggregation choice&lt;/b&gt;&lt;br&gt;Scatter fusion looks attractive but hurts determinism/BF16 atomic/all2all and may block next MMA tile." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1"><mxGeometry x="950" y="310" width="205" height="115" as="geometry"/></mxCell>
-        <mxCell id="d_20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" edge="1" parent="1" source="d_6" target="d_19"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="d_21" value="&lt;b&gt;Design rule:&lt;/b&gt; optimize the whole MoE workflow, not just one GEMM. SonicMoE wins by deciding what never materializes, what fuses into load/epilogue, what overlaps with MMA, and what remains as a separate memory-bound kernel." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1"><mxGeometry x="95" y="500" width="1010" height="80" as="geometry"/></mxCell>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="d_1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontFamily=Times New Roman;fontSize=50;" value="&lt;font style=&quot;font-size: 50px;&quot;&gt;&lt;b&gt;SonicMoE optimization map from router to HBM&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="1140" x="30" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="d_2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;" value="&lt;b&gt;Router / routing&lt;br&gt;&lt;/b&gt;&lt;br&gt;top-K sorting kernel&lt;br&gt;top-K softmax fusion&lt;br&gt;token rounding TR&lt;br&gt;custom router interface" vertex="1">
+          <mxGeometry height="150" width="205" x="10" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="d_3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;" value="&lt;b&gt;GMEM → SMEM load&lt;br&gt;&lt;/b&gt;&lt;br&gt;gather fusion on M dim&lt;br&gt;gather fusion on K dim&lt;br&gt;cp.async / TMA gather4&lt;br&gt;relay warp for 2CTA gather" vertex="1">
+          <mxGeometry height="150" width="205" x="240" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="d_4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;" value="&lt;b&gt;Grouped GEMM mainloop&lt;br&gt;&lt;/b&gt;&lt;br&gt;varlen-M / varlen-K kernels&lt;br&gt;Ping-Pong scheduling on Hopper&lt;br&gt;UMMA + TMEM on Blackwell&lt;br&gt;2CTA MMA + CLC scheduler" vertex="1">
+          <mxGeometry height="150" width="225" x="470" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="d_5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;" value="&lt;b&gt;Epilogue fusion&lt;br&gt;&lt;/b&gt;&lt;br&gt;SwiGLU / dSwiGLU&lt;br&gt;dH + dS + A_S outputs&lt;br&gt;async TMA load of H&lt;br&gt;async TMA store for heavy stores" vertex="1">
+          <mxGeometry height="150" width="205" x="720" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="d_6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;" value="&lt;b&gt;Output / aggregation&lt;br&gt;&lt;/b&gt;&lt;br&gt;keep transient Y recyclable&lt;br&gt;gather-and-sum aggregation&lt;br&gt;avoid atomic scatter&lt;br&gt;avoid sync st.global scatter fusion" vertex="1">
+          <mxGeometry height="150" width="205" x="950" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="d_7" edge="1" parent="1" source="d_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" target="d_3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_8" edge="1" parent="1" source="d_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" target="d_4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_9" edge="1" parent="1" source="d_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" target="d_5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_10" edge="1" parent="1" source="d_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" target="d_6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" value="&lt;b&gt;Router overhead&lt;br&gt;&lt;/b&gt;&lt;br&gt;torch.topk can be ~40% of router time; generic top-K becomes visible after compute kernels get faster." vertex="1">
+          <mxGeometry height="115" width="205" x="10" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="d_12" edge="1" parent="1" source="d_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" target="d_11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" value="&lt;b&gt;HBM traffic&lt;br&gt;&lt;/b&gt;&lt;br&gt;Separate gather/pad materializes O(TKd) buffers; fused load keeps source tensor compact and L2-friendly." vertex="1">
+          <mxGeometry height="115" width="205" x="240" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="d_14" edge="1" parent="1" source="d_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" target="d_13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" value="&lt;b&gt;Small GEMM tiles&lt;br&gt;&lt;/b&gt;&lt;br&gt;Fine-grained experts reduce arithmetic intensity; persistent scheduling and tile sharing keep SMs busy." vertex="1">
+          <mxGeometry height="115" width="205" x="480" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="d_16" edge="1" parent="1" source="d_4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" target="d_15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_17" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" value="&lt;b&gt;Heavy epilogue&lt;br&gt;&lt;/b&gt;&lt;br&gt;dSwiGLU/reduction/multi-output store would stall MMA unless overlapped with async IO." vertex="1">
+          <mxGeometry height="115" width="205" x="720" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="d_18" edge="1" parent="1" source="d_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" target="d_17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_19" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" value="&lt;b&gt;Aggregation choice&lt;br&gt;&lt;/b&gt;&lt;br&gt;Scatter fusion looks attractive but hurts determinism/BF16 atomic/all2all and may block next MMA tile." vertex="1">
+          <mxGeometry height="115" width="205" x="950" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="d_20" edge="1" parent="1" source="d_6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;endArrow=block;html=1;rounded=1;" target="d_19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_21" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1.5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=14;" value="&lt;b&gt;Design rule:&lt;/b&gt; optimize the whole MoE workflow, not just one GEMM. SonicMoE wins by deciding what never materializes, what fuses into load/epilogue, what overlaps with MMA, and what remains as a separate memory-bound kernel." vertex="1">
+          <mxGeometry height="80" width="1010" x="95" y="500" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
