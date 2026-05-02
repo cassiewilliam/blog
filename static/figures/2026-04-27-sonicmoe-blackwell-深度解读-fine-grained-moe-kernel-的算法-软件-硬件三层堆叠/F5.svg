@@ -1,100 +1,69 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 680">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 560">
+
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#4d5562"/>
     </marker>
     <style>
       text{font-family:Arial,Helvetica,sans-serif;fill:#1f2328}
-      .title{font-size:30px;font-weight:700}
+      .title{font-size:28px;font-weight:700}
+      .subtitle{font-size:13px;fill:#667085}
+      .lane{font-size:14px;font-weight:700;fill:#667085}
       .head{font-size:15px;font-weight:700}
-      .body{font-size:12.5px}
-      .noteHead{font-size:14px;font-weight:700}
-      .noteText{font-size:12px}
+      .small{font-size:12.5px;fill:#344054}
+      .formula{font-family:Georgia,"Times New Roman",serif;font-size:21px;font-style:italic}
+      .sub{font-size:12px;baseline-shift:sub}
       .box{stroke-width:2}
-      .note{fill:#fff;stroke:#667085;stroke-width:1.4}
-      .flow{stroke:#4d5562;stroke-width:2.2;fill:none;marker-end:url(#arrow)}
+      .thin{stroke-width:1.4}
+      .edge{stroke:#4d5562;stroke-width:2.2;fill:none;marker-end:url(#arrow)}
+      .dash{stroke:#667085;stroke-width:2;fill:none;stroke-dasharray:7 6;marker-end:url(#arrow)}
+      .cache{fill:#fff5f0;stroke:#b85450;stroke-width:1.6}
+      .io{fill:#fff;stroke:#d0d7de;stroke-width:1.4}
     </style>
   </defs>
 
-  <rect width="1280" height="680" fill="#fff"/>
-  <text x="40" y="54" class="title">SonicMoE optimization map from router to HBM</text>
-
-  <g id="top-row">
-    <rect x="40" y="105" width="220" height="145" rx="9" fill="#dae8fc" stroke="#6c8ebf" class="box"/>
-    <text x="150" y="132" text-anchor="middle" class="head">Router / routing</text>
-    <text x="150" y="160" text-anchor="middle" class="body">fused top-K sort</text>
-    <text x="150" y="182" text-anchor="middle" class="body">top-K softmax</text>
-    <text x="150" y="204" text-anchor="middle" class="body">token rounding</text>
-    <text x="150" y="226" text-anchor="middle" class="body">custom router API</text>
-
-    <rect x="280" y="105" width="220" height="145" rx="9" fill="#d5e8d4" stroke="#82b366" class="box"/>
-    <text x="390" y="132" text-anchor="middle" class="head">GMEM to SMEM load</text>
-    <text x="390" y="160" text-anchor="middle" class="body">gather on M dim</text>
-    <text x="390" y="182" text-anchor="middle" class="body">gather on K dim</text>
-    <text x="390" y="204" text-anchor="middle" class="body">cp.async / TMA gather</text>
-    <text x="390" y="226" text-anchor="middle" class="body">relay warp for 2CTA</text>
-
-    <rect x="520" y="105" width="220" height="145" rx="9" fill="#fff2cc" stroke="#d6b656" class="box"/>
-    <text x="630" y="132" text-anchor="middle" class="head">Grouped GEMM</text>
-    <text x="630" y="160" text-anchor="middle" class="body">varlen-M / varlen-K</text>
-    <text x="630" y="182" text-anchor="middle" class="body">persistent scheduling</text>
-    <text x="630" y="204" text-anchor="middle" class="body">UMMA + TMEM</text>
-    <text x="630" y="226" text-anchor="middle" class="body">2CTA + CLC scheduler</text>
-
-    <rect x="760" y="105" width="220" height="145" rx="9" fill="#e1d5e7" stroke="#9673a6" class="box"/>
-    <text x="870" y="132" text-anchor="middle" class="head">Epilogue fusion</text>
-    <text x="870" y="160" text-anchor="middle" class="body">SwiGLU / dSwiGLU</text>
-    <text x="870" y="182" text-anchor="middle" class="body">dH / dS / A_S outputs</text>
-    <text x="870" y="204" text-anchor="middle" class="body">async TMA load of H</text>
-    <text x="870" y="226" text-anchor="middle" class="body">async TMA store</text>
-
-    <rect x="1000" y="105" width="220" height="145" rx="9" fill="#f8cecc" stroke="#b85450" class="box"/>
-    <text x="1110" y="132" text-anchor="middle" class="head">Output / aggregation</text>
-    <text x="1110" y="160" text-anchor="middle" class="body">recycle transient Y</text>
-    <text x="1110" y="182" text-anchor="middle" class="body">gather-and-sum</text>
-    <text x="1110" y="204" text-anchor="middle" class="body">avoid atomics</text>
-    <text x="1110" y="226" text-anchor="middle" class="body">avoid sync scatter</text>
-  </g>
-
-  <path d="M260 178 H280" class="flow"/>
-  <path d="M500 178 H520" class="flow"/>
-  <path d="M740 178 H760" class="flow"/>
-  <path d="M980 178 H1000" class="flow"/>
-
-  <g id="bottom-row">
-    <rect x="40" y="330" width="220" height="125" rx="8" class="note"/>
-    <text x="150" y="358" text-anchor="middle" class="noteHead">Router overhead</text>
-    <text x="150" y="386" text-anchor="middle" class="noteText">top-K can dominate</text>
-    <text x="150" y="407" text-anchor="middle" class="noteText">once GEMM is faster</text>
-    <path d="M150 250 V330" class="flow"/>
-
-    <rect x="280" y="330" width="220" height="125" rx="8" class="note"/>
-    <text x="390" y="358" text-anchor="middle" class="noteHead">HBM traffic</text>
-    <text x="390" y="386" text-anchor="middle" class="noteText">avoid O(TKd) padding</text>
-    <text x="390" y="407" text-anchor="middle" class="noteText">keep X compact in L2</text>
-    <path d="M390 250 V330" class="flow"/>
-
-    <rect x="520" y="330" width="220" height="125" rx="8" class="note"/>
-    <text x="630" y="358" text-anchor="middle" class="noteHead">Small GEMM tiles</text>
-    <text x="630" y="386" text-anchor="middle" class="noteText">fine experts shrink tiles</text>
-    <text x="630" y="407" text-anchor="middle" class="noteText">scheduler hides imbalance</text>
-    <path d="M630 250 V330" class="flow"/>
-
-    <rect x="760" y="330" width="220" height="125" rx="8" class="note"/>
-    <text x="870" y="358" text-anchor="middle" class="noteHead">Heavy epilogue</text>
-    <text x="870" y="386" text-anchor="middle" class="noteText">multi-output stores</text>
-    <text x="870" y="407" text-anchor="middle" class="noteText">overlap with MMA</text>
-    <path d="M870 250 V330" class="flow"/>
-
-    <rect x="1000" y="330" width="220" height="125" rx="8" class="note"/>
-    <text x="1110" y="358" text-anchor="middle" class="noteHead">Aggregation choice</text>
-    <text x="1110" y="386" text-anchor="middle" class="noteText">deterministic reduce</text>
-    <text x="1110" y="407" text-anchor="middle" class="noteText">avoid blocking next tile</text>
-    <path d="M1110 250 V330" class="flow"/>
-  </g>
-
-  <rect x="90" y="535" width="1100" height="86" rx="8" class="note"/>
-  <text x="640" y="566" text-anchor="middle" class="noteHead">Design rule: optimize the whole MoE workflow, not just one GEMM.</text>
-  <text x="640" y="592" text-anchor="middle" class="noteText">Remove materialization, fuse load and epilogue, overlap memory traffic with MMA,</text>
-  <text x="640" y="612" text-anchor="middle" class="noteText">and leave only the kernels that should remain separate.</text>
+  <rect width="1180" height="560" fill="#fff"/>
+  <text x="40" y="48" class="title">SonicMoE optimization map: where each cost disappears</text>
+  <text x="40" y="76" class="subtitle">Read left to right as the path from routing metadata to HBM output.</text>
+  <rect x="55" y="125" width="165" height="82" rx="9" fill="#eef7ff" stroke="#4a6fd3" class="box"/>
+  <text x="137.5" y="156" text-anchor="middle" class="head">Router</text>
+  <text x="137.5" y="183" text-anchor="middle" class="small">top-K</text>
+  <rect x="77" y="270" width="121" height="72" rx="8" fill="#fff" stroke="#d0d7de" class="thin"/>
+  <text x="137.5" y="298" text-anchor="middle" class="head">Router time</text>
+  <text x="137.5" y="322" text-anchor="middle" class="small">removed / hidden</text>
+  <path d="M137.5 207 L137.5 270" class="edge"/>
+  <rect x="275" y="125" width="165" height="82" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
+  <text x="357.5" y="156" text-anchor="middle" class="head">Load</text>
+  <text x="357.5" y="183" text-anchor="middle" class="small">gather</text>
+  <rect x="297" y="270" width="121" height="72" rx="8" fill="#fff" stroke="#d0d7de" class="thin"/>
+  <text x="357.5" y="298" text-anchor="middle" class="head">O(TKd) buffers</text>
+  <text x="357.5" y="322" text-anchor="middle" class="small">removed / hidden</text>
+  <path d="M357.5 207 L357.5 270" class="edge"/>
+  <path d="M220 166 L275 166" class="edge"/>
+  <rect x="495" y="125" width="165" height="82" rx="9" fill="#fff8e7" stroke="#e0b300" class="box"/>
+  <text x="577.5" y="156" text-anchor="middle" class="head">GEMM</text>
+  <text x="577.5" y="183" text-anchor="middle" class="small">tiles</text>
+  <rect x="517" y="270" width="121" height="72" rx="8" fill="#fff" stroke="#d0d7de" class="thin"/>
+  <text x="577.5" y="298" text-anchor="middle" class="head">Tile imbalance</text>
+  <text x="577.5" y="322" text-anchor="middle" class="small">removed / hidden</text>
+  <path d="M577.5 207 L577.5 270" class="edge"/>
+  <path d="M440 166 L495 166" class="edge"/>
+  <rect x="715" y="125" width="165" height="82" rx="9" fill="#f7eff8" stroke="#a33ea1" class="box"/>
+  <text x="797.5" y="156" text-anchor="middle" class="head">Epilogue</text>
+  <text x="797.5" y="183" text-anchor="middle" class="small">fusion</text>
+  <rect x="737" y="270" width="121" height="72" rx="8" fill="#fff" stroke="#d0d7de" class="thin"/>
+  <text x="797.5" y="298" text-anchor="middle" class="head">Epilogue stalls</text>
+  <text x="797.5" y="322" text-anchor="middle" class="small">removed / hidden</text>
+  <path d="M797.5 207 L797.5 270" class="edge"/>
+  <path d="M660 166 L715 166" class="edge"/>
+  <rect x="935" y="125" width="165" height="82" rx="9" fill="#fff5f0" stroke="#b85450" class="box"/>
+  <text x="1017.5" y="156" text-anchor="middle" class="head">Output</text>
+  <text x="1017.5" y="183" text-anchor="middle" class="small">reduce</text>
+  <rect x="957" y="270" width="121" height="72" rx="8" fill="#fff" stroke="#d0d7de" class="thin"/>
+  <text x="1017.5" y="298" text-anchor="middle" class="head">Scatter cost</text>
+  <text x="1017.5" y="322" text-anchor="middle" class="small">removed / hidden</text>
+  <path d="M1017.5 207 L1017.5 270" class="edge"/>
+  <path d="M880 166 L935 166" class="edge"/>
+  <rect x="140" y="420" width="900" height="54" rx="8" fill="#f7f8fa" stroke="#d0d7de" class="thin"/>
+  <text x="590" y="453" text-anchor="middle" class="small">The contribution is the product of small decisions across the whole MoE path, not a single faster GEMM.</text>
 </svg>

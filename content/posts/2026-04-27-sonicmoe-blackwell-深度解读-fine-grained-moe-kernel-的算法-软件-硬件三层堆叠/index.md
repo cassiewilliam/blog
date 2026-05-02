@@ -546,6 +546,8 @@ Router 侧只需要抓住一个区分：**top-K kernel 是实现优化，token r
 论文 Appendix D 指出，PyTorch `topk` 可占 router 计算时间约 40%。SonicMoE 的处理很直接：
 针对 MoE 的大 $T$、中等 $E$、小 $K$，写一个专用 TC top-K kernel。
 
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/paper/figure15-topk-packing.png" label="P15" caption="论文 Figure 15 原图：把 column id pack 到 FP32 mantissa 低位，让排序 key 同时携带 score 与 expert id，从而得到稳定的 top-K 顺序。图源：SonicMoE paper。" >}}
+
 核心做法：
 
 - 每个 token 的一行 logits 独立处理，沿 $T$ 维并行。
@@ -553,7 +555,7 @@ Router 侧只需要抓住一个区分：**top-K kernel 是实现优化，token r
 - 用 sorting network / bitonic compare-swap，尽量留在 register 与 warp shuffle 内。
 - 可选融合 top-K score 的 softmax，少一次 kernel launch 和 HBM 往返。
 
-{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F4.svg" label="F4" caption="SonicMoE top-K sorting kernel 的直觉版流程：一行 router logits 进入 register，先把 expert id pack 到 FP32 低 mantissa 位，再用 warp/thread 内 compare-swap 排序，最后输出 top-K routing metadata，可选融合 softmax。" >}}
+{{< fig src="/figures/2026-04-27-sonicmoe-blackwell-深度解读-fine-grained-moe-kernel-的算法-软件-硬件三层堆叠/F4.svg" label="F4" caption="Figure 15 的直觉版拆解：排序的对象不是裸 score，而是 packed key；compare-swap 只移动这个 key，最后自然得到稳定的 top-K metadata。" >}}
 
 一句话：它不是新的 routing algorithm，而是把 vanilla TC top-K 从通用算子改成 MoE 专用算子。
 

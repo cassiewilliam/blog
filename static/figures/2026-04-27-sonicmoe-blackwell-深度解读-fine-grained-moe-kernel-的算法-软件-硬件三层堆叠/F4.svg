@@ -1,30 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 470">
+
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4d5562"/>
+    </marker>
     <style>
-      text{font-family:Arial,Helvetica,sans-serif;fill:#1f2328} .title{font-size:34px;font-weight:700}.box{stroke-width:2;rx:10}.h{font-size:17px;font-weight:700}.p{font-size:14px}.mono{font-family:Menlo,Consolas,monospace;font-size:14px}.edge{stroke:#555;stroke-width:2;fill:none;marker-end:url(#arrow)}
+      text{font-family:Arial,Helvetica,sans-serif;fill:#1f2328}
+      .title{font-size:28px;font-weight:700}
+      .subtitle{font-size:13px;fill:#667085}
+      .lane{font-size:14px;font-weight:700;fill:#667085}
+      .head{font-size:15px;font-weight:700}
+      .small{font-size:12.5px;fill:#344054}
+      .formula{font-family:Georgia,"Times New Roman",serif;font-size:21px;font-style:italic}
+      .sub{font-size:12px;baseline-shift:sub}
+      .box{stroke-width:2}
+      .thin{stroke-width:1.4}
+      .edge{stroke:#4d5562;stroke-width:2.2;fill:none;marker-end:url(#arrow)}
+      .dash{stroke:#667085;stroke-width:2;fill:none;stroke-dasharray:7 6;marker-end:url(#arrow)}
+      .cache{fill:#fff5f0;stroke:#b85450;stroke-width:1.6}
+      .io{fill:#fff;stroke:#d0d7de;stroke-width:1.4}
     </style>
   </defs>
-  <text x="40" y="50" class="title">SonicMoE efficient top-K sorting kernel</text>
-  <g>
-    <rect x="40" y="100" width="190" height="90" fill="#dae8fc" stroke="#6c8ebf" class="box"/><text x="135" y="127" text-anchor="middle" class="h">Router logits row</text><text x="135" y="153" text-anchor="middle" class="p">S[t, 0:E]</text><text x="135" y="175" text-anchor="middle" class="p">one token per work item</text>
-    <rect x="270" y="100" width="210" height="90" fill="#fff2cc" stroke="#d6b656" class="box"/><text x="375" y="127" text-anchor="middle" class="h">Load to registers</text><text x="375" y="153" text-anchor="middle" class="p">E scores stay on-chip</text><text x="375" y="175" text-anchor="middle" class="p">parallel over tokens T</text>
-    <rect x="520" y="90" width="260" height="110" fill="#d5e8d4" stroke="#82b366" class="box"/><text x="650" y="118" text-anchor="middle" class="h">Pack expert id into FP32</text><text x="650" y="145" text-anchor="middle" class="p">score high bits + column id low bits</text><text x="650" y="170" text-anchor="middle" class="p">stable sort, value/index move together</text>
-    <rect x="820" y="100" width="280" height="90" fill="#fff2cc" stroke="#d6b656" class="box"/><text x="960" y="127" text-anchor="middle" class="h">Bitonic / sorting-network</text><text x="960" y="153" text-anchor="middle" class="p">compare-swap in thread/warp registers</text><text x="960" y="175" text-anchor="middle" class="p">warp shuffle, no SMEM scans</text>
-    <path d="M230 145 H270" class="edge"/><path d="M480 145 H520" class="edge"/><path d="M780 145 H820" class="edge"/>
-  </g>
-  <g>
-    <rect x="70" y="260" width="330" height="80" fill="#fff" stroke="#666" class="box"/><text x="235" y="287" text-anchor="middle" class="h">Raw FP32 score</text><text x="235" y="316" text-anchor="middle" class="mono">sign | exponent | mantissa</text>
-    <rect x="470" y="260" width="420" height="80" fill="#fff" stroke="#666" class="box"/><text x="680" y="287" text-anchor="middle" class="h">Packed sortable key</text><text x="680" y="316" text-anchor="middle" class="mono">sign | exponent | higher mantissa | expert_id</text>
-    <rect x="930" y="250" width="220" height="100" fill="#d5e8d4" stroke="#82b366" class="box"/><text x="1040" y="278" text-anchor="middle" class="h">Why pack?</text><text x="1040" y="303" text-anchor="middle" class="p">equal scores become ordered</text><text x="1040" y="326" text-anchor="middle" class="p">argtopK follows score</text>
-    <path d="M400 300 H470" class="edge"/><path d="M890 300 H930" class="edge"/>
-  </g>
-  <g>
-    <rect x="135" y="430" width="220" height="90" fill="#dae8fc" stroke="#6c8ebf" class="box"/><text x="245" y="458" text-anchor="middle" class="h">Select first K</text><text x="245" y="484" text-anchor="middle" class="p">top-K scores + expert ids</text><text x="245" y="507" text-anchor="middle" class="p">K ≤ 16 in paper</text>
-    <rect x="450" y="430" width="240" height="90" fill="#d5e8d4" stroke="#82b366" class="box"/><text x="570" y="458" text-anchor="middle" class="h">Optional softmax fusion</text><text x="570" y="484" text-anchor="middle" class="p">renormalize top-K values</text><text x="570" y="507" text-anchor="middle" class="p">avoid extra kernel / HBM trip</text>
-    <rect x="790" y="430" width="260" height="90" fill="#dae8fc" stroke="#6c8ebf" class="box"/><text x="920" y="458" text-anchor="middle" class="h">Routing metadata</text><text x="920" y="484" text-anchor="middle" class="p">π[t,k] and S_topK[t,k]</text><text x="920" y="507" text-anchor="middle" class="p">used by MoE compute / TR</text>
-    <path d="M960 190 C960 370 245 350 245 430" class="edge"/><path d="M355 475 H450" class="edge"/><path d="M690 475 H790" class="edge"/>
-  </g>
-  <rect x="40" y="570" width="520" height="60" fill="#f8cecc" stroke="#b85450" class="box"/><text x="55" y="594" class="h">Compared with PyTorch topk</text><text x="55" y="618" class="p">PyTorch may do radix-select + gather and SMEM scans; SonicMoE targets large T, E ≤ 4096, K ≤ 16.</text>
-  <rect x="620" y="570" width="500" height="60" fill="#f8cecc" stroke="#b85450" class="box"/><text x="635" y="594" class="h">Compared with token rounding</text><text x="635" y="618" class="p">This kernel only accelerates vanilla top-K; TR later changes per-expert counts to tile multiples.</text>
+
+  <rect width="1120" height="470" fill="#fff"/>
+  <text x="40" y="48" class="title">Top-K kernel: make the sortable key carry the expert id</text>
+  <text x="40" y="76" class="subtitle">This explains the paper Figure 15: ties disappear because equal scores still have distinct packed low mantissa bits.</text>
+  <rect x="65" y="125" width="175" height="84" rx="9" fill="#eef7ff" stroke="#4a6fd3" class="box"/>
+  <text x="152.5" y="156" text-anchor="middle" class="head">Router row</text>
+  <text x="152.5" y="183" text-anchor="middle" class="small">S[t, :]</text>
+  <rect x="310" y="112" width="220" height="110" rx="9" fill="#f4faf4" stroke="#5fa55f" class="box"/>
+  <text x="420.0" y="143" text-anchor="middle" class="head">Pack key</text>
+  <text x="420.0" y="170" text-anchor="middle" class="small">score high bits</text>
+  <text x="420.0" y="191" text-anchor="middle" class="small">expert id low bits</text>
+  <rect x="600" y="112" width="220" height="110" rx="9" fill="#fff8e7" stroke="#e0b300" class="box"/>
+  <text x="710.0" y="143" text-anchor="middle" class="head">Register sort</text>
+  <text x="710.0" y="170" text-anchor="middle" class="small">thread / warp</text>
+  <text x="710.0" y="191" text-anchor="middle" class="small">compare-swap</text>
+  <rect x="890" y="125" width="175" height="84" rx="9" fill="#eef7ff" stroke="#4a6fd3" class="box"/>
+  <text x="977.5" y="156" text-anchor="middle" class="head">Top-K</text>
+  <text x="977.5" y="183" text-anchor="middle" class="small">π[t,k], score</text>
+  <path d="M240 167 L310 167" class="edge"/>
+  <path d="M530 167 L600 167" class="edge"/>
+  <path d="M820 167 L890 167" class="edge"/>
+  <rect x="235" y="285" width="650" height="74" rx="9" fill="#fff8e7" stroke="#e0b300" class="box"/>
+  <text x="560" y="317" text-anchor="middle" class="formula"><tspan>key</tspan><tspan class="sub">e</tspan><tspan> = score</tspan><tspan class="sub">e</tspan><tspan> || e</tspan></text>
+  <text x="560" y="344" text-anchor="middle" class="small">Sort by the packed FP32 value; the score and column id move together.</text>
+  <path d="M420 222 L450 285" class="dash"/>
+  <path d="M710 222 L685 285" class="dash"/>
 </svg>
