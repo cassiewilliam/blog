@@ -1,42 +1,26 @@
-<svg viewBox="0 0 1000 220" xmlns="http://www.w3.org/2000/svg">
-  <text x="500" y="22" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#1f3a6f">mbarrier 64-bit 状态 + Phase Bit 机制 (抗 ABA)</text>
-  <g font-family="monospace" font-size="11">
-    <!-- bit layout -->
-    <rect x="60"  y="50" width="880" height="40" fill="#fffcf1" stroke="#d9b860"/>
-    <line x1="140" y1="50" x2="140" y2="90" stroke="#d9b860"/>
-    <line x1="320" y1="50" x2="320" y2="90" stroke="#d9b860"/>
-    <line x1="520" y1="50" x2="520" y2="90" stroke="#d9b860"/>
-    <text x="100" y="74" text-anchor="middle" fill="#5a3f00">phase (1)</text>
-    <text x="230" y="74" text-anchor="middle" fill="#5a3f00">expected_arrival (19)</text>
-    <text x="420" y="74" text-anchor="middle" fill="#5a3f00">pending_arrival (19)</text>
-    <text x="730" y="74" text-anchor="middle" fill="#5a3f00">tx_count / timeout (25)</text>
-  </g>
-  <g font-family="sans-serif" font-size="11">
-    <text x="500" y="115" text-anchor="middle" fill="#333">arrive(tx): expected-- / tx_count += tx → 触发 0 时 phase bit 翻转</text>
-    <text x="500" y="132" text-anchor="middle" fill="#333">wait(phase): 自旋直到 mbarrier.phase ≠ phase → 返回对方已 flip</text>
-  </g>
-  <!-- Flip diagram -->
-  <g font-family="monospace" font-size="11">
-    <rect x="100" y="150" width="140" height="44" rx="4" fill="#d5e8d4" stroke="#5fa55f"/>
-    <text x="170" y="168" text-anchor="middle" fill="#1f5d1f" font-weight="700">phase=0 (初始)</text>
-    <text x="170" y="184" text-anchor="middle" fill="#1f5d1f" font-size="10">TMA producer arrive</text>
-
-    <rect x="340" y="150" width="140" height="44" rx="4" fill="#fff2cc" stroke="#e0b300"/>
-    <text x="410" y="168" text-anchor="middle" fill="#5a3f00" font-weight="700">phase=1 (翻一次)</text>
-    <text x="410" y="184" text-anchor="middle" fill="#5a3f00" font-size="10">MMA consumer wait(0)→ 解除</text>
-
-    <rect x="580" y="150" width="140" height="44" rx="4" fill="#fde2e4" stroke="#b85450"/>
-    <text x="650" y="168" text-anchor="middle" fill="#4a1515" font-weight="700">再次 arrive</text>
-    <text x="650" y="184" text-anchor="middle" fill="#4a1515" font-size="10">phase=0 (还原)</text>
-
-    <rect x="820" y="150" width="140" height="44" rx="4" fill="#e1f0ff" stroke="#4a6fd3"/>
-    <text x="890" y="168" text-anchor="middle" fill="#1f3a6f" font-weight="700">wait(1)→ 解除</text>
-    <text x="890" y="184" text-anchor="middle" fill="#1f3a6f" font-size="10">无 ABA 歧义</text>
-  </g>
-  <g stroke="#888" stroke-width="1.5" fill="none" marker-end="url(#arrp2)">
-    <line x1="240" y1="172" x2="338" y2="172"/>
-    <line x1="480" y1="172" x2="578" y2="172"/>
-    <line x1="720" y1="172" x2="818" y2="172"/>
-  </g>
-  <defs><marker id="arrp2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#888"/></marker></defs>
+<svg viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#24292f"/>
+  </marker>
+  <style>
+    .title{font:700 24px sans-serif;fill:#24292f}
+    .sub{font:400 13px sans-serif;fill:#57606a}
+    .mono{font:500 13px ui-monospace,Menlo,monospace;fill:#24292f}
+  </style>
+</defs>
+<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">mbarrier phase-bit reuse</text>
+<rect x="95" y="100" width="240" height="70" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
+<text x="215" y="128" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#4a6fd3">phase = 0</text>
+<text x="215" y="152" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="500" fill="#57606a">producer fills slot</text>
+<rect x="380" y="100" width="240" height="70" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
+<text x="500" y="128" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#5fa55f">arrive complete</text>
+<text x="500" y="152" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="500" fill="#57606a">phase flips</text>
+<rect x="665" y="100" width="240" height="70" rx="8" fill="#fbf0fb" stroke="#a33ea1" stroke-width="2"/>
+<text x="785" y="128" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#a33ea1">wait(0) returns</text>
+<text x="785" y="152" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="500" fill="#57606a">consumer owns data</text>
+<line x1="335" y1="135" x2="380" y2="135" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="620" y1="135" x2="665" y2="135" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M785 172 C760 220, 235 220, 215 172" fill="none" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="7 6"/>
+<text x="500" y="246" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="500" fill="#57606a">The same slot can be reused because the phase disambiguates old and new rounds.</text>
 </svg>

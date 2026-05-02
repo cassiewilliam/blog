@@ -1,27 +1,25 @@
-<svg viewBox="0 0 1000 230" xmlns="http://www.w3.org/2000/svg">
-  <text x="500" y="22" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="14" fill="#1f3a6f">Swap A/B：B 做 multicast 操作数，让权重而非激活走 2-CTA 广播</text>
-  <g font-family="sans-serif" font-size="11">
-    <!-- Without swap -->
-    <rect x="40"  y="50" width="420" height="150" rx="6" fill="#fde2e4" stroke="#b85450"/>
-    <text x="250" y="70" text-anchor="middle" font-weight="700" fill="#4a1515">默认：A = activations, B = weights</text>
-    <g fill="#333" font-size="10.5">
-      <text x="50" y="96">A = [M×K]  per-CTA 独立（每 CTA 读自己的 token 分片）</text>
-      <text x="50" y="114">B = [N×K]  multicast 候选（两 CTA 共享同一 weights）</text>
-      <text x="50" y="140" font-weight="700" fill="#b85450">问题：</text>
-      <text x="50" y="158">MoE decode/小 batch 下，M 小 (≤BLOCK_M) → A 也很小</text>
-      <text x="50" y="176">B (权重) 反而是 HBM 大头，但它"本来就应该 multicast"</text>
-      <text x="50" y="194">→ 收益没完全榨取</text>
-    </g>
-    <!-- With swap -->
-    <rect x="500" y="50" width="440" height="150" rx="6" fill="#d5e8d4" stroke="#5fa55f"/>
-    <text x="720" y="70" text-anchor="middle" font-weight="700" fill="#1f5d1f">Swap: A = weights, B = activations</text>
-    <g fill="#333" font-size="10.5">
-      <text x="510" y="96">A = [N×K] weights per-CTA 独立分块（拆 N）</text>
-      <text x="510" y="114">B = [M×K] activations multicast（两 CTA 共享 tokens）</text>
-      <text x="510" y="140" font-weight="700" fill="#1f5d1f">收益：</text>
-      <text x="510" y="158">当 token 数 &lt; UMMA_M 时，activations 天然需要重复广播</text>
-      <text x="510" y="176">让 UMMA multicast 帮忙，TMA-B 一次发 → 两 CTA 都收到</text>
-      <text x="510" y="194">Blackwell SM100 实测 MoE decode +15-25% 吞吐</text>
-    </g>
-  </g>
+<svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#24292f"/>
+  </marker>
+  <style>
+    .title{font:700 24px sans-serif;fill:#24292f}
+    .sub{font:400 13px sans-serif;fill:#57606a}
+    .mono{font:500 13px ui-monospace,Menlo,monospace;fill:#24292f}
+  </style>
+</defs>
+<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">A/B swap is a layout contract</text>
+<rect x="95" y="104" width="330" height="120" rx="8" fill="#fff5f0" stroke="#b85450" stroke-width="2"/>
+<text x="260" y="136" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#b85450">wrong mental model</text>
+<text x="260" y="166" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">runtime flag swaps A/B</text>
+<text x="260" y="188" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">everything else unchanged</text>
+<rect x="575" y="104" width="330" height="120" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
+<text x="740" y="136" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#5fa55f">actual issue</text>
+<text x="740" y="166" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">operand layout</text>
+<text x="740" y="188" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">TMA descriptor</text>
+<text x="740" y="210" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#24292f">multicast direction</text>
+<line x1="425" y1="164" x2="575" y2="164" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="260" y="260" width="480" height="52" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
+<text x="500" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#4a6fd3">design rule: choose layout so the reused operand is the multicast operand</text>
 </svg>
