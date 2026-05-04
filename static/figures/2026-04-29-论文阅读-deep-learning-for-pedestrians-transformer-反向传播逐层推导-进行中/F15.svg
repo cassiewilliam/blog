@@ -1,0 +1,46 @@
+<svg viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#24292f"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="1000" height="560" fill="#ffffff"/>
+<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">Derivation audit map</text>
+<text x="500" y="64" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#57606a">what the rewrite preserves from the notes and the paper</text>
+<rect x="70" y="88" width="860" height="42" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
+<text x="215" y="115" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#24292f">Layer</text>
+<text x="500" y="115" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#24292f">Forward object</text>
+<text x="785" y="115" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#24292f">Backward takeaway</text>
+<rect x="70" y="131" width="860" height="46" rx="8" fill="#eef7ff" stroke="#d0d7de" stroke-width="1"/>
+<text x="215" y="159" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">SGD</text>
+<text x="500" y="159" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">L(θ)</text>
+<text x="785" y="159" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">need all ∂L/∂θ</text>
+<rect x="70" y="181" width="860" height="46" rx="8" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="215" y="209" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">Graph node</text>
+<text x="500" y="209" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">ui = fi(v)</text>
+<text x="785" y="209" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">sum downstream paths</text>
+<rect x="70" y="231" width="860" height="46" rx="8" fill="#eef7ff" stroke="#d0d7de" stroke-width="1"/>
+<text x="215" y="259" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">Template</text>
+<text x="500" y="259" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">ΔA : dA</text>
+<text x="785" y="259" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">collect dX and dθ</text>
+<rect x="70" y="281" width="860" height="46" rx="8" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="215" y="309" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">Embedding</text>
+<text x="500" y="309" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">OHE lookup</text>
+<text x="785" y="309" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">scatter-add rows</text>
+<rect x="70" y="331" width="860" height="46" rx="8" fill="#eef7ff" stroke="#d0d7de" stroke-width="1"/>
+<text x="215" y="359" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">Attention</text>
+<text x="500" y="359" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">PV and QKᵀ</text>
+<text x="785" y="359" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">three branches sum into ΔX</text>
+<rect x="70" y="381" width="860" height="46" rx="8" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="215" y="409" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">Softmax</text>
+<text x="500" y="409" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">row probabilities</text>
+<text x="785" y="409" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">row-sum-zero adjoint</text>
+<rect x="70" y="431" width="860" height="46" rx="8" fill="#eef7ff" stroke="#d0d7de" stroke-width="1"/>
+<text x="215" y="459" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">LayerNorm</text>
+<text x="500" y="459" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">row statistics</text>
+<text x="785" y="459" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">project mean/variance</text>
+<rect x="70" y="481" width="860" height="46" rx="8" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="215" y="509" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#24292f">LoRA</text>
+<text x="500" y="509" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">αXDU</text>
+<text x="785" y="509" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="500" fill="#24292f">low-rank parameter gradients</text>
+</svg>

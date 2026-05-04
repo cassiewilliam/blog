@@ -1,7 +1,7 @@
 ---
 title: "论文精读：从计算图反向传播到 Transformer，逐层推导 Attention、LayerNorm 与 LoRA"
 date: 2026-04-29T10:00:00+08:00
-lastmod: 2026-05-04T10:45:00+08:00
+lastmod: 2026-05-04T11:30:00+08:00
 draft: false
 summary: "从 BackPropagation 课件的梯度下降、反向模式自动微分、计算图路径求和出发，再重写 Laurent Boué《Deep learning for pedestrians: backpropagation in Transformers》：按统一的 L、θ、Δ_u 记号逐层推导 Embedding、Self-Attention、MHA、LayerNorm、LoRA 与 GPT block。"
 tags: [paper-reading, transformer, backpropagation, self-attention, layernorm, lora, gpt-2, deep-learning, math]
@@ -144,6 +144,31 @@ $$
 实际写文章时我们不会把巨大 Jacobian 显式展开，而是把它化成矩阵乘法、逐行 softmax
 反传、scatter-add 或归一化投影。
 
+还有一个实现层面的细节也值得提前记住：反向模式不是把整个函数符号展开成一个巨大公式，
+而是在 forward 时保存局部值，在 backward 时对每个节点做一次局部
+vector-Jacobian product（VJP）。如果某个节点的输出是
+
+$$
+u=f(v,\theta),
+$$
+
+并且上游已经给出 $\Delta_u$，那么这个节点只需要负责两件事：
+
+{{< formula type="sm" label="Local VJP rule" >}}
+$$
+\Delta_v \mathrel{+}= \left(\frac{\partial u}{\partial v}\right)^T\Delta_u,
+\qquad
+\frac{\partial L}{\partial\theta}\mathrel{+}=
+\left(\frac{\partial u}{\partial\theta}\right)^T\Delta_u.
+$$
+{{< /formula >}}
+
+这里用 $\mathrel{+}=$ 是有意的：同一个值可能被多个下游节点使用，所以梯度要累加，
+不能覆盖。后面看到 Attention 的三条投影分支、MHA 的多个 head、GPT block 的 residual
+add，都可以回到这条局部规则。
+
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F5.svg" label="F5" caption="反向模式的每个节点只做局部 VJP；forward 保存的中间值让 backward 不必重新展开整张图。" >}}
+
 ## Stage 2 · 统一模板：每层 backward 都是整理 $\Delta:dA$
 
 Transformer 论文沿用前作 CNN backprop 的写法：不用厚重下标，而是用矩阵微分和形状来约束推导。
@@ -162,7 +187,7 @@ $$
 把 $dA$ 展开，再把所有含 $dX$、$d\theta$ 的项分别收集起来，就得到
 $\Delta_X$ 和参数梯度。
 
-{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F5.svg" label="F5" caption="反向传播的统一模板：先写微分，再把 $\Delta_A:dA$ 改写成各个变量的梯度。" >}}
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F6.svg" label="F6" caption="反向传播的统一模板：先写微分，再把 $\Delta_A:dA$ 改写成各个变量的梯度。" >}}
 
 最典型例子是线性层：
 
@@ -212,7 +237,7 @@ $$
 这里 $n_V$ 可以是词表大小，也可以是 context length；前者对应 token embedding，
 后者对应 learned positional embedding。
 
-{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F6.svg" label="F6" caption="Embedding 的 OHE 写法只是推导工具；实现里对应被选中行的 scatter-add。" >}}
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F7.svg" label="F7" caption="Embedding 的 OHE 写法只是推导工具；实现里对应被选中行的 scatter-add。" >}}
 
 反向直接套线性层：
 
@@ -248,7 +273,7 @@ P=\operatorname{softmax}_{row}(S),
 Y=PV.
 $$
 
-{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F7.svg" label="F7" caption="单头 attention 的前向图：Q/K 决定注意力分布，V 被分布加权混合。" >}}
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F8.svg" label="F8" caption="单头 attention 的前向图：Q/K 决定注意力分布，V 被分布加权混合。" >}}
 
 这里有两个很重要的语义分工：
 
@@ -282,7 +307,7 @@ $$
 
 矩阵形式可以理解为对每一行独立应用上式。
 
-{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F8.svg" label="F8" caption="Attention 反向：输出梯度先分到 V 与 P，P 再经 softmax 回到 Q/K score。" >}}
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F9.svg" label="F9" caption="Attention 反向：输出梯度先分到 V 与 P，P 再经 softmax 回到 Q/K score。" >}}
 
 随后由
 
@@ -335,7 +360,7 @@ $$
 对固定 query 行 $i$ 来说，这个量与 key 的列索引 $j$ 无关，所以它只是给整行
 score 加了同一个常数。
 
-{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F9.svg" label="F9" caption="Key bias 失效的原因：它只给每一行 score 加常数，而 row-softmax 对常数平移不敏感。" >}}
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F10.svg" label="F10" caption="Key bias 失效的原因：它只给每一行 score 加常数，而 row-softmax 对常数平移不敏感。" >}}
 
 而 softmax 满足：
 
@@ -356,7 +381,7 @@ Y_h=\operatorname{Att}_h(X),\qquad
 Y=\operatorname{Concat}(Y_1,\ldots,Y_H)W_o.
 $$
 
-{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F10.svg" label="F10" caption="MHA 的反向规则：输出投影先回到 concat，再按列切给各 head，最后各 head 的输入梯度相加。" >}}
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F11.svg" label="F11" caption="MHA 的反向规则：输出投影先回到 concat，再按列切给各 head，最后各 head 的输入梯度相加。" >}}
 
 反向时，先经过输出投影：
 
@@ -390,7 +415,7 @@ $$
 y=\gamma\odot\hat x+\beta.
 $$
 
-{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F11.svg" label="F11" caption="LayerNorm 的统计量沿 feature 维计算；反向也在每个 token 行内完成。" >}}
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F12.svg" label="F12" caption="LayerNorm 的统计量沿 feature 维计算；反向也在每个 token 行内完成。" >}}
 
 参数梯度很直接：
 
@@ -442,7 +467,7 @@ $$
 
 有些实现使用 $\alpha/r$ 作为 scale；本文公式沿用论文里的 $\alpha$ 记号。
 
-{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F12.svg" label="F12" caption="LoRA 是冻结主干旁边的低秩可训练旁路；反向只更新 $D$ 与 $U$。" >}}
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F13.svg" label="F13" caption="LoRA 是冻结主干旁边的低秩可训练旁路；反向只更新 $D$ 与 $U$。" >}}
 
 LoRA 分支的反向为：
 
@@ -474,7 +499,7 @@ $$
 X_2=X_1+W_2g(W_1\operatorname{LN}(X_1)).
 $$
 
-{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F13.svg" label="F13" caption="GPT block 的反向组合规则：每个 residual add 都把上游梯度复制到主支和残差支。" >}}
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F14.svg" label="F14" caption="GPT block 的反向组合规则：每个 residual add 都把上游梯度复制到主支和残差支。" >}}
 
 残差连接的反向非常简单，但极其重要：如果
 
@@ -506,7 +531,7 @@ $$
 
 ## Derivation Audit · 推导点查漏
 
-{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F14.svg" label="F14" caption="推导查漏表：重写后保留的核心对象、反向入口和易错点。" >}}
+{{< fig src="/figures/2026-04-29-论文阅读-deep-learning-for-pedestrians-transformer-反向传播逐层推导-进行中/F15.svg" label="F15" caption="推导查漏表：重写后保留的核心对象、反向入口和易错点。" >}}
 
 | 推导点 | 资料位置 | 前向对象 | 反向关键 | 易错点 |
 |---|---|---|---|---|
