@@ -16,9 +16,9 @@
 <text x="470" y="163" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">not across tokens</text>
 <line x1="567" y1="150" x2="680" y2="150" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
 <rect x="680" y="110" width="220" height="80" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
-<text x="790" y="137" text-anchor="middle" font-family="monospace" font-size="14" font-weight="700" fill="#24292f">y = γ ⊙ x̂ + β</text>
+<text x="790" y="137" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="15" font-style="italic" font-weight="700" fill="#24292f">y = γ ⊙ x̂ + β</text>
 <text x="790" y="163" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">affine per feature</text>
 <rect x="120" y="270" width="760" height="78" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
-<text x="500" y="296" text-anchor="middle" font-family="monospace" font-size="13" font-weight="700" fill="#a33ea1">Δx = (Δx̂ - mean(Δx̂) - x̂ mean(Δx̂ ⊙ x̂)) / σ</text>
+<text x="500" y="296" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="14" font-style="italic" font-weight="700" fill="#a33ea1">Δ<tspan baseline-shift="-25%" font-size="9.8">x</tspan> = (Δ<tspan baseline-shift="-25%" font-size="9.8">x̂</tspan> - <tspan font-style="normal">mean</tspan>(Δ<tspan baseline-shift="-25%" font-size="9.8">x̂</tspan>) - x̂ <tspan font-style="normal">mean</tspan>(Δ<tspan baseline-shift="-25%" font-size="9.8">x̂</tspan> ⊙ x̂)) / σ</text>
 <text x="500" y="322" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">LayerNorm backward projects away mean and variance directions.</text>
 </svg>

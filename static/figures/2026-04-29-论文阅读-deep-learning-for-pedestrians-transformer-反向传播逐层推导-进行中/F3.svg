@@ -16,11 +16,11 @@
 <text x="455" y="166" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">sparse rows</text>
 <line x1="552" y1="151" x2="650" y2="151" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
 <rect x="650" y="115" width="250" height="72" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
-<text x="775" y="144" text-anchor="middle" font-family="monospace" font-size="14" font-weight="700" fill="#24292f">A = OHE(T) Wemb</text>
+<text x="775" y="144" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="15" font-style="italic" font-weight="700" fill="#24292f">A = <tspan font-style="normal">OHE</tspan>(T) W<tspan baseline-shift="-25%" font-size="10.5">emb</tspan></text>
 <text x="775" y="166" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">lookup as matmul</text>
 <rect x="130" y="255" width="300" height="86" rx="8" fill="#fff5f0" stroke="#b85450" stroke-width="2"/>
 <text x="280" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">backward in math</text>
-<text x="280" y="312" text-anchor="middle" font-family="monospace" font-size="13" font-weight="600" fill="#24292f">∂L/∂Wemb = OHE(T)^T ΔA</text>
+<text x="280" y="312" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="14" font-style="italic" font-weight="600" fill="#24292f">∂L/∂W<tspan baseline-shift="-25%" font-size="9.8">emb</tspan> = <tspan font-style="normal">OHE</tspan>(T)<tspan baseline-shift="38%" font-size="9.8">T</tspan> Δ<tspan baseline-shift="-25%" font-size="9.8">A</tspan></text>
 <rect x="570" y="255" width="300" height="86" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
 <text x="720" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">backward in code</text>
 <text x="720" y="312" text-anchor="middle" font-family="monospace" font-size="13" font-weight="600" fill="#24292f">scatter-add selected rows</text>
