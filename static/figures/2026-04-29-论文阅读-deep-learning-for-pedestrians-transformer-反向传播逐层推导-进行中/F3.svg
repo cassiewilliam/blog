@@ -1,28 +1,24 @@
-<svg viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1000 385" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
     <path d="M 0 0 L 10 5 L 0 10 z" fill="#24292f"/>
   </marker>
 </defs>
-<rect x="0" y="0" width="1000" height="400" fill="#ffffff"/>
-<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">Embedding: lookup forward, scatter-add backward</text>
-<text x="500" y="64" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#57606a">OHE is a derivation device, not an implementation requirement</text>
-<rect x="80" y="115" width="170" height="72" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
-<text x="165" y="144" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">tokens T</text>
-<text x="165" y="166" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">[t1 ... tn]</text>
-<line x1="252" y1="151" x2="360" y2="151" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
-<rect x="360" y="115" width="190" height="72" rx="8" fill="#fff8e7" stroke="#e0b300" stroke-width="2"/>
-<text x="455" y="144" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">OHE(T)</text>
-<text x="455" y="166" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">sparse rows</text>
-<line x1="552" y1="151" x2="650" y2="151" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
-<rect x="650" y="115" width="250" height="72" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
-<text x="775" y="144" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="15" font-style="italic" font-weight="700" fill="#24292f">A = <tspan font-style="normal">OHE</tspan>(T) W<tspan baseline-shift="-25%" font-size="10.5">emb</tspan></text>
-<text x="775" y="166" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">lookup as matmul</text>
-<rect x="130" y="255" width="300" height="86" rx="8" fill="#fff5f0" stroke="#b85450" stroke-width="2"/>
-<text x="280" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">backward in math</text>
-<text x="280" y="312" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="14" font-style="italic" font-weight="600" fill="#24292f">∂L/∂W<tspan baseline-shift="-25%" font-size="9.8">emb</tspan> = <tspan font-style="normal">OHE</tspan>(T)<tspan baseline-shift="38%" font-size="9.8">T</tspan> Δ<tspan baseline-shift="-25%" font-size="9.8">A</tspan></text>
-<rect x="570" y="255" width="300" height="86" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
-<text x="720" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">backward in code</text>
-<text x="720" y="312" text-anchor="middle" font-family="monospace" font-size="13" font-weight="600" fill="#24292f">scatter-add selected rows</text>
-<line x1="430" y1="298" x2="570" y2="298" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="0" y="0" width="1000" height="385" fill="#ffffff"/>
+<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">Differentiation choices: why neural nets use reverse mode</text>
+<text x="500" y="64" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#57606a">finite difference checks, symbolic math explains, reverse mode trains</text>
+<rect x="55" y="122" width="250" height="92" rx="8" fill="#fff5f0" stroke="#b85450" stroke-width="2"/>
+<text x="180" y="150" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">finite difference</text>
+<text x="180" y="177" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="13" font-style="italic" font-weight="600" fill="#57606a">(L(θ + εe<tspan baseline-shift="-25%" font-size="9.1">i</tspan>) - L(θ))/ε</text>
+<text x="180" y="198" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">good for checks; too many calls</text>
+<rect x="375" y="122" width="250" height="92" rx="8" fill="#fff8e7" stroke="#e0b300" stroke-width="2"/>
+<text x="500" y="150" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">symbolic derivative</text>
+<text x="500" y="177" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="14" font-style="italic" font-weight="600" fill="#57606a">expand ∂L/∂θ<tspan baseline-shift="-25%" font-size="9.8">i</tspan></text>
+<text x="500" y="198" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">readable, but expression can blow up</text>
+<rect x="695" y="122" width="250" height="92" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
+<text x="820" y="150" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">reverse-mode AD</text>
+<text x="820" y="177" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="14" font-style="italic" font-weight="600" fill="#57606a">one scalar L → all Δ<tspan baseline-shift="-25%" font-size="9.8">u</tspan></text>
+<text x="820" y="198" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">backprop for neural networks</text>
+<rect x="160" y="282" width="680" height="58" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
+<text x="500" y="309" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="16" font-style="italic" font-weight="700" fill="#a33ea1">forward stores values; backward propagates adjoints Δ<tspan baseline-shift="-25%" font-size="11.2">u</tspan></text>
 </svg>

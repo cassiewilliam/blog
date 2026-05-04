@@ -1,27 +1,24 @@
-<svg viewBox="0 0 1000 390" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1000 380" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
     <path d="M 0 0 L 10 5 L 0 10 z" fill="#24292f"/>
   </marker>
 </defs>
-<rect x="0" y="0" width="1000" height="390" fill="#ffffff"/>
-<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">Backprop template: one rule for every layer</text>
-<text x="500" y="64" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#57606a">adjoint bookkeeping with matrix differentials</text>
-<rect x="70" y="120" width="210" height="84" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
-<text x="175" y="150" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">forward</text>
-<text x="175" y="172" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="13" font-style="italic" font-weight="500" fill="#57606a">A = f(X, θ)</text>
-<text x="175" y="191" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">save intermediates</text>
-<line x1="282" y1="162" x2="420" y2="162" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
-<rect x="420" y="120" width="180" height="84" rx="8" fill="#fff8e7" stroke="#e0b300" stroke-width="2"/>
-<text x="510" y="150" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">differential</text>
-<text x="510" y="172" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="13" font-style="italic" font-weight="500" fill="#57606a">dA = f<tspan baseline-shift="-25%" font-size="9.1">X</tspan> dX</text>
-<text x="510" y="191" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="13" font-style="italic" font-weight="500" fill="#57606a">+ f<tspan baseline-shift="-25%" font-size="9.1">θ</tspan> dθ</text>
-<line x1="602" y1="162" x2="738" y2="162" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
-<rect x="738" y="120" width="210" height="84" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
-<text x="843" y="150" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">adjoint</text>
-<text x="843" y="172" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="13" font-style="italic" font-weight="500" fill="#57606a">Δ<tspan baseline-shift="-25%" font-size="9.1">A</tspan> : dA</text>
-<text x="843" y="191" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">collect dX, dθ</text>
-<rect x="105" y="265" width="790" height="74" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
-<text x="500" y="292" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="17" font-style="italic" font-weight="700" fill="#a33ea1">dL = Δ<tspan baseline-shift="-25%" font-size="11.9">A</tspan> : dA = Δ<tspan baseline-shift="-25%" font-size="11.9">X</tspan> : dX + (∂L/∂θ) : dθ</text>
-<text x="500" y="318" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">This is vector-Jacobian product written as matrix differentials.</text>
+<rect x="0" y="0" width="1000" height="380" fill="#ffffff"/>
+<text x="500" y="38" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#24292f">Why backprop exists: SGD needs a full gradient</text>
+<text x="500" y="64" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#57606a">course-note view: training is repeated forward, reverse, update</text>
+<rect x="70" y="112" width="170" height="74" rx="8" fill="#eef7ff" stroke="#4a6fd3" stroke-width="2"/>
+<text x="155" y="140" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">parameters</text>
+<text x="155" y="166" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="14" font-style="italic" font-weight="600" fill="#57606a">θ = {W, b, …}</text>
+<line x1="242" y1="149" x2="355" y2="149" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="355" y="112" width="190" height="74" rx="8" fill="#fff8e7" stroke="#e0b300" stroke-width="2"/>
+<text x="450" y="140" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">forward pass</text>
+<text x="450" y="166" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="15" font-style="italic" font-weight="700" fill="#57606a">L(θ)</text>
+<line x1="547" y1="149" x2="660" y2="149" stroke="#24292f" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="660" y="112" width="250" height="74" rx="8" fill="#f4faf4" stroke="#5fa55f" stroke-width="2"/>
+<text x="785" y="140" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#24292f">one reverse sweep</text>
+<text x="785" y="166" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="13" font-style="italic" font-weight="600" fill="#57606a">∇<tspan baseline-shift="-25%" font-size="9.1">θ</tspan>L = {∂L/∂W, ∂L/∂b, …}</text>
+<rect x="170" y="270" width="660" height="62" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
+<text x="500" y="298" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="18" font-style="italic" font-weight="700" fill="#a33ea1">θ<tspan baseline-shift="-25%" font-size="12.6">t+1</tspan> = θ<tspan baseline-shift="-25%" font-size="12.6">t</tspan> - η∇<tspan baseline-shift="-25%" font-size="12.6">θ</tspan>L(θ<tspan baseline-shift="-25%" font-size="12.6">t</tspan>)</text>
+<text x="500" y="322" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="400" fill="#57606a">SGD needs all trainable-parameter gradients, not one derivative at a time.</text>
 </svg>
